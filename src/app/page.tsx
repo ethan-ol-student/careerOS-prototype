@@ -193,7 +193,7 @@ export default function LandingPage() {
       {/* ───────────────────── CANDIDATE VALUE PROPOSITION ───────────────────── */}
       <Section id="candidate-vp" className="relative">
         <div className="max-w-container mx-auto grid items-center gap-12 md:grid-cols-12">
-          {/* Image — diverging-path person */}
+          {/* Image - diverging-path person */}
           <div className="md:col-span-5">
             <Parallax speed={90}>
               <div className="glass-3 ring-brand/20 relative aspect-[4/5] w-full overflow-hidden rounded-3xl ring-1">
@@ -201,8 +201,8 @@ export default function LandingPage() {
                   src="/pathway.png"
                   alt="A candidate at a diverging path — Career OS helps them choose their direction"
                   fill
+                  sizes="(max-width: 768px) 100vw, 42vw"
                   priority
-                  sizes="(min-width: 768px) 40vw, 100vw"
                   className="object-cover"
                 />
                 <div
@@ -310,32 +310,18 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Image slot — placeholder until employer image is provided */}
+          {/* Image slot - Employer image */}
           <div className="md:order-2 md:col-span-5">
             <Parallax speed={-80}>
-            <div
-              role="img"
-              aria-label="Employer image placeholder"
-              className="border-border/60 bg-background/40 relative flex aspect-[4/5] w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border-2 border-dashed"
-            >
-              <div className="bg-brand/15 text-brand flex size-20 items-center justify-center rounded-3xl">
-                <Briefcase className="size-9" />
+              <div className="relative flex aspect-[4/5] w-full overflow-hidden rounded-3xl border border-border/60">
+                <Image
+                  src="/employer.png"
+                  alt="Employer image"
+                  fill
+                  className="object-cover"
+                  priority // Add this if the image is above the fold / top of the page
+                />
               </div>
-              <p className="text-foreground text-sm font-medium">
-                Employer image
-              </p>
-              <p className="text-muted-foreground max-w-[220px] px-6 text-center text-[11px]">
-                Drop the provided employer image into{" "}
-                <code className="text-foreground/80 font-mono">
-                  public/employer.png
-                </code>{" "}
-                and swap this placeholder.
-              </p>
-              <div
-                aria-hidden
-                className="from-brand/15 pointer-events-none absolute -bottom-16 -right-16 size-48 rounded-full bg-radial to-transparent"
-              />
-            </div>
             </Parallax>
           </div>
         </div>
