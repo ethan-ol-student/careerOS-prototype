@@ -1,0 +1,19 @@
+FUNCTIONS AND NOTES TO BE IMPLEMENTED:
+
+1. CareerOS should be more of a strategic life navigator where the AI more prone towards recommendation than scores - avoiding black box answers.
+
+2. Able to show a range of trajectories for people with similar shape - skills, education, prior roles, geography - and explain the trade-offs of each.
+
+3. Good questions to answer for the candidates:
+   - Where will they likely be in 5 years
+   - Which phase are they in (exploration, in job, etc.)
+   - Are they plateauing (due to no updates on skills, portfolio, experience, etc.)
+
+4. Be able to handle pivots (have transition pathways, skill transferability, risk analysis, bridge skills, compounding skills)
+(Skill combination = Long-term value for a job)
+
+5. Dashboard should show:
+- Career trajectory
+- Skill evolution
+- Long-term growth (skills, career path)
+- Career momentum
