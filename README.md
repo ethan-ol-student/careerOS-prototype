@@ -1,51 +1,52 @@
 <p align="center">
-  <img 
-    src="https://github.com/user-attachments/assets/9a2526d7-153b-45a7-8ff3-773198a8489c" 
-    alt="CareerOS Logo" 
+  <img
+    src="https://github.com/user-attachments/assets/9a2526d7-153b-45a7-8ff3-773198a8489c"
+    alt="CareerOS Logo"
     width="442"
   />
 </p>
 
+# CareerOS 🚀
 
-# CareerOS
+CareerOS is a career intelligence prototype that helps **Candidates** build direction, evidence, and momentum. It then turns those signals into an **Employer-facing marketplace** for discovering talent by trajectory, readiness, and fit.
 
-CareerOS is a career intelligence prototype that helps Candidates build career direction, evidence, and momentum, then turns those signals into an Employer-facing marketplace experience.
+## Big Idea 💡
 
-The core product idea is simple:
+CareerOS connects career growth with hiring discovery:
 
-1. Candidates progress through phase-based career growth.
-2. CareerOS captures skills, projects, milestones, planning, and readiness.
-3. Employers discover talent by trajectory, evidence, readiness, and fit.
-4. Candidates and Employers connect through marketplace actions and messaging.
+1. 🎯 Candidates move through phase-based career growth.
+2. 📁 CareerOS captures skills, projects, milestones, planning, and readiness.
+3. 🔎 Employers discover talent by trajectory, evidence, readiness, and fit.
+4. 💬 Candidates and Employers connect through marketplace actions and messaging.
 
-## Product Surfaces
+## Product Surfaces 🧭
 
-### Candidate
+### Candidate Experience 👤
 
-- Phase-driven dashboard at `/candidate/dashboard`
-- Six career phases:
+- 📊 Phase-driven dashboard: `/candidate/dashboard`
+- 🪜 Six career phases:
   - Student
   - Young Adult
   - Early Career
   - Mid-Career
   - Senior Career
   - Executive
-- Living Portfolio at `/candidate/portfolio`
-- Life Chapter Designer at `/candidate/chapters`
-- Candidate messages at `/candidate/messages`
-- Candidate settings, account, privacy, and discovery controls
+- 🧾 Living Portfolio: `/candidate/portfolio`
+- 🗺️ Life Chapter Designer: `/candidate/chapters`
+- 💬 Candidate messages: `/candidate/messages`
+- ⚙️ Candidate settings, account, privacy, and discovery controls
 
-### Employer
+### Employer Experience 🏢
 
-- Employer onboarding
-- Marketplace at `/employers/marketplace`
-- Candidate recommendation cards and profile details
-- Saved candidates
-- Invite/contact flow
-- Employer messages
-- Employer notifications and settings
+- 🚪 Employer onboarding
+- 🛒 Marketplace: `/employers/marketplace`
+- 🧩 Candidate recommendation cards and profile details
+- ⭐ Saved candidates
+- ✉️ Invite/contact flow
+- 💬 Employer messages
+- 🔔 Employer notifications and settings
 
-### Judge Evaluation Tour
+## Judge Evaluation Tour 🧑‍⚖️
 
 A dedicated judge-only guided product tour is available at:
 
@@ -60,63 +61,63 @@ username: judge
 password: judge123
 ```
 
-The judge account is protected by a backend/database flag, not by client-side username checks. Normal Candidate, Employer, Admin/dev, and anonymous users cannot access the judge tour.
+Judge access is protected by a backend/database flag, not by client-side username checks. Normal Candidate, Employer, Admin/dev, and anonymous users cannot access the judge tour.
 
 The judge tour demonstrates:
 
-- Candidate dashboard architecture
-- All six Candidate phases
-- Gatekeeper milestones
-- Living Portfolio
-- Life Chapter Designer
-- Candidate messaging bridge
-- Employer marketplace matching
-- Candidate profile evaluation
-- Save/invite flows
-- Employer messages
-- Functional vs prototype vs planned implementation notes
+- 🧱 Candidate dashboard architecture
+- 🪜 All six Candidate phases
+- ✅ Gatekeeper milestones
+- 🧾 Living Portfolio
+- 🗺️ Life Chapter Designer
+- 🌉 Candidate messaging bridge
+- 🔎 Employer marketplace matching
+- 🧑‍💼 Candidate profile evaluation
+- ⭐ Save/invite flows
+- 💬 Employer messages
+- 📝 Functional vs prototype vs planned implementation notes
 
-## Current Functional Features
+## Current Functional Features ✅
 
-- First-party username/email + password authentication
-- Signed HTTP-only JWT session cookie
-- Candidate and Employer account roles
-- Candidate onboarding and dashboard personalization storage
-- Employer onboarding and hiring preference storage
-- Prisma-backed PostgreSQL persistence
-- Candidate profile, portfolio, chapters, notifications, and settings APIs
-- Employer profile, goal, saved candidates, invited candidates, notifications, and messages APIs
-- Marketplace candidate catalog with seeded demo candidates
-- Candidate discovery opt-in for projecting real candidates into the marketplace
-- Role-based route gating in Candidate and Employer app shells
-- Judge-only route protection using `User.isJudgeAccount`
-- Judge demo seed data isolated from real user data
-- CSRF/origin protection for mutating API routes
-- Local cache scoping by active user to reduce cross-account data leaks on shared browsers
+- 🔐 First-party username/email + password authentication
+- 🍪 Signed HTTP-only JWT session cookie
+- 👥 Candidate and Employer account roles
+- 🎯 Candidate onboarding and dashboard personalization storage
+- 🏢 Employer onboarding and hiring preference storage
+- 🗄️ Prisma-backed PostgreSQL persistence
+- 📡 Candidate profile, portfolio, chapters, notifications, and settings APIs
+- 📡 Employer profile, goal, saved candidates, invited candidates, notifications, and messages APIs
+- 🛒 Marketplace candidate catalog with seeded demo candidates
+- 👀 Candidate discovery opt-in for projecting real candidates into the marketplace
+- 🚧 Role-based route gating in Candidate and Employer app shells
+- 🧑‍⚖️ Judge-only route protection using `User.isJudgeAccount`
+- 🧪 Judge demo seed data isolated from real user data
+- 🛡️ CSRF/origin protection for mutating API routes
+- 🧹 Local cache scoping by active user to reduce cross-account data leaks on shared browsers
 
-## Prototype / Demo Features
+## Prototype / Demo Features 🧪
 
 These features are usable for demos, but are not production-complete:
 
-- Match score and readiness score are explainable prototype signals, not a production AI model
-- Candidate recommendation logic is early-stage and partly seeded/demo-driven
-- Candidate phase simulation in the judge tour is scoped to judge demo state
-- Some dashboard widgets show mock or derived values where backend signals are not complete yet
-- Messaging demonstrates the Candidate-Employer bridge, but is not a full production messaging platform
+- 📈 Match score and readiness score are explainable prototype signals, not a production AI model
+- 🌱 Candidate recommendation logic is early-stage and partly seeded/demo-driven
+- 🧑‍⚖️ Candidate phase simulation in the judge tour is scoped to judge demo state
+- 📊 Some dashboard widgets show mock or derived values where backend signals are not complete yet
+- 💬 Messaging demonstrates the Candidate-Employer bridge, but is not a full production messaging platform
 
-## Planned Later
+## Planned Later 🛣️
 
-- Real AI recommendation engine
-- Stronger backend matching and scoring
-- Portfolio evidence verification
-- Cross-device milestone persistence
-- Deeper Employer analytics dashboard
-- Automated task generation for Candidate planning
-- Richer production messaging features
-- More advanced Candidate readiness and career trajectory modeling
-- Stronger audit/admin tooling for demo data resets and judge evaluation workflows
+- 🤖 Real AI recommendation engine
+- 🎯 Stronger backend matching and scoring
+- ✅ Portfolio evidence verification
+- 🔁 Cross-device milestone persistence
+- 📊 Deeper Employer analytics dashboard
+- ✨ Automated task generation for Candidate planning
+- 💬 Richer production messaging features
+- 📈 More advanced Candidate readiness and career trajectory modeling
+- 🛠️ Stronger audit/admin tooling for demo data resets and judge evaluation workflows
 
-## Tech Stack
+## Tech Stack 🧰
 
 - Next.js 16 App Router
 - React 19
@@ -128,7 +129,7 @@ These features are usable for demos, but are not production-complete:
 - jose for signed sessions
 - lucide-react icons
 
-## Local Setup
+## Local Setup 🏗️
 
 Install dependencies:
 
@@ -185,7 +186,7 @@ Open:
 http://localhost:3000
 ```
 
-## Production Deployment Notes
+## Production Deployment Notes 🚢
 
 Set production environment variables in the deployment provider, not in Git:
 
@@ -217,7 +218,7 @@ Seed production demo/judge data when appropriate:
 npm.cmd run db:seed
 ```
 
-## Important Security Notes
+## Important Security Notes 🛡️
 
 - `.env` and `.env.local` are ignored and must never be committed
 - `.env.example` is safe to commit because it contains placeholders only
@@ -228,7 +229,7 @@ npm.cmd run db:seed
 - Dev/test routes are gated by `NEXT_PUBLIC_ENABLE_TEST_MODE`; keep this disabled in production
 - If a real connection string or secret is ever committed or shared, rotate it immediately
 
-## Useful Commands
+## Useful Commands ⚡
 
 ```powershell
 npm.cmd run dev
@@ -239,7 +240,3 @@ npm.cmd run build
 .\node_modules\.bin\prisma.cmd migrate deploy
 npm.cmd run db:seed
 ```
-
-## Repository Status
-
-This is an active prototype. It includes real auth, persistence, route protection, and demo-ready flows, but several marketplace intelligence and messaging features are intentionally marked as prototype or planned while the product model evolves.
