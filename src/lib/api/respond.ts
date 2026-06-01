@@ -6,7 +6,8 @@
  * errors into correct HTTP semantics (401/403/404/400) and falls back
  * to a 500 for anything unexpected. In production it returns generic,
  * safe messages and never leaks internal causes (Prisma details,
- * stack traces, raw thrown values); full detail is logged server-side.
+ * stack traces, raw thrown values); unexpected failures are logged
+ * server-side.
  */
 
 import { NextResponse } from "next/server";
@@ -59,14 +60,13 @@ function clientMessage(status: number, specific: string): string {
 }
 
 /**
- * Catch-all responder. Classifies the thrown value, logs full detail
- * server-side, and returns a production-safe envelope (no `cause`,
- * no stack, no Prisma internals).
+ * Catch-all responder. Classifies the thrown value and returns a
+ * production-safe envelope (no `cause`, no stack, no Prisma internals).
+ * Expected request-state failures like unauthenticated API calls are not
+ * logged as errors, because those are normal 401/403/404 responses and can
+ * otherwise flood Vercel logs whenever an anonymous user hits a protected API.
  */
 export function failFromUnknown(err: unknown) {
-  // Always log the full error server-side for debugging.
-  console.error("[api]", err);
-
   // 401 — not authenticated.
   if (err instanceof UnauthorizedError) {
     return failFromCode(
@@ -90,6 +90,7 @@ export function failFromUnknown(err: unknown) {
   }
   // Prisma known request errors → map the common ones.
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    console.error("[api]", err);
     if (err.code === "P2025") {
       return failFromCode("not_found", clientMessage(404, "Not found."), 404);
     }
@@ -105,6 +106,7 @@ export function failFromUnknown(err: unknown) {
   }
 
   // Unknown server error — generic in prod, detailed in dev. No cause.
+  console.error("[api]", err);
   const detail = err instanceof Error ? err.message : "Unexpected server error.";
   return failFromCode("server", clientMessage(500, detail), 500);
 }
