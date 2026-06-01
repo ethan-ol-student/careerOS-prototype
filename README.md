@@ -1,4 +1,4 @@
-<img width="2000" height="616" alt="careerOS_logo_transparent_glow" src="https://github.com/user-attachments/assets/a3c62870-9d0c-46e1-90d8-0d4ac20ea655" />
+<img width="500" height="500" alt="careerOS_logo-removebg-preview" src="https://github.com/user-attachments/assets/15d14ac1-7371-43fb-b6a2-cab8bb79acb4" />
 
 # CareerOS
 
