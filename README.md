@@ -24,7 +24,7 @@ CareerOS connects career growth with hiring discovery:
 ### Candidate Experience 👤
 
 - 📊 Phase-driven dashboard: `/candidate/dashboard`
-- 🪜 Six career phases:
+- Six career phases:
   - Student
   - Young Adult
   - Early Career
@@ -66,7 +66,7 @@ Judge access is protected by a backend/database flag, not by client-side usernam
 The judge tour demonstrates:
 
 - 🧱 Candidate dashboard architecture
-- 🪜 All six Candidate phases
+- All six Candidate phases
 - ✅ Gatekeeper milestones
 - 🧾 Living Portfolio
 - 🗺️ Life Chapter Designer
