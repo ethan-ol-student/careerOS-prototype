@@ -51,7 +51,7 @@ const GENERIC_MESSAGE: Record<number, string> = {
  * Picks the client-facing message. In development we surface the real
  * message to aid debugging; in production we return the generic copy
  * for 5xx (to avoid leaking internals) but keep the specific message
- * for 4xx (which is safe, user-actionable, and already validated).
+ * for 4xx (which is safe, user-actionable, and already validated)
  */
 function clientMessage(status: number, specific: string): string {
   const generic = GENERIC_MESSAGE[status] ?? GENERIC_MESSAGE[500];
