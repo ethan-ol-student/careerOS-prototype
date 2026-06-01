@@ -16,6 +16,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Modal } from "@/components/ui/Modal";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { ScoringInfo } from "@/components/ui/ScoringInfo";
+import { explainReadiness } from "@/lib/candidates/readiness";
 
 interface CandidateDetailModalProps {
   candidate: Candidate;
@@ -30,6 +31,9 @@ export function CandidateDetailModal({
   onSaveToggle,
   onClose,
 }: CandidateDetailModalProps) {
+  // Explainable readiness — the displayed number IS the sum of the
+  // factors shown below, so the score is never a black box (principle #3).
+  const readiness = explainReadiness(candidate);
   return (
     <Modal
       isOpen
@@ -108,7 +112,7 @@ export function CandidateDetailModal({
           <ScoreBar label="Match" value={candidate.matchScore} accent="luminous" />
           <ScoreBar
             label="Readiness"
-            value={candidate.readinessScore}
+            value={readiness.score}
             accent="clover"
           />
           <div className="glass-3 flex flex-col gap-1 rounded-lg p-3">
@@ -124,6 +128,32 @@ export function CandidateDetailModal({
             </span>
           </div>
         </div>
+      </Section>
+
+      {/* Readiness breakdown — explainable, factor-by-factor */}
+      <Section label="How readiness is computed">
+        <ul className="flex flex-col gap-1.5">
+          {readiness.factors.map((f) => (
+            <li
+              key={f.label}
+              className="border-border/40 bg-card/40 flex items-start justify-between gap-3 rounded-lg border p-2.5"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium">{f.label}</p>
+                <p className="text-muted-foreground text-[11px] leading-snug">
+                  {f.detail}
+                </p>
+              </div>
+              <span className="text-clover shrink-0 font-mono text-xs">
+                +{f.earned}/{f.max}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+          Readiness = {readiness.score}/100, summed from the factors above —
+          based on self-reported profile signals, not verified assessments.
+        </p>
       </Section>
 
       {/* Skills */}

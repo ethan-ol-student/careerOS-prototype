@@ -4,14 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Menu as MenuIcon,
+  Bell,
   Bookmark,
   Briefcase,
   ChevronRight,
   LogIn,
   LogOut,
   MessageSquare,
+  Settings,
   Store,
 } from "lucide-react";
+import { useAuth } from "@/lib/context/AuthContext";
 import { cn } from "@/lib/utils";
 
 interface EmployerTopMenuProps {
@@ -30,6 +33,15 @@ interface EmployerTopMenuProps {
 export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+
+  // Display name — name → username → email local-part → "Employer".
+  const displayName =
+    user?.name?.trim() ||
+    user?.username?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Employer";
+  const subline = user?.email ?? "Find Talent · Career OS";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -76,28 +88,22 @@ export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
               <Briefcase className="size-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">Employer</p>
+              <p className="truncate text-sm font-semibold">{displayName}</p>
               <p className="text-muted-foreground truncate text-xs">
-                Find Talent · Career OS
+                {subline}
               </p>
             </div>
           </div>
 
-          {/* Sign-in placeholder — matches the candidate TopMenu treatment */}
+          {/* Sign-in / switch account */}
           <div className="border-b border-border/40 p-3">
-            <button
-              type="button"
-              aria-disabled="true"
-              title="Sign in is a static preview"
-              onClick={(e) => e.preventDefault()}
+            <Link
+              href="/auth"
               className="border-border/60 hover:border-clover/60 text-foreground hover:text-clover focus-visible:ring-clover/40 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
             >
               <LogIn className="size-4" />
-              Sign in
-              <span className="text-muted-foreground ml-1 text-[10px] font-normal uppercase tracking-wider">
-                Coming soon
-              </span>
-            </button>
+              Sign in / Switch account
+            </Link>
           </div>
 
           {/* Nav links — every employer surface lives here so the
@@ -118,12 +124,26 @@ export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
               onClick={() => setIsOpen(false)}
             />
             <MenuLink
-              href="/employers/notifications"
+              href="/employers/messages"
               icon={
                 <MessageSquare className="text-clover size-4" aria-hidden />
               }
               label="Messages"
-              hint="Invite replies & chat threads"
+              hint="Your candidate chat threads"
+              onClick={() => setIsOpen(false)}
+            />
+            <MenuLink
+              href="/employers/notifications"
+              icon={<Bell className="text-clover size-4" aria-hidden />}
+              label="Notifications"
+              hint="Invite replies & activity"
+              onClick={() => setIsOpen(false)}
+            />
+            <MenuLink
+              href="/employers/settings"
+              icon={<Settings className="text-clover size-4" aria-hidden />}
+              label="Settings"
+              hint="Profile, account & privacy"
               onClick={() => setIsOpen(false)}
             />
           </nav>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/context/AuthContext";
 import { IntentProvider } from "@/lib/context/IntentContext";
 import { PortfolioProvider } from "@/lib/hooks/usePortfolio";
 import { ChaptersProvider } from "@/lib/context/ChaptersContext";
@@ -38,17 +39,21 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${ibmPlexMono.variable} font-sans antialiased bg-background text-foreground`}
       >
-        <IntentProvider>
-          <NotificationsProvider>
-            <PortfolioProvider>
-              <ChaptersProvider>
-                <EmployerProvider>
-                  <SavedCandidatesProvider>{children}</SavedCandidatesProvider>
-                </EmployerProvider>
-              </ChaptersProvider>
-            </PortfolioProvider>
-          </NotificationsProvider>
-        </IntentProvider>
+        <AuthProvider>
+          <IntentProvider>
+            <NotificationsProvider>
+              <PortfolioProvider>
+                <ChaptersProvider>
+                  <EmployerProvider>
+                    <SavedCandidatesProvider>
+                      {children}
+                    </SavedCandidatesProvider>
+                  </EmployerProvider>
+                </ChaptersProvider>
+              </PortfolioProvider>
+            </NotificationsProvider>
+          </IntentProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -2,16 +2,13 @@
 
 import Link from "next/link";
 import { Compass, LogIn } from "lucide-react";
-import { LinkButton } from "@/components/ui/LinkButton";
+import { Button } from "@/components/ui/Button";
 
 interface NavLink {
   text: string;
   href: string;
 }
 
-// "Employer" anchors to the Employer VP section on this same page.
-// A dedicated employer route does not exist yet — link target is
-// intentionally in-page so it never 404s.
 const NAV_LINKS: NavLink[] = [
   { text: "Employer", href: "#employer-vp" },
 ];
@@ -44,32 +41,12 @@ export function Navbar() {
             </ul>
           </div>
           <div className="flex items-center gap-3">
-            {/* Sign in is a static preview across all entrypoints (Navbar,
-                TopMenu, EmployerTopMenu) — no auth backend is wired yet. */}
-            <button
-              type="button"
-              aria-disabled="true"
-              title="Sign in is a static preview"
-              onClick={(e) => e.preventDefault()}
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-luminous/40 hidden items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors focus:outline-none focus-visible:ring-2 md:inline-flex"
-            >
-              <LogIn className="size-3.5" aria-hidden />
-              Sign in
-              <span className="text-muted-foreground/70 text-[10px] font-normal uppercase tracking-wider">
-                soon
-              </span>
-            </button>
-            <LinkButton
-              href="/employers/onboarding"
-              size="sm"
-              variant="glow"
-              className="hidden sm:inline-flex"
-            >
-              Find Talent
-            </LinkButton>
-            <LinkButton href="/onboarding" size="sm" variant="default">
-              Begin your journey
-            </LinkButton>
+            <Link href="/auth">
+              <Button type="button" size="sm">
+                <LogIn className="size-4" />
+                Sign in
+              </Button>
+            </Link>
           </div>
         </nav>
       </div>

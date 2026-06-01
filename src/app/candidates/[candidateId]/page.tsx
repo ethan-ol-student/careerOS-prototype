@@ -12,6 +12,7 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { LayoutLines } from "@/components/ui/LayoutLines";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -19,22 +20,39 @@ import { Chip } from "@/components/ui/Chip";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { ScoringInfo } from "@/components/ui/ScoringInfo";
 import { DemoDataBanner } from "@/components/employer/DemoDataBanner";
-import { findCandidateById } from "@/lib/candidates/data";
+import { useMarketplaceCandidate } from "@/lib/marketplace/useCandidate";
+import { explainReadiness } from "@/lib/candidates/readiness";
 
 interface PageProps {
   params: Promise<{ candidateId: string }>;
 }
 
 /**
- * Placeholder candidate profile page. This is a read-only public view —
- * a Living Portfolio for the candidate, rendered from the same mock
- * data the marketplace uses. No employer shell so the URL also works
- * as a shareable preview.
+ * Read-only public candidate profile — a shareable Living Portfolio
+ * view. Resolves the candidate from the DB-backed marketplace API so it
+ * works for real candidates (projected mirror rows) as well as seeded
+ * demo candidates. No employer shell so the URL works as a public link.
  */
 export default function CandidateProfilePage({ params }: PageProps) {
   const { candidateId } = use(params);
-  const candidate = findCandidateById(candidateId);
-  if (!candidate) notFound();
+  const { candidate, status, notFound: missing } =
+    useMarketplaceCandidate(candidateId);
+
+  if (missing) notFound();
+
+  if (status === "loading" || !candidate) {
+    return (
+      <div className="bg-background text-foreground relative flex min-h-screen w-full items-center justify-center">
+        <span className="text-muted-foreground inline-flex items-center gap-2 text-sm">
+          <Loader2 className="text-luminous size-4 animate-spin" />
+          Loading profile…
+        </span>
+      </div>
+    );
+  }
+
+  // Explainable readiness — the number shown is the sum of the factors.
+  const readiness = explainReadiness(candidate);
 
   return (
     <div className="bg-background text-foreground relative min-h-screen w-full">
@@ -86,7 +104,9 @@ export default function CandidateProfilePage({ params }: PageProps) {
               <div className="min-w-0 flex-1">
                 <Badge variant="outline" className="mb-2">
                   <span className="text-muted-foreground">
-                    Candidate placeholder profile
+                    {candidate.source === "real"
+                      ? "Living Portfolio profile"
+                      : "Demo candidate profile"}
                   </span>
                 </Badge>
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -123,7 +143,9 @@ export default function CandidateProfilePage({ params }: PageProps) {
                   </Button>
                 </Link>
                 <p className="text-muted-foreground text-[11px]">
-                  Profile rendered from prototype mock data
+                  {candidate.source === "real"
+                    ? "Built from the candidate's Living Portfolio"
+                    : "Profile rendered from prototype demo data"}
                 </p>
               </div>
             </div>
@@ -158,11 +180,28 @@ export default function CandidateProfilePage({ params }: PageProps) {
               />
               <ScoreBar
                 label="Readiness"
-                value={candidate.readinessScore}
+                value={readiness.score}
                 accent="clover"
                 surfaceClassName="glass-4"
               />
             </div>
+            <ul className="mt-3 flex flex-col gap-1">
+              {readiness.factors.map((f) => (
+                <li
+                  key={f.label}
+                  className="text-muted-foreground flex items-center justify-between gap-2 text-[11px]"
+                >
+                  <span>{f.label}</span>
+                  <span className="text-clover font-mono">
+                    +{f.earned}/{f.max}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+              Readiness is computed from self-reported profile signals, not
+              verified assessments.
+            </p>
           </section>
 
           {/* Skills */}

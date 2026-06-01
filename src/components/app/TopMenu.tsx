@@ -13,7 +13,8 @@ import {
   LogOut,
   LogIn,
   ChevronRight,
-  Handshake,
+  MessageSquare,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -116,23 +117,17 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
             </div>
           </div>
 
-          {/* Sign-in CTA — outline variant so it doesn't impersonate a working primary */}
+          {/* Sign-in / switch account */}
           <div className="border-b border-border/40 p-3">
-            <button
-              type="button"
-              aria-disabled="true"
-              title="Sign in is a static preview"
-              onClick={(e) => e.preventDefault()}
+            <Link
+              href="/auth"
               className="border-border/60 hover:border-luminous/60 text-foreground hover:text-luminous focus-visible:ring-luminous/40 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
             >
               <LogIn className="size-4" />
-              Sign in
-              <span className="text-muted-foreground ml-1 text-[10px] font-normal uppercase tracking-wider">
-                soon
-              </span>
-            </button>
+              Sign in / Switch account
+            </Link>
             <p className="text-muted-foreground mt-2 text-center text-[10px]">
-              Sync your profile across devices · static preview
+              Your saved data syncs across devices.
             </p>
           </div>
 
@@ -151,10 +146,16 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
               hint="Design and compare next-chapter scenarios"
             />
             <MenuLink
-              href="/employers/onboarding"
-              icon={<Handshake className="size-4 text-luminous" aria-hidden />}
-              label="Engage with Employers"
-              hint="Open the employer workspace"
+              href="/candidate/messages"
+              icon={<MessageSquare className="size-4 text-luminous" aria-hidden />}
+              label="Messages"
+              hint="Your employer conversations"
+            />
+            <MenuLink
+              href="/candidate/settings"
+              icon={<Settings className="size-4 text-luminous" aria-hidden />}
+              label="Settings"
+              hint="Profile, account & privacy"
             />
           </nav>
 

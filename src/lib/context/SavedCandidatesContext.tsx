@@ -9,6 +9,8 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { getApiAdapter } from "@/lib/api";
+import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
 import type {
   ChatMessage,
   EmployerNotification,
@@ -16,46 +18,29 @@ import type {
 import type { ContextStatus } from "@/lib/types/contextStatus";
 
 interface SavedCandidatesContextValue {
-  /** Candidate IDs saved by the employer. */
   savedIds: string[];
-  /** Candidate IDs the employer has invited. */
   invitedIds: string[];
-  /** Employer-side notification feed. */
   notifications: EmployerNotification[];
-  /** Unread notification count. */
   unreadCount: number;
-  /** Chat history keyed by candidate ID. */
   conversations: Record<string, ChatMessage[]>;
   isHydrated: boolean;
-  /** Lifecycle status — see `ContextStatus`. */
   status: ContextStatus;
-  /** Optional human-readable error message when `status === "error"`. */
   error: string | null;
 
   toggleSaved: (candidateId: string) => void;
   isSaved: (candidateId: string) => boolean;
-
   markInvited: (candidateId: string) => void;
   isInvited: (candidateId: string) => boolean;
-
   addNotification: (
     n: Omit<EmployerNotification, "id" | "createdAt" | "read">,
   ) => string;
   markAllRead: () => void;
   dismissNotification: (id: string) => void;
-
-  /** Ensure a conversation exists with a baseline of mock messages. */
   ensureConversation: (candidateId: string, candidateName: string) => void;
   appendMessage: (
     candidateId: string,
     message: Omit<ChatMessage, "id" | "createdAt">,
   ) => void;
-
-  /**
-   * Clear every employer-side prototype slot owned by this context
-   * (saved IDs, invites, notifications, chats). Used by the
-   * employer sign-out flow.
-   */
   resetAll: () => void;
 }
 
@@ -63,10 +48,6 @@ const SavedCandidatesContext = createContext<
   SavedCandidatesContextValue | undefined
 >(undefined);
 
-const SAVED_KEY = "career-os-employer-saved";
-const INVITED_KEY = "career-os-employer-invited";
-const NOTIF_KEY = "career-os-employer-notifications";
-const CHAT_KEY = "career-os-employer-chats";
 
 function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -85,74 +66,135 @@ export function SavedCandidatesProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  // Hydrate. All setState calls below are one-time SSR-safe hydration
-  // from localStorage; the resulting cascading render is intentional
-  // and unavoidable without a hydration mismatch.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
     setStatus("loading");
     try {
-      const saved = localStorage.getItem(SAVED_KEY);
-      if (saved) setSavedIds(JSON.parse(saved) as string[]);
-      const invited = localStorage.getItem(INVITED_KEY);
-      if (invited) setInvitedIds(JSON.parse(invited) as string[]);
-      const notifs = localStorage.getItem(NOTIF_KEY);
-      if (notifs)
-        setNotifications(JSON.parse(notifs) as EmployerNotification[]);
-      const chats = localStorage.getItem(CHAT_KEY);
-      if (chats)
-        setConversations(
-          JSON.parse(chats) as Record<string, ChatMessage[]>,
-        );
-      setStatus("ready");
-    } catch (err) {
-      console.warn("Saved candidates hydration failed:", err);
-      setStatus("error");
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Saved candidates hydration failed",
-      );
-    } finally {
-      setIsHydrated(true);
+      const s = localStorage.getItem(currentScopedKey(CACHE_BASE.employerSaved));
+      if (s) setSavedIds(JSON.parse(s));
+      const i = localStorage.getItem(currentScopedKey(CACHE_BASE.employerInvited));
+      if (i) setInvitedIds(JSON.parse(i));
+      const n = localStorage.getItem(currentScopedKey(CACHE_BASE.employerNotifications));
+      if (n) setNotifications(JSON.parse(n));
+      const c = localStorage.getItem(currentScopedKey(CACHE_BASE.employerChats));
+      if (c) setConversations(JSON.parse(c));
+    } catch {
+      /* ignore */
     }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const api = await getApiAdapter();
+        const result = await api.getEmployerProfile();
+        if (cancelled) return;
+        if (!result.ok) {
+          setStatus("error");
+          setError(result.error.message);
+          setIsHydrated(true);
+          return;
+        }
+        setSavedIds(result.data.savedIds);
+        setInvitedIds(result.data.invitedIds);
+        setNotifications(result.data.notifications);
+        try {
+          localStorage.setItem(currentScopedKey(CACHE_BASE.employerSaved), JSON.stringify(result.data.savedIds));
+          localStorage.setItem(
+            currentScopedKey(CACHE_BASE.employerInvited),
+            JSON.stringify(result.data.invitedIds),
+          );
+          localStorage.setItem(
+            currentScopedKey(CACHE_BASE.employerNotifications),
+            JSON.stringify(result.data.notifications),
+          );
+        } catch {
+          /* ignore */
+        }
+        setStatus("ready");
+      } catch (err) {
+        if (cancelled) return;
+        setStatus("error");
+        setError(
+          err instanceof Error ? err.message : "Failed to load saved data.",
+        );
+      } finally {
+        if (!cancelled) setIsHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Persist (gated on hydration).
+  // Cache writes when state mutates post-hydration.
   useEffect(() => {
     if (!isHydrated) return;
     try {
-      localStorage.setItem(SAVED_KEY, JSON.stringify(savedIds));
+      localStorage.setItem(currentScopedKey(CACHE_BASE.employerSaved), JSON.stringify(savedIds));
     } catch {}
   }, [savedIds, isHydrated]);
-
   useEffect(() => {
     if (!isHydrated) return;
     try {
-      localStorage.setItem(INVITED_KEY, JSON.stringify(invitedIds));
+      localStorage.setItem(currentScopedKey(CACHE_BASE.employerInvited), JSON.stringify(invitedIds));
     } catch {}
   }, [invitedIds, isHydrated]);
-
   useEffect(() => {
     if (!isHydrated) return;
     try {
-      localStorage.setItem(NOTIF_KEY, JSON.stringify(notifications));
+      localStorage.setItem(currentScopedKey(CACHE_BASE.employerNotifications), JSON.stringify(notifications));
     } catch {}
   }, [notifications, isHydrated]);
-
   useEffect(() => {
     if (!isHydrated) return;
     try {
-      localStorage.setItem(CHAT_KEY, JSON.stringify(conversations));
+      localStorage.setItem(currentScopedKey(CACHE_BASE.employerChats), JSON.stringify(conversations));
     } catch {}
   }, [conversations, isHydrated]);
 
   const toggleSaved = useCallback((candidateId: string) => {
+    // Optimistic flip.
     setSavedIds((prev) =>
       prev.includes(candidateId)
         ? prev.filter((id) => id !== candidateId)
         : [candidateId, ...prev],
     );
+    void (async () => {
+      try {
+        const res = await fetch("/api/employer/saved", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ candidateId }),
+        });
+        const body = (await res.json().catch(() => null)) as
+          | { ok?: boolean; data?: { saved?: boolean }; error?: { message?: string } }
+          | null;
+        if (!res.ok || body?.ok === false) {
+          throw new Error(body?.error?.message ?? "Couldn't update saved list.");
+        }
+        // Reconcile to the server's authoritative saved state.
+        const saved = body?.data?.saved;
+        if (typeof saved === "boolean") {
+          setSavedIds((prev) => {
+            const has = prev.includes(candidateId);
+            if (saved && !has) return [candidateId, ...prev];
+            if (!saved && has) return prev.filter((id) => id !== candidateId);
+            return prev;
+          });
+        }
+        setError(null);
+      } catch (err) {
+        // Roll back so the UI never claims a save that didn't persist.
+        setSavedIds((prev) =>
+          prev.includes(candidateId)
+            ? prev.filter((id) => id !== candidateId)
+            : [candidateId, ...prev],
+        );
+        setError(
+          err instanceof Error ? err.message : "Couldn't update saved list.",
+        );
+      }
+    })();
   }, []);
 
   const isSaved = useCallback(
@@ -161,10 +203,35 @@ export function SavedCandidatesProvider({ children }: { children: ReactNode }) {
   );
 
   const markInvited = useCallback((candidateId: string) => {
+    const alreadyInvited = invitedIds.includes(candidateId);
     setInvitedIds((prev) =>
       prev.includes(candidateId) ? prev : [candidateId, ...prev],
     );
-  }, []);
+    void (async () => {
+      try {
+        const res = await fetch("/api/employer/invited", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ candidateId }),
+        });
+        const body = (await res.json().catch(() => null)) as
+          | { ok?: boolean; error?: { message?: string } }
+          | null;
+        if (!res.ok || body?.ok === false) {
+          throw new Error(body?.error?.message ?? "Couldn't record the invite.");
+        }
+        setError(null);
+      } catch (err) {
+        // Roll back only if WE added it (don't drop a pre-existing invite).
+        if (!alreadyInvited) {
+          setInvitedIds((prev) => prev.filter((id) => id !== candidateId));
+        }
+        setError(
+          err instanceof Error ? err.message : "Couldn't record the invite.",
+        );
+      }
+    })();
+  }, [invitedIds]);
 
   const isInvited = useCallback(
     (candidateId: string) => invitedIds.includes(candidateId),
@@ -173,51 +240,135 @@ export function SavedCandidatesProvider({ children }: { children: ReactNode }) {
 
   const addNotification = useCallback(
     (n: Omit<EmployerNotification, "id" | "createdAt" | "read">) => {
-      const id = genId("enotif");
-      setNotifications((prev) => [
-        { ...n, id, createdAt: Date.now(), read: false },
-        ...prev,
-      ]);
-      return id;
+      const tempId = genId("enotif");
+      const optimistic: EmployerNotification = {
+        ...n,
+        id: tempId,
+        createdAt: Date.now(),
+        read: false,
+      };
+      setNotifications((prev) => [optimistic, ...prev]);
+      void (async () => {
+        try {
+          await fetch("/api/employer/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(n),
+          });
+        } catch {
+          /* ignore */
+        }
+      })();
+      return tempId;
     },
     [],
   );
 
   const markAllRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    void (async () => {
+      try {
+        await fetch("/api/employer/notifications", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "markAllRead" }),
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
   }, []);
 
   const dismissNotification = useCallback((id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+    void (async () => {
+      try {
+        await fetch(`/api/employer/notifications/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
   }, []);
 
   const ensureConversation = useCallback(
     (candidateId: string, candidateName: string) => {
-      setConversations((prev) => {
-        if (prev[candidateId] && prev[candidateId].length > 0) return prev;
-        const now = Date.now();
-        const seed: ChatMessage[] = [
-          {
-            id: genId("msg"),
-            sender: "candidate",
-            body: `Hi! Thanks for reaching out — I'd love to hear more about the opportunity.`,
-            createdAt: now - 1000 * 60 * 2,
-          },
-          {
-            id: genId("msg"),
-            sender: "employer",
-            body: `Hi ${candidateName.split(" ")[0]}, great to connect. What kind of work are you most excited about right now?`,
-            createdAt: now - 1000 * 60,
-          },
-          {
-            id: genId("msg"),
-            sender: "candidate",
-            body: `Honestly, anything where I can keep compounding on what I'm already building. Happy to share my portfolio.`,
-            createdAt: now - 1000 * 30,
-          },
-        ];
-        return { ...prev, [candidateId]: seed };
-      });
+      // DEMO-ONLY local seed so the prototype chat feels alive. OFF by
+      // default (gated on the same flag as the simulated reply) so
+      // production NEVER shows fabricated candidate messages as if they
+      // were real — real threads come from the server hydrate below.
+      const demoChat = process.env.NEXT_PUBLIC_ENABLE_DEMO_CHAT === "true";
+      if (demoChat) {
+        setConversations((prev) => {
+          if (prev[candidateId] && prev[candidateId].length > 0) return prev;
+          const now = Date.now();
+          const seed: ChatMessage[] = [
+            {
+              id: genId("msg"),
+              sender: "candidate",
+              body: `Hi! Thanks for reaching out — I'd love to hear more about the opportunity.`,
+              createdAt: now - 1000 * 60 * 2,
+            },
+            {
+              id: genId("msg"),
+              sender: "employer",
+              body: `Hi ${candidateName.split(" ")[0]}, great to connect.`,
+              createdAt: now - 1000 * 60,
+            },
+          ];
+          return { ...prev, [candidateId]: seed };
+        });
+      }
+      // Server hydrate (authoritative — always runs).
+      void (async () => {
+        try {
+          const res = await fetch(
+            `/api/messages/${encodeURIComponent(candidateId)}`,
+            { cache: "no-store" },
+          );
+          const body = (await res.json().catch(() => null)) as
+            | { ok?: boolean; data?: ChatMessage[] }
+            | null;
+          if (body?.ok && Array.isArray(body.data) && body.data.length > 0) {
+            setConversations((prev) => ({ ...prev, [candidateId]: body.data! }));
+          }
+        } catch {
+          /* keep local seed */
+        }
+      })();
+    },
+    [],
+  );
+
+  const appendMessage = useCallback(
+    (
+      candidateId: string,
+      message: Omit<ChatMessage, "id" | "createdAt">,
+    ) => {
+      const tempId = genId("msg");
+      const optimistic: ChatMessage = {
+        ...message,
+        id: tempId,
+        createdAt: Date.now(),
+      };
+      setConversations((prev) => ({
+        ...prev,
+        [candidateId]: [...(prev[candidateId] ?? []), optimistic],
+      }));
+      if (message.sender === "employer") {
+        void (async () => {
+          try {
+            await fetch(`/api/messages/${encodeURIComponent(candidateId)}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ body: message.body }),
+            });
+          } catch {
+            /* ignore */
+          }
+        })();
+      }
     },
     [],
   );
@@ -228,33 +379,14 @@ export function SavedCandidatesProvider({ children }: { children: ReactNode }) {
     setNotifications([]);
     setConversations({});
     try {
-      localStorage.removeItem(SAVED_KEY);
-      localStorage.removeItem(INVITED_KEY);
-      localStorage.removeItem(NOTIF_KEY);
-      localStorage.removeItem(CHAT_KEY);
-    } catch (err) {
-      console.warn("Saved candidates reset failed:", err);
+      localStorage.removeItem(currentScopedKey(CACHE_BASE.employerSaved));
+      localStorage.removeItem(currentScopedKey(CACHE_BASE.employerInvited));
+      localStorage.removeItem(currentScopedKey(CACHE_BASE.employerNotifications));
+      localStorage.removeItem(currentScopedKey(CACHE_BASE.employerChats));
+    } catch {
+      /* ignore */
     }
   }, []);
-
-  const appendMessage = useCallback(
-    (
-      candidateId: string,
-      message: Omit<ChatMessage, "id" | "createdAt">,
-    ) => {
-      setConversations((prev) => {
-        const list = prev[candidateId] ?? [];
-        return {
-          ...prev,
-          [candidateId]: [
-            ...list,
-            { ...message, id: genId("msg"), createdAt: Date.now() },
-          ],
-        };
-      });
-    },
-    [],
-  );
 
   const value = useMemo<SavedCandidatesContextValue>(() => {
     const unreadCount = notifications.filter((n) => !n.read).length;

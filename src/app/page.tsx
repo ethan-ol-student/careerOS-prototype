@@ -4,7 +4,6 @@ import {
   ArrowRightIcon,
   Compass,
   Sparkles,
-  TrendingUp,
   Users,
   Briefcase,
   Search,
@@ -12,16 +11,13 @@ import {
   Activity,
   ShieldCheck,
   Telescope,
-  Layers,
   Eye,
-  Target,
 } from "lucide-react";
 
 import { Section } from "@/components/ui/Section";
 import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Glow } from "@/components/ui/Glow";
-import { LayoutLines } from "@/components/ui/LayoutLines";
 import { Mockup, MockupFrame } from "@/components/ui/Mockup";
 import { Navbar } from "@/components/marketing/Navbar";
 import { DashboardPreview } from "@/components/marketing/DashboardPreview";
@@ -32,36 +28,36 @@ import { cn } from "@/lib/utils";
 const CANDIDATE_BENEFITS = [
   {
     icon: Telescope,
-    title: "See your trajectory, not just your CV",
-    body: "Career OS continuously reads your skills, learning, and goals to surface where you stand and where you're heading.",
+    title: "A live view of your trajectory",
+    body: "Career OS reads your skills, learning, and goals to show where you stand and where you could go next.",
   },
   {
     icon: Sparkles,
-    title: "Grow with guidance, not guesswork",
-    body: "Every skill you add ripples through your profile, opportunities, and recommendations — no black-box scoring.",
+    title: "Clear next steps as you grow",
+    body: "Every skill you add updates your profile, your readiness, and your recommendations. No black-box scoring.",
   },
   {
     icon: Eye,
-    title: "Be seen by the right employers",
-    body: "As your readiness rises, your Living Portfolio reaches employers who actually match your direction.",
+    title: "Found by the right employers",
+    body: "As your readiness rises, your Living Portfolio reaches employers who match your direction.",
   },
 ];
 
 const EMPLOYER_VALUE = [
   {
     icon: Search,
-    title: "Discover talent on trajectory",
-    body: "Find candidates by where they're going — not only where they've been. Filter by compounding skills and readiness signals.",
+    title: "Talent on trajectory",
+    body: "Find candidates by where they're heading, not only where they've been. Filter by compounding skills and readiness signals.",
   },
   {
     icon: Activity,
-    title: "Real-time readiness signals",
-    body: "Every Living Portfolio updates as candidates learn and ship. You see momentum, not a frozen snapshot.",
+    title: "Live readiness signals",
+    body: "Every Living Portfolio updates as candidates learn and ship, so you see current momentum instead of a frozen snapshot.",
   },
   {
     icon: ShieldCheck,
-    title: "Transparent matches, no black boxes",
-    body: "Every match is explainable — see the exact skills, evidence, and chapters behind a candidate's readiness score.",
+    title: "Transparent matches",
+    body: "Every match is explainable: the exact skills, evidence, and chapters behind a candidate's readiness score.",
   },
 ];
 
@@ -71,21 +67,21 @@ const CONNECTION_STEPS = [
     tint: "luminous" as const,
     icon: Users,
     title: "Growth signals in",
-    body: "Skills, projects, learning chapters and life goals flow into the Living Portfolio as the candidate grows.",
+    body: "Skills, projects, learning chapters, and goals flow into the Living Portfolio as the candidate grows.",
   },
   {
     side: "CareerOS",
     tint: "brand" as const,
     icon: Handshake,
     title: "The bridge",
-    body: "CareerOS reads trajectory, compounding skills, and readiness — translating personal growth into discoverable shape.",
+    body: "CareerOS reads trajectory, compounding skills, and readiness, turning personal growth into a discoverable shape.",
   },
   {
     side: "Employer",
     tint: "clover" as const,
     icon: Briefcase,
     title: "Discovery out",
-    body: "Employers surface candidates whose direction matches the role — and reach out with full context, not just keywords.",
+    body: "Employers surface candidates whose direction matches the role, then reach out with full context.",
   },
 ];
 
@@ -113,20 +109,19 @@ const CONNECTION_TINT: Record<
 export default function LandingPage() {
   return (
     <main className="bg-background text-foreground min-h-screen w-full">
-      <LayoutLines />
       <Navbar />
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
       <Section className="fade-bottom relative overflow-hidden pb-0 sm:pb-0 md:pb-0">
         <div className="max-w-container mx-auto flex flex-col gap-12 pt-16 sm:gap-24">
-          <div className="flex flex-col items-center gap-6 text-center sm:gap-12">
+          <div className="flex flex-col items-center gap-6 text-center sm:gap-10">
             <Badge variant="outline" className="animate-appear">
               <span className="text-muted-foreground">
                 A career operating system for Asia&apos;s next generation
               </span>
               <a
                 href="#candidate-vp"
-                className="flex items-center gap-1 text-foreground"
+                className="text-foreground flex items-center gap-1"
               >
                 See how it works
                 <ArrowRightIcon className="size-3" />
@@ -135,35 +130,33 @@ export default function LandingPage() {
 
             <h1
               className={cn(
-                "animate-appear relative z-10 inline-block bg-linear-to-r bg-clip-text text-transparent text-balance drop-shadow-2xl",
-                "from-foreground to-foreground dark:to-muted-foreground",
-                "text-4xl leading-tight font-semibold sm:text-6xl sm:leading-tight md:text-8xl md:leading-tight",
+                "animate-appear text-foreground relative z-10 text-balance",
+                "text-4xl font-semibold leading-tight sm:text-6xl sm:leading-tight md:text-7xl md:leading-[1.05]",
               )}
             >
-              Guiding you towards your future Career.
+              See where your career is heading.
             </h1>
 
-            <p className="animate-appear text-muted-foreground relative z-10 max-w-[740px] text-md font-medium text-balance opacity-0 [animation-delay:0.1s] sm:text-xl">
-              Career OS is the candidate-centered intelligence platform that
-              turns fragmented career decisions into a continuous, guided
-              growth experience — and the bridge that lets the right employers
-              find you as you grow.
+            <p className="animate-appear text-muted-foreground relative z-10 max-w-[680px] text-pretty text-base font-medium opacity-0 [animation-delay:0.1s] sm:text-xl">
+              Career OS reads your skills, projects, and goals to show your
+              trajectory and what to do next. As you grow, the right employers
+              can find you.
             </p>
 
             <div className="animate-appear relative z-10 flex flex-wrap justify-center gap-4 opacity-0 [animation-delay:0.3s]">
               <LinkButton
-                href="/onboarding"
+                href="/auth?mode=signup&role=candidate"
                 variant="default"
                 iconRight={<ArrowRight />}
               >
                 Start your journey
               </LinkButton>
               <LinkButton
-                href="/employers/onboarding"
+                href="/auth?mode=signup&role=employer"
                 variant="glow"
                 icon={<Briefcase />}
               >
-                Find Talent
+                Find talent
               </LinkButton>
             </div>
 
@@ -198,12 +191,12 @@ export default function LandingPage() {
             <Parallax speed={90}>
               <div className="glass-3 ring-brand/20 relative aspect-[4/5] w-full overflow-hidden rounded-3xl ring-1">
                 <Image
-                  src="/pathway.png"
-                  alt="A candidate at a diverging path — Career OS helps them choose their direction"
+                  src="/candidate_new.png"
+                  alt="A candidate standing at a fork in the path, choosing their direction with Career OS"
                   fill
                   sizes="(max-width: 768px) 100vw, 42vw"
                   priority
-                  className="object-cover"
+                  className="object-cover scale-x-[-1]"
                 />
                 <div
                   aria-hidden
@@ -222,11 +215,11 @@ export default function LandingPage() {
               Your career, navigated{" "}
               <span className="text-brand">with intent</span>.
             </h2>
-            <p className="text-muted-foreground mt-4 max-w-2xl text-base sm:text-lg">
-              Career OS treats every step you take — a skill learned, a project
-              shipped, a chapter completed — as a signal. Those signals
-              compound into a living picture of where you are and where you
-              could go next.
+            <p className="text-muted-foreground mt-4 max-w-2xl text-pretty text-base sm:text-lg">
+              Career OS treats every step you take (a skill learned, a project
+              shipped, a chapter completed) as a signal. Those signals compound
+              into a living picture of where you are and where you could go
+              next.
             </p>
 
             <ul className="mt-8 flex flex-col gap-5">
@@ -239,7 +232,7 @@ export default function LandingPage() {
                     <h3 className="text-base font-semibold tracking-tight">
                       {title}
                     </h3>
-                    <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    <p className="text-muted-foreground mt-1 text-pretty text-sm leading-relaxed">
                       {body}
                     </p>
                   </div>
@@ -249,7 +242,7 @@ export default function LandingPage() {
 
             <div className="mt-8">
               <LinkButton
-                href="/onboarding"
+                href="/auth?mode=signup&role=candidate"
                 variant="default"
                 iconRight={<ArrowRight />}
               >
@@ -261,7 +254,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ───────────────────── EMPLOYER VALUE PROPOSITION ───────────────────── */}
-      <Section id="employer-vp" className="relative overflow-hidden bg-card/40">
+      <Section id="employer-vp" className="bg-card/40 relative overflow-hidden">
         <div className="max-w-container mx-auto grid items-center gap-12 md:grid-cols-12">
           {/* Content */}
           <div className="md:order-1 md:col-span-7">
@@ -272,13 +265,13 @@ export default function LandingPage() {
               Find talent already{" "}
               <span className="text-brand">on trajectory</span>.
             </h2>
-            <p className="text-muted-foreground mt-4 max-w-2xl text-base sm:text-lg">
-              Career OS turns every candidate into a living portfolio of
-              skills, evidence, and direction — so you reach out when the
-              match is real, not when the keywords happen to align.
+            <p className="text-muted-foreground mt-4 max-w-2xl text-pretty text-base sm:text-lg">
+              Career OS turns every candidate into a living portfolio of skills,
+              evidence, and direction, so you reach out when the match is real
+              rather than when keywords line up.
             </p>
 
-            <ul className="mt-8 grid gap-5 sm:grid-cols-1">
+            <ul className="mt-8 flex flex-col gap-5">
               {EMPLOYER_VALUE.map(({ icon: Icon, title, body }) => (
                 <li key={title} className="flex items-start gap-4">
                   <span className="bg-brand/15 text-brand flex size-10 shrink-0 items-center justify-center rounded-xl">
@@ -288,7 +281,7 @@ export default function LandingPage() {
                     <h3 className="text-base font-semibold tracking-tight">
                       {title}
                     </h3>
-                    <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    <p className="text-muted-foreground mt-1 text-pretty text-sm leading-relaxed">
                       {body}
                     </p>
                   </div>
@@ -298,28 +291,28 @@ export default function LandingPage() {
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <LinkButton
-                href="/employers/onboarding"
+                href="/auth?mode=signup&role=employer"
                 variant="default"
                 iconRight={<ArrowRight />}
               >
-                Find Talent
+                Find talent
               </LinkButton>
               <span className="text-muted-foreground text-xs uppercase tracking-wider">
-                Employer workspace · research preview
+                Research preview
               </span>
             </div>
           </div>
 
-          {/* Image slot - Employer image */}
+          {/* Image slot - Employer */}
           <div className="md:order-2 md:col-span-5">
             <Parallax speed={-80}>
-              <div className="relative flex aspect-[4/5] w-full overflow-hidden rounded-3xl border border-border/60">
+              <div className="border-border/60 relative flex aspect-[4/5] w-full overflow-hidden rounded-3xl border">
                 <Image
-                  src="/employer.png"
-                  alt="Employer image"
+                  src="/employer_new.png"
+                  alt="A hiring team reviewing candidates by their growth trajectory"
                   fill
-                  className="object-cover"
-                  priority // Add this if the image is above the fold / top of the page
+                  sizes="(max-width: 768px) 100vw, 42vw"
+                  className="object-cover scale-x-[-1]"
                 />
               </div>
             </Parallax>
@@ -331,25 +324,19 @@ export default function LandingPage() {
       <Section id="connection" className="relative">
         <div className="max-w-container mx-auto flex flex-col gap-12">
           <div className="flex flex-col items-center gap-4 text-center">
-            <Badge variant="outline">
-              <span className="text-muted-foreground">
-                How CareerOS connects both sides
-              </span>
-            </Badge>
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-              Growth signals in.{" "}
-              <span className="text-brand">Discovery</span> out.
+              Growth signals in. <span className="text-brand">Discovery</span>{" "}
+              out.
             </h2>
-            <p className="text-muted-foreground max-w-2xl text-base sm:text-lg">
-              Career OS sits between candidates and employers as the
-              translation layer. As candidates grow, the right employers see
-              them — and the path between intent and opportunity gets
-              shorter.
+            <p className="text-muted-foreground max-w-2xl text-pretty text-base sm:text-lg">
+              Career OS sits between candidates and employers as the translation
+              layer. As candidates grow, the right employers see them, and the
+              path from intent to opportunity gets shorter.
             </p>
           </div>
 
           {/* Three-step bridge */}
-          <div className="relative grid gap-4 md:grid-cols-3">
+          <ol className="relative grid gap-4 md:grid-cols-3">
             {/* Connector line on desktop */}
             <div
               aria-hidden
@@ -358,16 +345,13 @@ export default function LandingPage() {
             {CONNECTION_STEPS.map(({ side, icon: Icon, title, body, tint }, i) => {
               const t = CONNECTION_TINT[tint];
               return (
-                <article
+                <li
                   key={title}
                   className={cn(
                     "glass-3 relative flex flex-col items-center gap-4 rounded-2xl p-6 text-center ring-1",
                     t.ring,
                   )}
                 >
-                  <span className="text-muted-foreground absolute left-4 top-3 font-mono text-[10px] uppercase tracking-wider">
-                    Step {i + 1}
-                  </span>
                   <div
                     className={cn(
                       "flex size-14 items-center justify-center rounded-2xl",
@@ -382,36 +366,18 @@ export default function LandingPage() {
                       t.sideText,
                     )}
                   >
-                    {side}
+                    {i + 1} · {side}
                   </p>
                   <h3 className="text-lg font-semibold tracking-tight">
                     {title}
                   </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-pretty text-sm leading-relaxed">
                     {body}
                   </p>
-                </article>
+                </li>
               );
             })}
-          </div>
-
-          {/* Recap */}
-          <div className="glass-3 mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-3 rounded-full px-6 py-3 text-sm">
-            <span className="text-luminous flex items-center gap-1.5 font-medium">
-              <Target className="size-4" />
-              Candidate growth
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className="text-brand flex items-center gap-1.5 font-medium">
-              <Layers className="size-4" />
-              CareerOS bridge
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className="text-clover flex items-center gap-1.5 font-medium">
-              <TrendingUp className="size-4" />
-              Employer discovery
-            </span>
-          </div>
+          </ol>
         </div>
       </Section>
 
@@ -419,14 +385,11 @@ export default function LandingPage() {
       <Section id="features" className="relative overflow-hidden">
         <div className="max-w-container mx-auto flex flex-col gap-10">
           <div className="flex flex-col items-center gap-4 text-center">
-            <Badge variant="outline">
-              <span className="text-muted-foreground">Features</span>
-            </Badge>
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-              A guided tour, scroll-by-scroll.
+              A guided tour, scroll by scroll.
             </h2>
-            <p className="text-muted-foreground max-w-2xl text-base">
-              Swipe, scroll, or tap to move through what Career OS does — one
+            <p className="text-muted-foreground max-w-2xl text-pretty text-base">
+              Swipe, scroll, or tap to move through what Career OS does, one
               feature at a time.
             </p>
           </div>
@@ -446,7 +409,7 @@ export default function LandingPage() {
           <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
             Two sides. One operating system.
           </h2>
-          <p className="text-muted-foreground max-w-xl text-base sm:text-lg">
+          <p className="text-muted-foreground max-w-xl text-pretty text-base sm:text-lg">
             Whether you&apos;re mapping your next chapter or sourcing the next
             generation of talent, Career OS meets you on your side of the
             bridge.
@@ -460,7 +423,7 @@ export default function LandingPage() {
                 Candidate
               </p>
               <LinkButton
-                href="/onboarding"
+                href="/auth?mode=signup&role=candidate"
                 variant="default"
                 iconRight={<ArrowRight />}
                 className="w-full sm:w-auto"
@@ -476,12 +439,12 @@ export default function LandingPage() {
                 Employer
               </p>
               <LinkButton
-                href="/employers/onboarding"
+                href="/auth?mode=signup&role=employer"
                 variant="glow"
                 iconRight={<ArrowRight />}
                 className="w-full sm:w-auto"
               >
-                Find Talent
+                Find talent
               </LinkButton>
             </div>
           </div>

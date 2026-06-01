@@ -9,6 +9,8 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { getApiAdapter } from "@/lib/api";
+import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
 import type { ContextStatus } from "@/lib/types/contextStatus";
 
 export type NotificationKind = "skill" | "system" | "job-match";
@@ -20,9 +22,7 @@ export interface AppNotification {
   severity: NotificationSeverity;
   title: string;
   body: string;
-  /** Optional CTA — e.g. "Reach out" on a job-match alert. */
   actionLabel?: string;
-  /** Arbitrary payload passed back to the action handler. */
   payload?: Record<string, unknown>;
   createdAt: number;
   read: boolean;
@@ -33,11 +33,8 @@ interface NotificationsContextValue {
   unreadCount: number;
   hasImportant: boolean;
   isHydrated: boolean;
-  /** Lifecycle status — see `ContextStatus`. */
   status: ContextStatus;
-  /** Optional human-readable error message when `status === "error"`. */
   error: string | null;
-  /** Add a notification. Returns the generated id. */
   addNotification: (
     n: Omit<AppNotification, "id" | "createdAt" | "read">,
   ) => string;
@@ -50,72 +47,163 @@ const NotificationsContext = createContext<NotificationsContextValue | undefined
   undefined,
 );
 
-const STORAGE_KEY = "career-os-candidate-notifications";
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
-  // Initial render (server + first client paint) must match — start
-  // empty. We hydrate from localStorage in an effect after mount and
-  // gate writes on `isHydrated` so we never overwrite saved data with
-  // an empty list.
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  // Hydrate once on mount.
+  // Initial load: quick paint from cache, then authoritative fetch.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
     setStatus("loading");
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as AppNotification[];
-        if (Array.isArray(parsed)) {
-          setNotifications(parsed);
-        }
+      const cached = localStorage.getItem(currentScopedKey(CACHE_BASE.candidateNotifications));
+      if (cached) {
+        const parsed = JSON.parse(cached) as AppNotification[];
+        if (Array.isArray(parsed)) setNotifications(parsed);
       }
-      setStatus("ready");
-    } catch (err) {
-      console.warn("Notifications hydration failed:", err);
-      setStatus("error");
-      setError(
-        err instanceof Error ? err.message : "Notifications hydration failed",
-      );
-    } finally {
-      setIsHydrated(true);
+    } catch {
+      /* ignore */
     }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const api = await getApiAdapter();
+        const result = await api.getCandidateProfile();
+        if (cancelled) return;
+        if (!result.ok) {
+          setStatus("error");
+          setError(result.error.message);
+          setIsHydrated(true);
+          return;
+        }
+        setNotifications(result.data.notifications);
+        try {
+          localStorage.setItem(
+            currentScopedKey(CACHE_BASE.candidateNotifications),
+            JSON.stringify(result.data.notifications),
+          );
+        } catch {
+          /* ignore */
+        }
+        setStatus("ready");
+      } catch (err) {
+        if (cancelled) return;
+        setStatus("error");
+        setError(
+          err instanceof Error ? err.message : "Failed to load notifications.",
+        );
+      } finally {
+        if (!cancelled) setIsHydrated(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Persist (gated on hydration so we don't clobber storage on first paint).
+  // Persistence side-effect: write the React state back to the cache
+  // whenever it changes (post-hydration), so a refresh paints fast.
   useEffect(() => {
     if (!isHydrated) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-    } catch (err) {
-      console.warn("Notifications save failed:", err);
+      localStorage.setItem(currentScopedKey(CACHE_BASE.candidateNotifications), JSON.stringify(notifications));
+    } catch {
+      /* ignore */
     }
   }, [notifications, isHydrated]);
 
   const addNotification: NotificationsContextValue["addNotification"] =
     useCallback((n) => {
-      const id = `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-      setNotifications((prev) => [
-        { ...n, id, createdAt: Date.now(), read: false },
-        ...prev,
-      ]);
-      return id;
+      const tempId = `notif_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 7)}`;
+      const optimistic: AppNotification = {
+        ...n,
+        id: tempId,
+        createdAt: Date.now(),
+        read: false,
+      };
+      setNotifications((prev) => [optimistic, ...prev]);
+
+      // Persist to the server so candidate notifications survive reloads
+      // and sync across devices, then reconcile the temp id → server id.
+      void (async () => {
+        try {
+          const res = await fetch("/api/me/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              kind: n.kind,
+              severity: n.severity,
+              title: n.title,
+              body: n.body,
+              ...(n.actionLabel ? { actionLabel: n.actionLabel } : {}),
+              ...(n.payload ? { payload: n.payload } : {}),
+            }),
+          });
+          const body = (await res.json().catch(() => null)) as
+            | { ok?: boolean; data?: { id?: string } }
+            | null;
+          if (body?.ok && body.data?.id) {
+            const serverId = body.data.id;
+            setNotifications((prev) =>
+              prev.map((x) => (x.id === tempId ? { ...x, id: serverId } : x)),
+            );
+          }
+        } catch {
+          /* swallow — optimistic row remains visible from the paint cache */
+        }
+      })();
+
+      return tempId;
     }, []);
 
   const dismissNotification = useCallback((id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+    void (async () => {
+      try {
+        await fetch(`/api/me/notifications/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
   }, []);
 
   const markAllRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    void (async () => {
+      try {
+        await fetch(`/api/me/notifications`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "markAllRead" }),
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
   }, []);
 
   const clearAll = useCallback(() => {
     setNotifications([]);
+    void (async () => {
+      try {
+        await fetch(`/api/me/notifications`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "clearAll" }),
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
   }, []);
 
   const value = useMemo<NotificationsContextValue>(() => {
@@ -156,11 +244,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 export function useNotifications() {
   const ctx = useContext(NotificationsContext);
   if (!ctx)
-    throw new Error("useNotifications must be used inside NotificationsProvider");
+    throw new Error(
+      "useNotifications must be used inside NotificationsProvider",
+    );
   return ctx;
 }
 
-/** Format a unix-ms timestamp into a short "Just now / Xm ago / Xh ago" string. */
 export function formatTimeAgo(createdAt: number, now = Date.now()): string {
   const diff = Math.max(0, now - createdAt);
   const s = Math.floor(diff / 1000);

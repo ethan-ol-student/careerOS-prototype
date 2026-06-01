@@ -75,18 +75,36 @@ export interface ApiAdapter {
 let cachedAdapter: ApiAdapter | null = null;
 
 /**
- * Returns the currently-active API adapter. Today this always
- * returns the localStorage-backed implementation; later we'll
- * read `process.env.NEXT_PUBLIC_API_BASE_URL` to decide whether
- * to construct an `httpAdapter` instead.
+ * Returns the currently-active API adapter.
  *
- * Centralizing the choice here means components never need to
- * change when the swap happens.
+ * The HTTP adapter (real backend + access control) is ALWAYS the
+ * default. The localStorage-only `localAdapter` is an explicit
+ * dev-only opt-in via `NEXT_PUBLIC_USE_LOCAL_ADAPTER=true`, and is
+ * hard-blocked in production so backend persistence/authorization can
+ * never be silently bypassed.
+ *
+ * Centralizing the choice here means components never need to change.
  */
 export async function getApiAdapter(): Promise<ApiAdapter> {
   if (cachedAdapter) return cachedAdapter;
-  const { localAdapter } = await import("./localAdapter");
-  cachedAdapter = localAdapter;
+
+  const useLocal = process.env.NEXT_PUBLIC_USE_LOCAL_ADAPTER === "true";
+
+  // Fail closed: the local adapter must never run in production.
+  if (useLocal && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "The localStorage adapter cannot be used in production. " +
+        "Unset NEXT_PUBLIC_USE_LOCAL_ADAPTER to use the HTTP/API backend.",
+    );
+  }
+
+  if (useLocal) {
+    const { localAdapter } = await import("./localAdapter");
+    cachedAdapter = localAdapter;
+  } else {
+    const { httpAdapter } = await import("./httpAdapter");
+    cachedAdapter = httpAdapter;
+  }
   return cachedAdapter;
 }
 

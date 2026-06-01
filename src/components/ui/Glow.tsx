@@ -19,7 +19,14 @@ export function Glow({ className, variant = "top", ...props }: GlowProps) {
   return (
     <div
       data-slot="glow"
-      className={cn("absolute w-full", variantClasses[variant], className)}
+      aria-hidden
+      className={cn(
+        // Decorative only — must never intercept clicks (it sits over
+        // CTA sections and was swallowing button presses).
+        "pointer-events-none absolute w-full",
+        variantClasses[variant],
+        className,
+      )}
       {...props}
     >
       <div

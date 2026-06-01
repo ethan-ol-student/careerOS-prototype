@@ -1,0 +1,394 @@
+// Career OS — Postgres (Neon) schema.
+//
+// Design notes:
+// - One `User` row per real account (candidate OR employer). Auth is
+//   first-party: bcrypt password hash on this row + a signed-JWT session
+//   cookie (see `src/lib/auth/*`). Every owned row FKs back to `User`.
+// - `Candidate` is the marketplace catalog — currently seeded from
+//   `src/lib/candidates/data.ts`. Catalog candidates are distinct from
+//   "real" candidate users (`User.role = CANDIDATE` + `CandidateProfile`)
+//   so the prototype demo never breaks when real signups exist.
+// - Enum-like strings (severity, kind, growth signal, etc.) are kept as
+//   `String` to avoid migrating Postgres enums every time a TS literal
+//   changes. The TS API layer is the source of truth for legal values.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Auth-adjacent ──────────────────────────────────────────────
+
+enum UserRole {
+  CANDIDATE
+  EMPLOYER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String?  @unique
+  passwordHash String?
+  name         String?
+  role         UserRole
+  isJudgeAccount Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  candidateProfile CandidateProfile?
+  employerProfile  EmployerProfile?
+  candidatesAI     CandidatesAI?
+  employersAI      EmployersAI?
+
+  // Optional projection of this user into the marketplace catalog
+  // (only for real candidates who opt into discovery). See `Candidate`.
+  marketplaceCandidate Candidate?
+}
+
+// ── Candidate side ─────────────────────────────────────────────
+
+model CandidateProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Intent fields
+  stage     String   @default("")
+  goals     String[] @default([])
+  name      String   @default("")
+  field     String   @default("")
+  targetJob String   @default("")
+
+  // Portfolio CV fields
+  headline String   @default("")
+  summary  String   @default("")
+  skills   String[] @default([])
+  bio      String   @default("")
+
+  // Candidate-controlled discovery opt-in. When true, the candidate is
+  // projected into the marketplace `Candidate` catalog (visible to
+  // employers). Off by default — discovery is the candidate's choice.
+  discoverable Boolean @default(false)
+
+  totalAdditions Int       @default(0)
+  lastUpdated    DateTime?
+
+  certificates  Certificate[]
+  awards        Award[]
+  projects      Project[]
+  experiences   Experience[]
+  chapters      ChapterEvent[]
+  notifications CandidateNotification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Certificate {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title     String
+  issuer    String
+  year      String
+
+  @@index([profileId])
+}
+
+model Award {
+  id          String           @id @default(cuid())
+  profileId   String
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title       String
+  year        String
+  description String?
+
+  @@index([profileId])
+}
+
+model Project {
+  id          String           @id @default(cuid())
+  profileId   String
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  link        String?
+
+  @@index([profileId])
+}
+
+model Experience {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  role      String
+  company   String
+  period    String
+  detail    String?
+
+  @@index([profileId])
+}
+
+model ChapterEvent {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name      String
+  priority  String // "high" | "medium" | "low" — enforced in API layer
+  date      String
+  time      String
+  subtasks  Json // [{ id, label, done }]
+  createdAt DateTime         @default(now())
+
+  @@index([profileId])
+}
+
+model CandidateNotification {
+  id          String           @id @default(cuid())
+  profileId   String
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  kind        String // "skill" | "system" | "job-match"
+  severity    String // "info" | "important"
+  title       String
+  body        String
+  actionLabel String?
+  payload     Json?
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  @@index([profileId, createdAt])
+}
+
+// ── Employer side ──────────────────────────────────────────────
+
+model EmployerProfile {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationName       String?
+  talentType             String   @default("")
+  role                   String   @default("")
+  priorities             String[] @default([])
+  locationPreference     String?
+  hasCompletedOnboarding Boolean  @default(false)
+
+  savedCandidates   EmployerSavedCandidate[]
+  invitedCandidates EmployerInvitedCandidate[]
+  notifications     EmployerNotification[]
+  conversations     ChatConversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Many-to-many: which catalog candidates an employer has saved.
+model EmployerSavedCandidate {
+  employerId  String
+  candidateId String
+  savedAt     DateTime @default(now())
+
+  employer  EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  candidate Candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@id([employerId, candidateId])
+  @@index([candidateId])
+}
+
+model EmployerInvitedCandidate {
+  employerId  String
+  candidateId String
+  invitedAt   DateTime @default(now())
+
+  employer  EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  candidate Candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@id([employerId, candidateId])
+  @@index([candidateId])
+}
+
+model EmployerNotification {
+  id          String          @id @default(cuid())
+  employerId  String
+  employer    EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  kind        String // "invite-accepted" | "invite-pending" | "system"
+  title       String
+  body        String
+  candidateId String?
+  read        Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+
+  @@index([employerId, createdAt])
+}
+
+// ── Messaging ──────────────────────────────────────────────────
+
+model ChatConversation {
+  id          String          @id @default(cuid())
+  employerId  String
+  candidateId String
+  employer    EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  candidate   Candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  messages ChatMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employerId, candidateId])
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String // "employer" | "candidate"
+  body           String
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// ── Advanced Candidate onboarding answers (AI-personalization input) ──
+// Separate from `CandidateProfile` so the "Living Portfolio" stays
+// the user-facing CV and this row holds the longer guided answers
+// that drive dashboard personalization + future AI recommendations.
+
+model CandidatesAI {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Step 1 — Stage
+  careerStage        String @default("") // student / young-adult / early / mid / senior / executive
+  careerStageMeaning String @default("")
+
+  // Step 2 — Discovery
+  targetRoles          String[] @default([])
+  interestedIndustries String[] @default([])
+  opportunityTypes     String[] @default([])
+  locationPreference   String?
+  availability         String?
+
+  // Step 3 — Growth
+  currentSkills      String[] @default([])
+  skillLevels        Json? // { [skill]: "beginner" | "intermediate" | "expert" }
+  projects           String[] @default([])
+  skillsToImprove    String[] @default([])
+  weeklyLearningTime String?
+
+  // Step 4 — Progression
+  desiredNextMove  String  @default("")
+  longTermGoal     String?
+  timeline         String?
+  careerConfidence String?
+  mainBlocker      String?
+
+  // Step 5 — Feedback
+  applicationsSent       String?
+  interviewExperience    String?
+  rejectionsOrChallenges String?
+  resumeConfidence       String?
+  portfolioConfidence    String?
+  interviewConfidence    String?
+
+  dashboardPersonalizationSummary String?
+  onboardingCompleted             Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── Advanced Employer onboarding answers (AI-matching input) ──
+// Mirrors `CandidatesAI` on the candidate side. Holds the hiring
+// intent / company context / candidate-signal data captured in
+// the 5-step employer onboarding flow. Drives the marketplace
+// personalization card and any future AI-matching layer.
+
+model EmployersAI {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Step 1 — Company Context
+  companyType String   @default("") // Startup / SME / Corporate / …
+  industries  String[] @default([])
+  teamFocus   String[] @default([])
+
+  // Step 2 — Hiring Goal
+  hiringReasons  String[] @default([])
+  hiringTimeline String   @default("")
+
+  // Step 3 — Role Direction
+  targetRoles          String[] @default([])
+  futureRoleDirections String[] @default([])
+
+  // Step 4 — Candidate Signals
+  candidateGreenFlags String[] @default([])
+  requiredSkills      String[] @default([])
+  trainableSkills     String[] @default([])
+
+  // Step 5 — Matching Preferences
+  strongFitTypes  String[] @default([])
+  workArrangement String   @default("") // On-site / Hybrid / Remote / Flexible
+  hiringLocation  String   @default("")
+
+  // Generated narrative summaries surfaced on the dashboard.
+  hiringIntentSummary      String?
+  futurePathSummary        String?
+  bestCandidateTypeSummary String?
+
+  onboardingCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── Marketplace catalog ────────────────────────────────────────
+// Static-ish pool of demo candidates. Real candidate signups live in
+// CandidateProfile; the marketplace doesn't surface them yet.
+
+model Candidate {
+  id                String   @id // seeded ids ("c-amelia-tan") OR "real-<userId>" for projected real candidates
+  name              String
+  careerDirection   String
+  targetRole        String
+  industry          String
+  category          String
+  matchScore        Int
+  readinessScore    Int
+  growthSignal      String // "Accelerating" | "Steady" | "Emerging" | "Compounding"
+  topSkills         String[]
+  portfolioProjects String[]
+  whyRecommended    String
+  location          String
+  availability      String
+  headline          String
+  stage             String
+
+  // ── Real-candidate bridge ────────────────────────────────────
+  // `source` distinguishes seeded demo rows from real users projected
+  // into the catalog. `userId` links a projected row back to the real
+  // `User` so the candidate inbox can resolve employer conversations.
+  // `visible` is the live discovery flag (mirrors CandidateProfile.discoverable).
+  source  String  @default("seed") // "seed" | "real"
+  userId  String? @unique
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visible Boolean @default(true)
+
+  savedByEmployers   EmployerSavedCandidate[]
+  invitedByEmployers EmployerInvitedCandidate[]
+  conversations      ChatConversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([matchScore])
+  @@index([visible])
+  @@index([source])
+}

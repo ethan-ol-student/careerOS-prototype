@@ -4,9 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Compass } from "lucide-react";
-import { useEmployer } from "@/lib/context/EmployerContext";
-import { useIntent } from "@/lib/context/IntentContext";
-import { useSavedCandidates } from "@/lib/context/SavedCandidatesContext";
+import { useAuth } from "@/lib/context/AuthContext";
 import { LayoutLines } from "@/components/ui/LayoutLines";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { EmployerTopMenu } from "./EmployerTopMenu";
@@ -27,36 +25,50 @@ export default function EmployerAppShell({
   requireOnboarding = true,
 }: EmployerAppShellProps) {
   const router = useRouter();
-  const { hasCompletedOnboarding, isHydrated, resetGoal } = useEmployer();
-  const { resetIntent } = useIntent();
-  const { resetAll: resetSavedCandidates } = useSavedCandidates();
+  const {
+    user,
+    employerOnboardingCompleted,
+    status: authStatus,
+    logout,
+  } = useAuth();
 
   const [showSignOut, setShowSignOut] = useState(false);
 
+  // Auth + role + onboarding gate.
   useEffect(() => {
     if (!requireOnboarding) return;
-    if (!isHydrated) return;
-    if (!hasCompletedOnboarding) {
+    if (authStatus !== "ready") return;
+    if (!user) {
+      router.replace("/auth");
+      return;
+    }
+    if (user.role === "candidate") {
+      router.replace("/candidate/dashboard");
+      return;
+    }
+    if (!employerOnboardingCompleted) {
       router.replace("/employers/onboarding");
     }
-  }, [requireOnboarding, hasCompletedOnboarding, isHydrated, router]);
+  }, [requireOnboarding, authStatus, user, employerOnboardingCompleted, router]);
 
-  // While hydration in progress (or onboarding incomplete), render
-  // nothing to avoid a flash of protected content.
-  if (requireOnboarding && (!isHydrated || !hasCompletedOnboarding)) {
+  if (
+    requireOnboarding &&
+    (authStatus !== "ready" ||
+      !user ||
+      user.role !== "employer" ||
+      !employerOnboardingCompleted)
+  ) {
     return null;
   }
 
   /**
-   * Employer sign-out: wipe the employer-owned localStorage slots and
-   * also clear `intent.role` (which we set to `"employer"` at the end
-   * of onboarding so AppShell can tell the two sides apart). Send the
-   * user back to the landing page.
+   * Employer sign-out: end the auth session on the server, clear
+   * local/session caches (NOT the database), and bounce to the
+   * landing page. Saved candidates, messages, and hiring goal stay
+   * in the database and are restored on next sign-in.
    */
-  const handleSignOutConfirm = () => {
-    resetGoal();
-    resetSavedCandidates();
-    resetIntent();
+  const handleSignOutConfirm = async () => {
+    await logout();
     setShowSignOut(false);
     router.push("/");
   };
@@ -95,7 +107,7 @@ export default function EmployerAppShell({
       <ConfirmDialog
         isOpen={showSignOut}
         title="Do you wish to sign out?"
-        description="You'll lose all employer prototype data — saved candidates, messages, notifications, and your hiring goal — on this device."
+        description="Your saved data will remain in your account, but this device session will be cleared."
         confirmLabel="Sign out"
         cancelLabel="Cancel"
         onConfirm={handleSignOutConfirm}

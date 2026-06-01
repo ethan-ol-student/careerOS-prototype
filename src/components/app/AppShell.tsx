@@ -5,9 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Compass } from "lucide-react";
 import { useIntent } from "@/lib/context/IntentContext";
-import { useNotifications } from "@/lib/context/NotificationsContext";
-import { usePortfolio } from "@/lib/hooks/usePortfolio";
-import { useChapters } from "@/lib/context/ChaptersContext";
+import { useAuth } from "@/lib/context/AuthContext";
 import { LayoutLines } from "@/components/ui/LayoutLines";
 import { TopMenu } from "@/components/app/TopMenu";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -28,42 +26,60 @@ export default function AppShell({
   requireIntent = true,
 }: AppShellProps) {
   const router = useRouter();
-  const { intent, isHydrated, resetIntent } = useIntent();
-  const { clearAll: clearNotifications } = useNotifications();
-  const { resetPortfolio } = usePortfolio();
-  const { resetEvents } = useChapters();
+  const { intent } = useIntent();
+  const {
+    user,
+    candidateOnboardingCompleted,
+    status: authStatus,
+    logout,
+  } = useAuth();
 
   const [showSignOut, setShowSignOut] = useState(false);
 
-  // Wait for hydration before deciding whether to redirect — without
-  // this gate every refresh on a candidate route briefly sees
-  // `intent.role === null` and bounces back to onboarding.
-  const isCandidate = intent.role === "candidate";
+  // Auth-driven gating: wait for the AuthProvider to hydrate, then:
+  //   - no user → bounce to /auth
+  //   - employer user → bounce to /employers/marketplace
+  //   - candidate without advanced onboarding → bounce to /candidate/onboarding
   useEffect(() => {
     if (!requireIntent) return;
-    if (!isHydrated) return;
-    if (intent.role === null) {
-      router.replace("/onboarding");
-    } else if (intent.role === "employer") {
-      router.replace("/employers/marketplace");
+    if (authStatus !== "ready") return;
+    if (!user) {
+      router.replace("/auth");
+      return;
     }
-  }, [requireIntent, isHydrated, intent.role, router]);
+    if (user.role === "employer") {
+      router.replace("/employers/marketplace");
+      return;
+    }
+    if (!candidateOnboardingCompleted) {
+      router.replace("/candidate/onboarding");
+    }
+  }, [
+    requireIntent,
+    authStatus,
+    user,
+    candidateOnboardingCompleted,
+    router,
+  ]);
 
-  // While hydration is in progress (or the user isn't a candidate)
-  // render nothing to avoid a flash of protected content.
-  if (requireIntent && (!isHydrated || !isCandidate)) return null;
+  if (
+    requireIntent &&
+    (authStatus !== "ready" ||
+      !user ||
+      user.role !== "candidate" ||
+      !candidateOnboardingCompleted)
+  ) {
+    return null;
+  }
 
   /**
-   * Candidate sign-out: wipe every candidate-side localStorage slot
-   * we own, then send the user back to the landing page. The
-   * confirmation is rendered through the shared `ConfirmDialog` so
-   * the affordance matches everything else in the app.
+   * Candidate sign-out: end the auth session on the server, clear
+   * local/session caches (NOT the database), and bounce to the
+   * landing page. The user's saved data remains in their account
+   * and is restored next time they sign in.
    */
-  const handleSignOutConfirm = () => {
-    resetIntent();
-    resetPortfolio();
-    resetEvents();
-    clearNotifications();
+  const handleSignOutConfirm = async () => {
+    await logout();
     setShowSignOut(false);
     router.push("/");
   };
@@ -102,8 +118,8 @@ export default function AppShell({
 
       <ConfirmDialog
         isOpen={showSignOut}
-        title="Are you sure?"
-        description="Signing out will clear your Career OS profile, portfolio, life chapters, and notifications on this device. You'll return to the landing page."
+        title="Are you sure you want to sign out?"
+        description="Your saved data will remain in your account, but this device session will be cleared."
         confirmLabel="Sign out"
         cancelLabel="Cancel"
         onConfirm={handleSignOutConfirm}

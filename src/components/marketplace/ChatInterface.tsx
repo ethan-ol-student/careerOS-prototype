@@ -6,7 +6,6 @@ import { ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useSavedCandidates } from "@/lib/context/SavedCandidatesContext";
 import { formatTimeAgo } from "@/lib/context/NotificationsContext";
-import { getApiAdapter } from "@/lib/api";
 import type { Candidate } from "@/lib/candidates/types";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +34,14 @@ interface ChatInterfaceProps {
 type SendStatus = "idle" | "sending" | "typing";
 
 const DEMO_REPLY_DELAY_MS = 1400;
+
+/**
+ * Simulated candidate replies are OFF by default and only enabled with
+ * an explicit dev/demo flag, so production never shows a fake reply as
+ * if a real candidate responded. Set `NEXT_PUBLIC_ENABLE_DEMO_CHAT=true`
+ * locally to demo the conversation flow.
+ */
+const DEMO_CHAT_REPLIES = process.env.NEXT_PUBLIC_ENABLE_DEMO_CHAT === "true";
 
 export function ChatInterface({ candidate }: ChatInterfaceProps) {
   const { conversations, ensureConversation, appendMessage } =
@@ -74,37 +81,17 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
     const trimmed = draft.trim();
     if (!trimmed || status !== "idle") return;
 
-    // Optimistic local insert so the message appears immediately.
-    appendMessage(candidate.id, { sender: "employer", body: trimmed });
+    // Single write path: `appendMessage` is the data-layer call. It
+    // updates React state optimistically AND fires the POST to
+    // `/api/messages/[candidateId]`. Calling the API adapter again
+    // here would race against the same route and trigger a
+    // ChatConversation unique-constraint violation, so we don't.
     setDraft("");
     setSendError(null);
     setStatus("sending");
 
-    // Call the API adapter. Today this is localStorage; tomorrow it
-    // will hit the real messaging endpoint. The adapter's response
-    // shape (`{ ok, data: { message, reply? } }`) is the same in
-    // both worlds, so this block doesn't need to change when we
-    // swap implementations.
     try {
-      const api = await getApiAdapter();
-      const result = await api.sendChatMessage({
-        candidateId: candidate.id,
-        body: trimmed,
-      });
-      if (!result.ok) {
-        setSendError(result.error.message);
-        setStatus("idle");
-        return;
-      }
-      // If the server already has a reply queued, append it here.
-      if (result.data.reply) {
-        appendMessage(candidate.id, {
-          sender: result.data.reply.sender,
-          body: result.data.reply.body,
-        });
-        setStatus("idle");
-        return;
-      }
+      appendMessage(candidate.id, { sender: "employer", body: trimmed });
     } catch (err) {
       setSendError(
         err instanceof Error ? err.message : "Couldn't send the message.",
@@ -113,10 +100,17 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
       return;
     }
 
-    // ── DEMO-ONLY FALLBACK ───────────────────────────────────────
-    // While the project has no live backend, simulate a candidate
-    // reply so the conversation feels alive in demos. Delete this
-    // block once a real messaging service is wired in.
+    // ── DEMO-ONLY FALLBACK (gated) ───────────────────────────────
+    // Without the demo flag (i.e. in production) there is NO fake
+    // reply — the message simply sends and we return to idle. Real
+    // candidate replies will arrive via the live channel when the
+    // messaging backend lands.
+    if (!DEMO_CHAT_REPLIES) {
+      setStatus("idle");
+      return;
+    }
+
+    // Demo mode: simulate a candidate reply so the flow feels alive.
     setStatus("typing");
     replyTimerRef.current = setTimeout(() => {
       appendMessage(candidate.id, {

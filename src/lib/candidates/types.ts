@@ -45,6 +45,14 @@ export interface Candidate {
   headline: string;
   /** Stage label — Intern / Fresh grad / Junior / Mid-level / Future. */
   stage: string;
+  /**
+   * Catalog origin: "seed" (demo pool) or "real" (a real candidate user
+   * projected into the marketplace). Optional because the static mock
+   * pool predates the field; the DB/API always sets it.
+   */
+  source?: "seed" | "real";
+  /** Discovery visibility for real candidates (mirrors discoverable). */
+  visible?: boolean;
 }
 
 export type TalentType =

@@ -1,19 +1,69 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Loader2 } from "lucide-react";
 import EmployerAppShell from "@/components/employer/EmployerAppShell";
 import { SavedCandidateCard } from "@/components/marketplace/SavedCandidateCard";
 import { Button } from "@/components/ui/Button";
-import { findCandidateById } from "@/lib/candidates/data";
 import { useSavedCandidates } from "@/lib/context/SavedCandidatesContext";
+import type { Candidate } from "@/lib/candidates/types";
+import type { ContextStatus } from "@/lib/types/contextStatus";
 
+/**
+ * Employer shortlist. Resolves each saved candidate id against the
+ * DB-backed marketplace API so the shortlist renders BOTH seeded demo
+ * candidates and real candidates (projected mirror rows) — the old
+ * mock-only `findCandidateById` lookup silently dropped real people.
+ * Fetch-by-id works even if a real candidate later turned discovery
+ * off, so an employer never loses someone they already shortlisted.
+ */
 export default function SavedCandidatesPage() {
   const { savedIds, toggleSaved } = useSavedCandidates();
+  const [saved, setSaved] = useState<Candidate[]>([]);
+  const [status, setStatus] = useState<ContextStatus>("loading");
 
-  const savedCandidates = savedIds
-    .map((id) => findCandidateById(id))
-    .filter((c): c is NonNullable<typeof c> => c != null);
+  // Stable dependency: re-resolve only when the set of ids changes.
+  const idKey = savedIds.join(",");
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = idKey ? idKey.split(",") : [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset to loading before the async resolve.
+    setStatus("loading");
+    if (ids.length === 0) {
+      setSaved([]);
+      setStatus("ready");
+      return;
+    }
+    (async () => {
+      try {
+        const results = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const res = await fetch(`/api/marketplace/${encodeURIComponent(id)}`, {
+                cache: "no-store",
+              });
+              const body = (await res.json().catch(() => null)) as
+                | { ok?: boolean; data?: Candidate }
+                | null;
+              return body?.ok && body.data ? body.data : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        if (cancelled) return;
+        setSaved(results.filter((c): c is Candidate => c != null));
+        setStatus("ready");
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [idKey]);
 
   return (
     <EmployerAppShell>
@@ -32,7 +82,12 @@ export default function SavedCandidatesPage() {
             </p>
           </header>
 
-          {savedCandidates.length === 0 ? (
+          {status === "loading" ? (
+            <div className="glass-3 flex items-center justify-center gap-2 rounded-2xl p-10 text-sm">
+              <Loader2 className="text-luminous size-4 animate-spin" />
+              <span className="text-muted-foreground">Loading your shortlist…</span>
+            </div>
+          ) : saved.length === 0 ? (
             <div className="glass-3 ring-luminous/20 flex flex-col items-center gap-4 rounded-2xl p-10 text-center ring-1">
               <div className="bg-luminous/15 text-luminous flex size-14 items-center justify-center rounded-2xl">
                 <Bookmark className="size-6" />
@@ -50,7 +105,7 @@ export default function SavedCandidatesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {savedCandidates.map((c) => (
+              {saved.map((c) => (
                 <SavedCandidateCard
                   key={c.id}
                   candidate={c}
