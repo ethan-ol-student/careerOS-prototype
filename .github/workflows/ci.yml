@@ -1,6 +1,9 @@
 name: CI
 
-# Green-build gate: lint + typecheck/build must pass before any staging deploy.
+# Green-build gate: lint + intelligence checks + build/typecheck must pass.
+# Deploys are handled by Vercel's GitHub integration (auto-deploy on push to
+# main). Database migrations are applied out-of-band with `prisma migrate
+# deploy` (see README / docs). This workflow needs NO secrets.
 on:
   push:
     branches: [main]
@@ -23,7 +26,8 @@ jobs:
           node-version: 20
           cache: npm
 
-      # postinstall runs `prisma generate` — needs no DB connection.
+      # postinstall runs `prisma generate` — needs no DB connection
+      # (prisma.config.ts falls back to a placeholder when DATABASE_URL is unset).
       - name: Install dependencies
         run: npm ci
 
@@ -34,83 +38,11 @@ jobs:
       - name: Intelligence engine checks
         run: npm run check:intelligence
 
-      # `next build` also runs the TS typecheck. Build-time env vars are
-      # dummies: Prisma generate + the build never connect to the real DB.
+      # `next build` also runs the TS typecheck. The env vars are dummies:
+      # the build never connects to a real database.
       - name: Build
         run: npm run build
         env:
           AUTH_SECRET: ci-build-placeholder-not-a-real-secret
           DATABASE_URL: postgresql://user:pass@localhost:5432/db?schema=public
           DIRECT_URL: postgresql://user:pass@localhost:5432/db?schema=public
-
-  migrate-staging:
-    name: Migrate Staging DB
-    needs: verify # ← only run migrations after lint+build are green
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    # The `staging-db` environment must have a **required reviewer** configured
-    # (Repo → Settings → Environments → staging-db → Required reviewers). That
-    # turns this job into a manual approval gate: schema changes never hit the
-    # database until a human clicks "Approve" on the paused run.
-    environment:
-      name: staging-db
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      # postinstall runs `prisma generate`.
-      - name: Install dependencies
-        run: npm ci
-
-      # `prisma migrate deploy` applies pending migrations only — no schema
-      # drift, no data loss prompts. Uses the DIRECT (non-pooled) URL.
-      - name: Apply pending migrations
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
-
-  deploy-staging:
-    name: Deploy Staging
-    needs: migrate-staging # ← deploy only after the approved migration applies
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: ${{ steps.deploy.outputs.url }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Pull Vercel env (preview/staging)
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Build (Vercel)
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Deploy prebuilt to staging
-        id: deploy
-        run: |
-          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "Deployed staging → $URL"
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
