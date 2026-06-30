@@ -1,0 +1,21 @@
+role,industry,companySize,location,currency,p25,p50,p75,p90,sourceUrl
+Software Engineer,Technology,startup,Remote-US,USD,110000,140000,175000,210000,https://www.levels.fyi
+Software Engineer,Technology,midsize,Remote-US,USD,125000,155000,190000,230000,https://www.levels.fyi
+Software Engineer,Technology,enterprise,Remote-US,USD,140000,175000,215000,260000,https://www.levels.fyi
+Software Engineer,Technology,midsize,Singapore,SGD,84000,108000,138000,170000,https://www.glassdoor.sg
+Machine Learning Engineer,Technology,enterprise,Remote-US,USD,160000,200000,245000,300000,https://www.levels.fyi
+Machine Learning Engineer,Technology,midsize,Singapore,SGD,96000,126000,160000,200000,https://www.glassdoor.sg
+Backend Engineer,Technology,startup,Remote-US,USD,115000,145000,180000,215000,https://www.levels.fyi
+Data Engineer,Technology,midsize,Singapore,SGD,82000,105000,134000,165000,https://www.glassdoor.sg
+Product Manager,Technology,enterprise,Singapore,SGD,110000,140000,178000,220000,https://www.glassdoor.sg
+Product Manager,Technology,midsize,Remote-US,USD,130000,160000,195000,235000,https://www.levels.fyi
+Robotics Engineer,Engineering,midsize,Remote-US,USD,105000,132000,165000,200000,https://www.levels.fyi
+Robotics Engineer,Engineering,enterprise,Singapore,SGD,78000,100000,128000,158000,https://www.glassdoor.sg
+Mechanical Engineer,Engineering,midsize,Singapore,SGD,60000,78000,100000,125000,https://www.glassdoor.sg
+Mechanical Engineer,Engineering,enterprise,Munich,EUR,62000,80000,102000,128000,https://www.glassdoor.de
+Controls Engineer,Engineering,enterprise,Zurich,CHF,95000,118000,145000,175000,https://www.glassdoor.com
+Embedded Systems Engineer,Engineering,enterprise,Stuttgart,EUR,64000,82000,104000,130000,https://www.glassdoor.de
+Aerospace Engineer,Engineering,enterprise,Toulouse,EUR,55000,72000,94000,118000,https://www.glassdoor.fr
+Quantitative Developer,Finance,enterprise,Singapore,SGD,120000,155000,200000,250000,https://www.glassdoor.sg
+Platform Engineer,Technology,enterprise,Sydney,AUD,130000,160000,195000,235000,https://www.glassdoor.com.au
+Firmware Engineer,Engineering,enterprise,Seoul,KRW,70000000,90000000,115000000,145000000,https://www.glassdoor.com

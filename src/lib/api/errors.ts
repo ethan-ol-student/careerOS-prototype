@@ -30,3 +30,11 @@ export class NotFoundError extends Error {
     this.name = "NotFoundError";
   }
 }
+
+/** 409 — conflicts with current state (e.g. a duplicate unique row). */
+export class ConflictError extends Error {
+  constructor(message = "That conflicts with an existing record.") {
+    super(message);
+    this.name = "ConflictError";
+  }
+}

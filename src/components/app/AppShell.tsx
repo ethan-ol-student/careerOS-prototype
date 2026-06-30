@@ -99,7 +99,7 @@ export default function AppShell({
             >
               <Compass className="size-5 text-luminous" />
               Career OS
-              <span className="text-muted-foreground ml-1 text-[10px] font-medium uppercase tracking-wider">
+              <span className="text-muted-foreground ml-1 hidden text-[10px] font-medium uppercase tracking-wider sm:inline">
                 · Candidate
               </span>
             </Link>

@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import {
+  ConflictError,
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
@@ -44,6 +45,7 @@ const GENERIC_MESSAGE: Record<number, string> = {
   401: "Authentication required.",
   403: "You don't have access to this resource.",
   404: "Not found.",
+  409: "That conflicts with an existing record.",
   500: "Something went wrong. Please try again.",
 };
 
@@ -82,6 +84,10 @@ export function failFromUnknown(err: unknown) {
   // 404 — missing resource.
   if (err instanceof NotFoundError) {
     return failFromCode("not_found", clientMessage(404, err.message), 404);
+  }
+  // 409 — conflicts with current state (friendly duplicate handling).
+  if (err instanceof ConflictError) {
+    return failFromCode("conflict", clientMessage(409, err.message), 409);
   }
   // 400 — request validation.
   if (err instanceof ZodError) {

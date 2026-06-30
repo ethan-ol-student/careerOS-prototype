@@ -1,19 +1,9 @@
 /**
  * Frontend API adapter contract.
  *
- * The adapter is a thin seam between Career OS components and
- * whatever data source is wired up below — today that's
- * localStorage, tomorrow it'll be a real backend. Keep this file
- * small and focused on the *shape* of operations.
- *
- * Implementations:
- *  - `localAdapter`   (in `./localAdapter`)  — current default
- *  - `httpAdapter`    (future)                — real backend
- *  - `mockAdapter`    (future, optional)      — fixtures for tests
- *
- * Components should never call adapters directly. Wrap calls in a
- * context/provider or hook so swapping the implementation only
- * happens in one place (`getApiAdapter()` below).
+ * Career OS is online-only: every data call goes to the Next.js route
+ * handlers under `src/app/api/` via the single `httpAdapter`. This
+ * interface is just the typed shape of those operations.
  */
 
 import type {
@@ -70,45 +60,10 @@ export interface ApiAdapter {
   ): Promise<ApiResult<SendInviteResponse>>;
 }
 
-// ── Adapter selection ───────────────────────────────────────────
+// ── Adapter access ──────────────────────────────────────────────
 
-let cachedAdapter: ApiAdapter | null = null;
-
-/**
- * Returns the currently-active API adapter.
- *
- * The HTTP adapter (real backend + access control) is ALWAYS the
- * default. The localStorage-only `localAdapter` is an explicit
- * dev-only opt-in via `NEXT_PUBLIC_USE_LOCAL_ADAPTER=true`, and is
- * hard-blocked in production so backend persistence/authorization can
- * never be silently bypassed.
- *
- * Centralizing the choice here means components never need to change.
- */
+// ponytail: kept async so the 8 `await getApiAdapter()` call sites don't churn.
 export async function getApiAdapter(): Promise<ApiAdapter> {
-  if (cachedAdapter) return cachedAdapter;
-
-  const useLocal = process.env.NEXT_PUBLIC_USE_LOCAL_ADAPTER === "true";
-
-  // Fail closed: the local adapter must never run in production.
-  if (useLocal && process.env.NODE_ENV === "production") {
-    throw new Error(
-      "The localStorage adapter cannot be used in production. " +
-        "Unset NEXT_PUBLIC_USE_LOCAL_ADAPTER to use the HTTP/API backend.",
-    );
-  }
-
-  if (useLocal) {
-    const { localAdapter } = await import("./localAdapter");
-    cachedAdapter = localAdapter;
-  } else {
-    const { httpAdapter } = await import("./httpAdapter");
-    cachedAdapter = httpAdapter;
-  }
-  return cachedAdapter;
-}
-
-/** Convenience helper used in tests/dev tools to force a fresh adapter. */
-export function _resetApiAdapterForTests(next: ApiAdapter | null) {
-  cachedAdapter = next;
+  const { httpAdapter } = await import("./httpAdapter");
+  return httpAdapter;
 }

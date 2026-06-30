@@ -10,6 +10,8 @@
 
 import { PrismaClient } from "@prisma/client";
 import { MOCK_CANDIDATES } from "../src/lib/candidates/data";
+import { MID_CAREER_DEMO } from "../src/lib/judge/midCareerDemo";
+import { readCsv } from "./csv";
 import { hashPassword } from "../src/lib/auth/password";
 import {
   JUDGE_ACCOUNT,
@@ -30,13 +32,16 @@ function daysFromNow(n: number): string {
 }
 
 async function main() {
-  console.log(`Seeding ${MOCK_CANDIDATES.length} marketplace candidates…`);
+  // SEED_DEMO guard — the demo catalog (candidates, companies, jobs, salary)
+  // is labelled `isDemo` and only seeded when enabled. Default ON; set
+  // SEED_DEMO=false (e.g. in production) to skip it. `/api/dev/reset` scope
+  // "demo" removes exactly these rows.
+  const demo = process.env.SEED_DEMO !== "false";
 
-  for (const c of MOCK_CANDIDATES) {
-    await prisma.candidate.upsert({
-      where: { id: c.id },
-      create: {
-        id: c.id,
+  if (demo) {
+    console.log(`Seeding ${MOCK_CANDIDATES.length} marketplace candidates…`);
+    for (const c of MOCK_CANDIDATES) {
+      const fields = {
         name: c.name,
         careerDirection: c.careerDirection,
         targetRole: c.targetRole,
@@ -52,37 +57,176 @@ async function main() {
         availability: c.availability,
         headline: c.headline,
         stage: c.stage,
-        // Seed rows are demo data and always visible. Real candidates are
-        // projected separately with source="real" (see lib/candidates/projection.ts).
+        // Seed rows are demo data. Real candidates are projected separately
+        // with source="real"/isDemo=false (lib/candidates/projection.ts).
         source: "seed",
-        visible: true,
-      },
-      update: {
-        name: c.name,
-        careerDirection: c.careerDirection,
-        targetRole: c.targetRole,
-        industry: c.industry,
-        category: c.category,
-        matchScore: c.matchScore,
-        readinessScore: c.readinessScore,
-        growthSignal: c.growthSignal,
-        topSkills: c.topSkills,
-        portfolioProjects: c.portfolioProjects,
-        whyRecommended: c.whyRecommended,
-        location: c.location,
-        availability: c.availability,
-        headline: c.headline,
-        stage: c.stage,
-        // Never clobber a real projection through the seed path.
-        source: "seed",
-      },
-    });
+        isDemo: true,
+      };
+      await prisma.candidate.upsert({
+        where: { id: c.id },
+        create: { id: c.id, visible: true, ...fields },
+        update: fields,
+      });
+    }
+    await seedDemoCatalog();
+  } else {
+    console.log("SEED_DEMO=false → skipping demo catalog.");
   }
 
   console.log(`Seeding judge evaluation account "${JUDGE_ACCOUNT.username}"...`);
   await seedJudgeAccount();
 
+  console.log(`Seeding mid-career demo account "${MID_CAREER_DEMO.username}"...`);
+  await seedMidCareerDemo();
+
   console.log("Seed complete.");
+}
+
+// Mid-career demo account (35+, rich history) so the "Career Health"
+// dashboard renders fully populated. isJudgeAccount=true so the flag-gated
+// demo-login can sign it in. Idempotent: account upserts; history rows are
+// replaced.
+async function seedMidCareerDemo() {
+  const d = MID_CAREER_DEMO;
+  const passwordHash = await hashPassword(d.password);
+
+  const user = await prisma.user.upsert({
+    where: { username: d.username },
+    create: {
+      email: d.email,
+      username: d.username,
+      passwordHash,
+      name: d.name,
+      role: "CANDIDATE",
+      isJudgeAccount: true,
+      candidateProfile: {
+        create: { name: d.name, field: d.profile.field, targetJob: d.profile.targetJob },
+      },
+      candidatesAI: { create: {} },
+      employerProfile: {
+        create: { organizationName: d.organizationName, hasCompletedOnboarding: true },
+      },
+      employersAI: { create: {} },
+    },
+    update: { email: d.email, passwordHash, name: d.name, isJudgeAccount: true },
+    include: { candidateProfile: { select: { id: true } } },
+  });
+
+  let profileId = user.candidateProfile?.id;
+  if (!profileId) {
+    const p = await prisma.candidateProfile.create({
+      data: { userId: user.id, name: d.name },
+      select: { id: true },
+    });
+    profileId = p.id;
+  }
+
+  await prisma.candidateProfile.update({
+    where: { id: profileId },
+    data: {
+      name: d.name,
+      field: d.profile.field,
+      targetJob: d.profile.targetJob,
+      headline: d.profile.headline,
+      summary: d.profile.summary,
+      bio: d.profile.bio,
+      skills: d.profile.skills,
+      discoverable: false,
+      totalAdditions: d.profile.skills.length + d.projects.length + d.experiences.length,
+      lastUpdated: new Date(),
+    },
+  });
+
+  await prisma.candidatesAI.upsert({
+    where: { userId: user.id },
+    create: { userId: user.id, ...d.ai },
+    update: d.ai,
+  });
+
+  await prisma.midCareerProfile.upsert({
+    where: { candidateProfileId: profileId },
+    create: { candidateProfileId: profileId, ...d.midCareer },
+    update: d.midCareer,
+  });
+
+  // Replace history rows so re-seeding stays idempotent (no duplicates).
+  await prisma.project.deleteMany({ where: { profileId } });
+  await prisma.experience.deleteMany({ where: { profileId } });
+  await prisma.chapterEvent.deleteMany({ where: { profileId } });
+  await prisma.project.createMany({ data: d.projects.map((p) => ({ ...p, profileId })) });
+  await prisma.experience.createMany({ data: d.experiences.map((e) => ({ ...e, profileId })) });
+  for (const c of d.chapters) {
+    await prisma.chapterEvent.create({
+      data: { profileId, name: c.name, priority: c.priority, date: c.date, time: c.time, subtasks: c.subtasks },
+    });
+  }
+}
+
+// Demo job catalogue + salary benchmarks, from curated CSV (prisma/data/*).
+// Idempotent: companies upsert on name, jobs on id, benchmarks on the
+// (role, industry, companySize, location) natural key.
+async function seedDemoCatalog() {
+  const companies = readCsv("companies.csv");
+  console.log(`Seeding ${companies.length} demo companies…`);
+  for (const c of companies) {
+    await prisma.company.upsert({
+      where: { name: c.name },
+      create: { name: c.name, sourceUrl: c.sourceUrl || null, isDemo: true },
+      update: { sourceUrl: c.sourceUrl || null, isDemo: true },
+    });
+  }
+
+  const jobs = readCsv("jobs.csv");
+  console.log(`Seeding ${jobs.length} demo jobs…`);
+  for (const j of jobs) {
+    const company = await prisma.company.upsert({
+      where: { name: j.company },
+      create: { name: j.company, isDemo: true },
+      update: {},
+    });
+    const fields = {
+      title: j.title,
+      location: j.location,
+      duration: j.duration,
+      field: j.field,
+      requiredSkills: j.requiredSkills.split(";").map((s) => s.trim()).filter(Boolean),
+      baseMatch: Number(j.baseMatch),
+      sourceUrl: j.sourceUrl || null,
+      companyId: company.id,
+      isDemo: true,
+      source: "seed",
+    };
+    await prisma.job.upsert({
+      where: { id: j.id },
+      create: { id: j.id, ...fields },
+      update: fields,
+    });
+  }
+
+  const benchmarks = readCsv("salary_benchmarks.csv");
+  console.log(`Seeding ${benchmarks.length} salary benchmarks…`);
+  for (const b of benchmarks) {
+    const key = {
+      role: b.role,
+      industry: b.industry,
+      companySize: b.companySize,
+      location: b.location,
+    };
+    const fields = {
+      currency: b.currency,
+      p25: Number(b.p25),
+      p50: Number(b.p50),
+      p75: Number(b.p75),
+      p90: Number(b.p90),
+      sourceUrl: b.sourceUrl || null,
+      isDemo: true,
+    };
+    await prisma.salaryBenchmark.upsert({
+      where: { role_industry_companySize_location: key },
+      create: { ...key, ...fields },
+      update: fields,
+    });
+  }
 }
 
 async function seedJudgeAccount() {

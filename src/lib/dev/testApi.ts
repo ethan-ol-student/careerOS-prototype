@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth/password";
 import { signSession, setSessionCookie, readSession } from "@/lib/auth/session";
 import { failFromCode } from "@/lib/api/respond";
+import { ForbiddenError } from "@/lib/api/errors";
 import { normalizeCareerPhase } from "@/lib/dashboard/phaseConfig";
 import {
   isTestModeEnabled,
@@ -139,6 +140,28 @@ export async function loadTestContext(): Promise<TestContext> {
     candidateProfileId: user.candidateProfile.id,
     employerProfileId: user.employerProfile.id,
   };
+}
+
+/**
+ * Log in a named demo account (resolved by username server-side, never a
+ * client id) in the chosen role. Backup for demo-login security: refuses any
+ * account that isn't a demo account (`isJudgeAccount`), so this can never
+ * sign in a real user even if the username is guessed.
+ */
+export async function setDemoSession(
+  username: string,
+  role: DevUserMode,
+): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user || !user.isJudgeAccount) {
+    throw new ForbiddenError("Not a demo account.");
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { role: role === "candidate" ? "CANDIDATE" : "EMPLOYER" },
+  });
+  const token = await signSession({ userId: user.id, role });
+  await setSessionCookie(token);
 }
 
 /** Set the test account's role and (re)issue its session cookie. */

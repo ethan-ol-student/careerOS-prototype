@@ -23,6 +23,7 @@ import { Navbar } from "@/components/marketing/Navbar";
 import { DashboardPreview } from "@/components/marketing/DashboardPreview";
 import { FeaturesCarousel } from "@/components/marketing/FeaturesCarousel";
 import { Parallax } from "@/components/marketing/Parallax";
+import { isTestModeEnabled } from "@/lib/dev/testMode";
 import { cn } from "@/lib/utils";
 
 const CANDIDATE_BENEFITS = [
@@ -158,6 +159,11 @@ export default function LandingPage() {
               >
                 Find talent
               </LinkButton>
+              {isTestModeEnabled() && (
+                <LinkButton href="/judge" variant="outline" icon={<Sparkles />}>
+                  Judge Demo
+                </LinkButton>
+              )}
             </div>
 
             <div className="relative w-full pt-12">

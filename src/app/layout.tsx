@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/context/AuthContext";
+import { SessionTimeout } from "@/components/app/SessionTimeout";
 import { IntentProvider } from "@/lib/context/IntentContext";
 import { PortfolioProvider } from "@/lib/hooks/usePortfolio";
 import { ChaptersProvider } from "@/lib/context/ChaptersContext";
@@ -26,6 +27,12 @@ export const metadata: Metadata = {
     "Career OS is the candidate-centered career intelligence platform. See where you stand, where you can go, and what to do next.",
 };
 
+// Mobile pass: explicit, responsive viewport (no forced zoom lock).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -40,6 +47,7 @@ export default function RootLayout({
         className={`${inter.variable} ${ibmPlexMono.variable} font-sans antialiased bg-background text-foreground`}
       >
         <AuthProvider>
+          <SessionTimeout />
           <IntentProvider>
             <NotificationsProvider>
               <PortfolioProvider>

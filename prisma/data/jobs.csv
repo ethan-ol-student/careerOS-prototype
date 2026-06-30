@@ -1,0 +1,21 @@
+id,title,company,location,duration,field,requiredSkills,baseMatch,sourceUrl
+robotics-engineer,Robotics Engineer,Universal Robots,Remote,Full-time,Engineering and manufacturing,robotics;control systems;python;cad design,88,https://www.universal-robots.com/careers
+mechanical-design-lead,Mechanical Design Lead,Dyson,Singapore,Full-time,Engineering and manufacturing,cad design;fea;materials science;project management,84,https://careers.dyson.com
+ml-controls-engineer,ML / Controls Engineer,Tesla,Singapore,Full-time,Technology and software,python;machine learning;control systems;systems design,79,https://www.tesla.com/careers
+product-engineer,Product Engineer,Honda Mfg.,Kuala Lumpur,Full-time,Engineering and manufacturing,cad design;product analytics;project management,72,https://www.honda.jobs
+design-engineer-intern,Design Engineer Intern,Tesla,Singapore,6 months,Engineering and manufacturing,cad design;thermodynamics;storytelling,78,https://www.tesla.com/careers
+product-manager,Associate Product Manager,Grab,Singapore,Full-time,Technology and software,product analytics;storytelling;systems design,76,https://grab.careers
+backend-engineer,Backend Engineer,Stripe,Remote,Full-time,Technology and software,python;systems design;databases;api design,81,https://stripe.com/jobs
+fullstack-engineer,Full-Stack Engineer,Shopify,Remote,Full-time,Technology and software,typescript;react;node;databases,80,https://www.shopify.com/careers
+platform-engineer,Platform Engineer,Atlassian,Sydney,Full-time,Technology and software,kubernetes;go;systems design;ci cd,77,https://www.atlassian.com/company/careers
+automation-engineer,Automation Engineer,Siemens,Munich,Full-time,Engineering and manufacturing,plc;robotics;control systems;python,75,https://jobs.siemens.com
+embedded-engineer,Embedded Systems Engineer,Bosch,Stuttgart,Full-time,Engineering and manufacturing,c;embedded;rtos;control systems,74,https://www.bosch.com/careers
+controls-engineer,Controls Engineer,ABB,Zurich,Full-time,Engineering and manufacturing,control systems;matlab;plc;systems design,73,https://careers.abb
+ml-engineer,Machine Learning Engineer,Nvidia,Santa Clara,Full-time,Technology and software,python;machine learning;cuda;systems design,83,https://www.nvidia.com/en-us/about-nvidia/careers
+aerospace-stress-engineer,Aerospace Stress Engineer,Airbus,Toulouse,Full-time,Engineering and manufacturing,fea;materials science;cad design;aerospace,71,https://www.airbus.com/careers
+propulsion-engineer,Propulsion Engineer,Rolls-Royce,Derby,Full-time,Engineering and manufacturing,thermodynamics;cad design;materials science;fea,70,https://careers.rolls-royce.com
+data-engineer,Data Engineer,Sea Limited,Singapore,Full-time,Technology and software,python;sql;data pipelines;cloud,76,https://career.sea.com
+gov-software-engineer,Government Software Engineer,GovTech Singapore,Singapore,Full-time,Technology and software,java;systems design;security;cloud,72,https://www.tech.gov.sg/careers
+quant-developer,Quantitative Developer,DBS Bank,Singapore,Full-time,Technology and software,python;c++;statistics;systems design,78,https://www.dbs.com/careers
+hardware-test-engineer,Hardware Test Engineer,Keysight,Penang,Full-time,Engineering and manufacturing,electronics;test automation;python;measurement,69,https://careers.keysight.com
+firmware-engineer,Firmware Engineer,Samsung,Seoul,Full-time,Engineering and manufacturing,c;embedded;firmware;rtos,73,https://www.samsung.com/us/careers

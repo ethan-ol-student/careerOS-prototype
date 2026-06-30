@@ -44,10 +44,32 @@ model User {
   employerProfile  EmployerProfile?
   candidatesAI     CandidatesAI?
   employersAI      EmployersAI?
+  oauthAccounts    OAuthAccount[]
 
   // Optional projection of this user into the marketplace catalog
   // (only for real candidates who opt into discovery). See `Candidate`.
   marketplaceCandidate Candidate?
+}
+
+// ── OAuth / SSO (Google) ────────────────────────────────────────
+// Links a third-party identity to a `User`. The OAuth callback finds the
+// account here (or creates User+OAuthAccount) and mints the SAME `jose`
+// session cookie used by password auth — see docs/sso-google-design.md.
+// Model + migration only; NO UI yet (planned Week 4). `passwordHash` on
+// `User` is already optional, so SSO-only accounts need no password.
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String // "google"
+  providerAccountId String // provider's stable subject id (Google `sub`)
+  email             String? // email asserted by the provider
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 // ── Candidate side ─────────────────────────────────────────────
@@ -84,6 +106,8 @@ model CandidateProfile {
   experiences   Experience[]
   chapters      ChapterEvent[]
   notifications CandidateNotification[]
+  applications  Application[]
+  midCareer     MidCareerProfile?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -376,6 +400,7 @@ model Candidate {
   // `User` so the candidate inbox can resolve employer conversations.
   // `visible` is the live discovery flag (mirrors CandidateProfile.discoverable).
   source  String  @default("seed") // "seed" | "real"
+  isDemo  Boolean @default(false) // seedable demo row (vs real/projected)
   userId  String? @unique
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   visible Boolean @default(true)
@@ -391,4 +416,136 @@ model Candidate {
   @@index([matchScore])
   @@index([visible])
   @@index([source])
+  @@index([isDemo])
+}
+
+// ── Jobs catalogue ──────────────────────────────────────────────
+// Seeded from `src/lib/jobs/data.ts` (`TARGET_JOBS`). `Job.id` is the
+// natural slug (e.g. "robotics-engineer") so seed upserts stay stable.
+// `source` mirrors the Candidate convention ("seed" | "real").
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sourceUrl String? // citation / company site
+  isDemo    Boolean  @default(false)
+  jobs      Job[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isDemo])
+}
+
+model Job {
+  id             String   @id // natural slug
+  title          String
+  location       String
+  duration       String
+  field          String
+  requiredSkills String[]
+  baseMatch      Int
+  isDemo         Boolean  @default(false)
+  source         String   @default("seed") // "seed" | "real"
+  sourceUrl      String? // citation / original job posting
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  applications Application[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([field])
+  @@index([isDemo])
+}
+
+// ── Applications data spine ─────────────────────────────────────
+// One Application per (candidate, job) — see @@unique (the conflict
+// risk: re-applying). Lifecycle is an append-only ApplicationEvent log.
+// Status values are owned by the TS layer (applications.service.ts),
+// stored as plain String per project convention.
+
+model Application {
+  id                 String           @id @default(cuid())
+  candidateProfileId String
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  jobId              String
+  job                Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  status    String   @default("submitted") // submitted|reviewing|interview|offer|rejected|withdrawn|expired
+  expiresAt DateTime // auto-expire deadline; expire-on-read flips stale rows
+
+  events ApplicationEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateProfileId, jobId])
+  @@index([jobId])
+  @@index([status])
+}
+
+model ApplicationEvent {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  type       String // submitted|status_changed|expired
+  fromStatus String?
+  toStatus   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId])
+}
+
+// ── Fair Pay Calculator ─────────────────────────────────────────
+// Curated, cited salary ranges — clearly demo data (see `isDemo` +
+// `sourceUrl`). Seeded from `prisma/data/salary_benchmarks.csv`.
+// Unique natural key (role+industry+companySize+location) keeps the
+// seed idempotent. Percentiles are integers in the row's `currency`.
+
+model SalaryBenchmark {
+  id          String   @id @default(cuid())
+  role        String
+  industry    String
+  companySize String // "startup" | "midsize" | "enterprise"
+  location    String
+  currency    String   @default("USD")
+  p25         Int
+  p50         Int
+  p75         Int
+  p90         Int
+  sourceUrl   String? // citation for the range
+  isDemo      Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([role, industry, companySize, location])
+  @@index([role])
+  @@index([isDemo])
+}
+
+// ── Mid-career profile ──────────────────────────────────────────
+// Optional 1:1 extension of CandidateProfile for the mid-career phase.
+// `salaryPrivate` is the candidate's own current salary — PRIVATE, never
+// projected into the marketplace mirror; used only for the Fair Pay
+// comparison against SalaryBenchmark.
+
+model MidCareerProfile {
+  id                 String           @id @default(cuid())
+  candidateProfileId String           @unique
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  problemsSolved String[] @default([]) // notable problems/impact
+  careerPattern  String   @default("") // "specialist" | "generalist" | "pivot" | "zigzag"
+  salaryPrivate  Int? // optional, private — never public
+  salaryCurrency String   @default("USD")
+  lifeFactors    String[] @default([]) // e.g. "relocation-limited", "caregiver", "remote-only"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

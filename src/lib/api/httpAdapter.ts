@@ -1,11 +1,9 @@
 /**
- * HTTP-backed implementation of `ApiAdapter`.
+ * HTTP-backed implementation of `ApiAdapter` — the only adapter.
  *
- * Mirrors the `localAdapter` method-for-method, but each call goes
- * to the Next.js route handlers under `src/app/api/`. Activated by
- * `getApiAdapter()` whenever `NEXT_PUBLIC_API_BASE_URL` is set (in
- * dev you can leave it empty for same-origin; on Vercel it points
- * to your deployed URL).
+ * Every call goes to the Next.js route handlers under `src/app/api/`.
+ * Requests are same-origin by default; set `NEXT_PUBLIC_API_BASE_URL`
+ * to target a different host.
  *
  * Conversions:
  *  - The DB schema stores timestamps as `Date` → serialized to ISO

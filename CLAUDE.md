@@ -97,9 +97,9 @@ Path alias `@/* → src/*`.
 - `AUTH_SECRET` — **required in production.** `src/lib/auth/session.ts` resolves the key
   lazily and throws if it's missing in prod (fail closed); a clearly-marked insecure
   fallback is used only in dev (with a console warning). Never ships a usable prod secret.
-- Data adapter: the HTTP/API backend is the **default** (`src/lib/api/adapter.ts`). The
-  localStorage adapter is opt-in via `NEXT_PUBLIC_USE_LOCAL_ADAPTER=true` and is
-  hard-blocked in production.
+- Data adapter: the app is **online-only**. All data calls go through the single
+  `httpAdapter` (`src/lib/api/httpAdapter.ts`), reached via `getApiAdapter()`
+  (`src/lib/api/adapter.ts`). The HTTP/API backend is always the source of truth.
 - Local caches are **user+role scoped** (`src/lib/storage/appCache.ts`: `scopedCacheKey`,
   `currentScopedKey`). `AuthContext` publishes the active scope, purges all caches on
   account switch (`reconcileActiveUser`), and clears everything on logout
