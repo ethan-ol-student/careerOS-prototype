@@ -255,6 +255,31 @@ export default function AuthPage() {
             </button>
           </div>
 
+          {/* Google SSO — flag-gated so a broken OAuth config can be
+              switched off without a deploy (risk backup). Server routes
+              independently 404 unless GOOGLE_CLIENT_ID/SECRET are set. */}
+          {process.env.NEXT_PUBLIC_ENABLE_GOOGLE_SSO === "true" && (
+            <div className="mb-6">
+              <a
+                href="/api/auth/google/start"
+                className="border-border/60 bg-card/40 hover:border-luminous/60 hover:text-luminous inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors"
+              >
+                <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+                  <path
+                    fill="currentColor"
+                    d="M21.35 11.1H12v2.9h5.35c-.5 2.5-2.62 3.9-5.35 3.9a5.9 5.9 0 1 1 0-11.8c1.5 0 2.85.55 3.9 1.45l2.2-2.2A9 9 0 1 0 12 21c5.2 0 8.75-3.65 8.75-8.8 0-.37-.03-.74-.1-1.1Z"
+                  />
+                </svg>
+                Continue with Google
+              </a>
+              <div className="text-muted-foreground mt-4 flex items-center gap-3 text-[11px] uppercase tracking-wider">
+                <span className="line-t h-px flex-1" />
+                or use email
+                <span className="line-t h-px flex-1" />
+              </div>
+            </div>
+          )}
+
           {mode === "signup" ? (
             <form className="flex flex-col gap-4" onSubmit={handleSignup}>
               <h1 className="text-2xl font-semibold tracking-tight">

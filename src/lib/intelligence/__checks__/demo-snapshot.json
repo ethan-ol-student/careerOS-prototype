@@ -1,0 +1,67 @@
+{
+  "careerHealth": {
+    "score": 63,
+    "maintained": [
+      "Kubernetes",
+      "System Design",
+      "Team Leadership"
+    ],
+    "atRisk": [
+      "Distributed Systems",
+      "Go",
+      "TypeScript",
+      "Postgres",
+      "Mentoring"
+    ],
+    "decayRisk": 63
+  },
+  "topJob": {
+    "id": "platform-engineer",
+    "score": 50,
+    "missing": [
+      "systems design",
+      "ci cd"
+    ]
+  },
+  "fairPay": {
+    "band": "p25-p50",
+    "score": 45,
+    "verdict": "balanced",
+    "takeHomeDeltaPct": 8,
+    "benchmarkRole": "Machine Learning Engineer",
+    "lifeNotes": 2
+  },
+  "story": {
+    "pattern": "specialist",
+    "score": 100,
+    "hiddenStrengths": 4
+  },
+  "nextMoves": [
+    {
+      "id": "stay",
+      "flavor": "safe",
+      "confidence": 75,
+      "difficulty": "low",
+      "salaryImpactPct": 8,
+      "timeMonths": 9
+    },
+    {
+      "id": "move-company",
+      "flavor": "growth",
+      "confidence": 65,
+      "difficulty": "medium",
+      "salaryImpactPct": 32,
+      "timeMonths": 4
+    },
+    {
+      "id": "change-role",
+      "flavor": "bold",
+      "confidence": 40,
+      "difficulty": "high",
+      "salaryImpactPct": 8,
+      "timeMonths": 12
+    }
+  ],
+  "archetype": "strategist",
+  "resumeCompletenessPct": 86
+}

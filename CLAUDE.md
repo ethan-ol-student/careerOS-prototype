@@ -70,6 +70,35 @@ No test runner is configured. Validate changes with `npm run lint` + `npm run bu
   **Messages** item (`/candidate/messages`) is a clean placeholder (empty state) — the
   candidate↔employer chat bridge isn't backend-wired yet; it intentionally replaced the old
   non-functional "Engage with Employers" link.
+- **Jobs/applications loop**: `Job`+`Company` catalogue (`/jobs`, `/companies`, seeded from
+  `prisma/data/*.csv`) → candidate applies (`POST /api/jobs/[id]/apply`) → `Application` +
+  append-only `ApplicationEvent` timeline (`/candidate/applications`) → employer sets status
+  (`/employers/applicants`, `PATCH /api/employer/applications/[id]`). Company responsiveness
+  metrics (`companies.service.ts`) become real from application statuses; zero-applicant
+  companies show a deterministic seeded score labelled "Demo data".
+- **Intelligence engines** (`src/lib/intelligence/*`): every engine returns the shared
+  explainable `ScoreResult` (`score` + `reasons[]` + optional `factors[]`/`uncertainty`) —
+  match, readiness, career health, transferable skills, skill bridge, fair pay (+ life
+  impact), career story, personality quiz, employer candidate insight, next-move simulator.
+  Pure + deterministic; checks in `__checks__/engines.check.ts` run in CI
+  (`npm run check:intelligence`). The mid-career/senior/executive dashboards render
+  `CareerHealthHome` (Career Health home + Next Move Navigator + Fair Pay calculator)
+  wired to these engines, fed by `GET /api/me/mid-career` + `GET /api/me/fair-pay`.
+- **Personality (working style)**: `/candidate/personality` quiz → `PersonalityResult`
+  (via `POST /api/me/personality`), archetype defs in `scoringConfig.ts` (`ARCHETYPES`).
+  DESCRIPTIVE ONLY — never a match-score input, never a filter; employer surfaces carry a
+  Bias Check note. The archetype mirrors onto `Candidate.archetype` (marketplace tag).
+- **Gamification** (`gamification.service.ts`, `XpLedger`/`Streak`/`Badge`): one deliberate
+  action (`POST /api/me/checkin`) per period; cadence is age-tuned — daily for younger
+  phases, quiet **Monthly Career Check-Up** for mid-career+ (`cadenceForPhase`). Streaks
+  bridge one missed period (forgivable); XP only for real actions. Widget + archetype badge
+  mount in `DashboardShell`.
+- **Leaderboard**: `/leaderboard` + `GET /api/leaderboard` — curated, cited `University`
+  rows (CSV-seeded, demo-labelled). Never ranks or exposes real users.
+- **Resume (Living Portfolio)**: `/candidate/resume` + `GET /api/me/resume{,/pdf,/versions}`.
+  PDF via `@react-pdf/renderer` (Node runtime), template in `src/lib/resume/pdfTemplate.tsx`;
+  `ResumeVersion` stores named JSON snapshots. Mid-career resumes lead with
+  `MidCareerProfile.problemsSolved` (proof of capability).
 - **Settings**: `/candidate/settings` + `/employers/settings` (mode-aware, shells gate them).
   Shared sections in `src/components/settings/*`. `PATCH/DELETE /api/account` edits safe user
   fields / deletes the account (password re-entry, cascades, clears session — real, not faked).

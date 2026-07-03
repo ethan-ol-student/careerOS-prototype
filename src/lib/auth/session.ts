@@ -115,3 +115,30 @@ export async function readSession(): Promise<SessionPayload | null> {
   if (!token) return null;
   return verifySession(token);
 }
+
+// ── Transient tokens (OAuth handshakes) ─────────────────────────
+// Short-lived signed payloads (e.g. the pending Google-SSO identity
+// between callback and role selection). Same fail-closed secret as
+// sessions; never usable AS a session (different shape, no userId role).
+
+export async function signTransientToken(
+  payload: Record<string, unknown>,
+  expiresIn: string,
+): Promise<string> {
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(getSecret());
+}
+
+export async function verifyTransientToken(
+  token: string,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    return payload as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}

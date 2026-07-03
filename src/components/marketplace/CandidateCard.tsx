@@ -5,6 +5,7 @@ import { Bookmark, BookmarkCheck, MapPin, Send, TrendingUp } from "lucide-react"
 import type { Candidate } from "@/lib/candidates/types";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { ARCHETYPES } from "@/lib/intelligence/scoringConfig";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { ScoringInfo } from "@/components/ui/ScoringInfo";
 import { cn } from "@/lib/utils";
@@ -97,11 +98,20 @@ export function CandidateCard({
         />
       </div>
 
-      {/* Growth signal */}
-      <div className="flex items-center gap-2 text-xs">
+      {/* Growth signal + working-style tag (context only, never a filter) */}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         <Chip tone="clover" icon={<TrendingUp className="size-3" />}>
           {candidate.growthSignal}
         </Chip>
+        {candidate.archetype && ARCHETYPES[candidate.archetype] && (
+          <span
+            title={`${ARCHETYPES[candidate.archetype].interpretation} Bias check: working style is interpretation context only — it never affects match scores and must not be used to screen candidates out.`}
+          >
+            <Chip tone="luminous">
+              {ARCHETYPES[candidate.archetype].name}
+            </Chip>
+          </span>
+        )}
         <span className="text-muted-foreground inline-flex items-center gap-1">
           <MapPin className="size-3" />
           {candidate.location}

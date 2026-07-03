@@ -17,6 +17,8 @@ import { Modal } from "@/components/ui/Modal";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { ScoringInfo } from "@/components/ui/ScoringInfo";
 import { explainReadiness } from "@/lib/candidates/readiness";
+import { candidateInsight } from "@/lib/intelligence/employerCandidateInsightEngine";
+import { ARCHETYPES } from "@/lib/intelligence/scoringConfig";
 
 interface CandidateDetailModalProps {
   candidate: Candidate;
@@ -34,6 +36,8 @@ export function CandidateDetailModal({
   // Explainable readiness — the displayed number IS the sum of the
   // factors shown below, so the score is never a black box (principle #3).
   const readiness = explainReadiness(candidate);
+  // Signal map: strengths / risks / hiring confidence / interview kit.
+  const insight = candidateInsight(candidate);
   return (
     <Modal
       isOpen
@@ -153,6 +157,85 @@ export function CandidateDetailModal({
         <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
           Readiness = {readiness.score}/100, summed from the factors above —
           based on self-reported profile signals, not verified assessments.
+        </p>
+      </Section>
+
+      {/* Working style — descriptive context only (bias-checked) */}
+      {candidate.archetype && ARCHETYPES[candidate.archetype] && (
+        <Section label="Working style (context)">
+          <div className="border-border/40 bg-card/40 rounded-lg border p-3">
+            <p className="text-sm font-medium">
+              {ARCHETYPES[candidate.archetype].name} ·{" "}
+              <span className="text-muted-foreground font-normal">
+                {ARCHETYPES[candidate.archetype].tagline}
+              </span>
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs leading-snug">
+              {ARCHETYPES[candidate.archetype].interpretation}
+            </p>
+            <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+              Bias check: working style is self-reported interpretation
+              context. It never affects match scores and must not be used to
+              screen candidates out.
+            </p>
+          </div>
+        </Section>
+      )}
+
+      {/* Employer intelligence — signal map + hiring confidence + kit */}
+      <Section label="Employer intelligence">
+        <div className="mb-3">
+          <ScoreBar
+            label="Hiring confidence"
+            value={insight.score}
+            accent="luminous"
+            size="sm"
+          />
+          <p className="text-muted-foreground/80 mt-1 text-[10px] italic">
+            {insight.reasons[0]}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-clover mb-1.5 text-[10px] font-semibold uppercase tracking-wider">
+              Strengths
+            </p>
+            <ul className="space-y-1 text-xs leading-snug">
+              {insight.strengths.map((s) => (
+                <li key={s}>• {s}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-yellow-400">
+              Risks to probe
+            </p>
+            <ul className="space-y-1 text-xs leading-snug">
+              {insight.risks.length ? (
+                insight.risks.map((r) => <li key={r}>• {r}</li>)
+              ) : (
+                <li className="text-muted-foreground">
+                  No obvious risks from profile signals.
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+        <p className="text-luminous mt-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider">
+          Interview kit
+        </p>
+        <ol className="space-y-1.5 text-xs leading-snug">
+          {insight.interviewKit.map((q, i) => (
+            <li
+              key={q}
+              className="border-border/40 bg-card/40 rounded-lg border p-2"
+            >
+              {i + 1}. {q}
+            </li>
+          ))}
+        </ol>
+        <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+          {insight.uncertainty}
         </p>
       </Section>
 

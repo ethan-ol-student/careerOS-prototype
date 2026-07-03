@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Settings,
   Store,
+  UsersRound,
 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -114,6 +115,13 @@ export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
               icon={<Store className="text-clover size-4" aria-hidden />}
               label="Marketplace"
               hint="Browse candidates on trajectory"
+              onClick={() => setIsOpen(false)}
+            />
+            <MenuLink
+              href="/employers/applicants"
+              icon={<UsersRound className="text-clover size-4" aria-hidden />}
+              label="Applicants"
+              hint="Review applications & set statuses"
               onClick={() => setIsOpen(false)}
             />
             <MenuLink

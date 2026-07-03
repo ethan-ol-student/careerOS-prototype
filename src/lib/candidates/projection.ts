@@ -104,7 +104,7 @@ export async function syncMarketplaceMirror(userId: string): Promise<void> {
     const [profile, ai] = await Promise.all([
       prisma.candidateProfile.findUnique({
         where: { userId },
-        include: { projects: true, experiences: true },
+        include: { projects: true, experiences: true, personality: true },
       }),
       prisma.candidatesAI.findUnique({ where: { userId } }),
     ]);
@@ -201,6 +201,8 @@ export async function syncMarketplaceMirror(userId: string): Promise<void> {
       availability,
       headline,
       stage: inferStage(ai?.careerStage ?? ""),
+      // Working-style tag — descriptive context only, never a filter.
+      archetype: profile.personality?.archetype ?? "",
       source: "real",
       visible: true,
       userId,

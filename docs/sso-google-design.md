@@ -1,9 +1,13 @@
 # Google SSO — design note (no UI yet)
 
-Status: **design + data model only.** The `OAuthAccount` model + migration are
-live (`20260630030000_oauth_account`). The login UI and the two routes below are
-planned for **Week 4**. This note is the contract so the later build is a fill-in,
-not a redesign.
+Status: **BUILT (Week 3).** Routes: `GET /api/auth/google/{start,callback}` +
+`POST /api/auth/google/role` (first-login role select at `/auth/google/role`).
+Helpers in `src/lib/auth/google.ts` (PKCE via node:crypto, id_token verified
+against Google's JWKS via jose — no new dependency). The button on `/auth` is
+gated by `NEXT_PUBLIC_ENABLE_GOOGLE_SSO`; server routes 404 unless
+`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set, so the whole feature is
+inert until configured (the risk backup). The rest of this note remains the
+design rationale.
 
 ## Principle
 

@@ -17,6 +17,7 @@ import {
   StatTile,
   MockBadge,
 } from "@/components/dashboard/PhaseWidgetGrid";
+import { CareerHealthHome } from "@/components/dashboard/midcareer/CareerHealthHome";
 import type { PhaseDashboardProps } from "@/lib/dashboard/types";
 
 // ── Mock fallback data (no backend leadership/advisory tables yet) ──
@@ -36,7 +37,9 @@ export function SeniorCareerDashboard({ data }: PhaseDashboardProps) {
 
   return (
     <>
-      <PhaseWidgetGrid>
+      {/* Career Health home — shared mid-career+ engine modules. */}
+      <CareerHealthHome data={data} />
+      <PhaseWidgetGrid topLine>
         {/* Leadership metrics (mock + real experience count) */}
         <Col span={12} lg={5}>
           <DashboardCard glow="clover" className="h-full">

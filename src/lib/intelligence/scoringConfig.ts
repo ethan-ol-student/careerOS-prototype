@@ -41,6 +41,66 @@ export const WEIGHTS = {
   careerHealth: { maintenance: 60, specialization: 25, direction: 15 },
 } as const;
 
+// ── Working-style archetypes (Feature 2) ────────────────────────
+// Descriptive context ONLY. Archetypes never enter a match score and are
+// never a filter — the employer-facing copy carries a Bias Check note.
+// Mid-career framing: working-style/strength context, not a "fun quiz".
+
+export interface Archetype {
+  id: string;
+  name: string;
+  tagline: string;
+  /** Candidate-facing description (strength framing). */
+  description: string;
+  /** How this shows up at work — bullets for the profile/tooltip. */
+  strengths: string[];
+  /** Employer-facing interpretation (context, not a screen). */
+  interpretation: string;
+}
+
+export const ARCHETYPES: Record<string, Archetype> = {
+  builder: {
+    id: "builder",
+    name: "The Builder",
+    tagline: "Makes ideas real",
+    description:
+      "You do your best work shipping tangible things — you'd rather build a working version than debate a perfect plan.",
+    strengths: ["Bias to action", "Prototype-first problem solving", "Strong follow-through"],
+    interpretation:
+      "Thrives on concrete deliverables and ownership; give them something real to ship early.",
+  },
+  strategist: {
+    id: "strategist",
+    name: "The Strategist",
+    tagline: "Sees the system",
+    description:
+      "You zoom out before zooming in — patterns, trade-offs, and second-order effects are where you add the most value.",
+    strengths: ["Systems thinking", "Prioritisation under constraints", "Long-horizon planning"],
+    interpretation:
+      "Strongest when scope is ambiguous; give them the problem, not the task list.",
+  },
+  connector: {
+    id: "connector",
+    name: "The Connector",
+    tagline: "Multiplies through people",
+    description:
+      "You create momentum by aligning people — translating between groups and unblocking collaboration is your lever.",
+    strengths: ["Stakeholder alignment", "Communication across functions", "Mentoring energy"],
+    interpretation:
+      "Impact compounds in cross-functional roles; pair with deep specialists.",
+  },
+  explorer: {
+    id: "explorer",
+    name: "The Explorer",
+    tagline: "Finds the new edge",
+    description:
+      "You're energised by unmapped territory — new tools, domains, and approaches others haven't tried yet.",
+    strengths: ["Fast learning curves", "Comfort with uncertainty", "Cross-domain range"],
+    interpretation:
+      "Best where the answer isn't known yet; avoid boxing into rigid, repetitive scope.",
+  },
+};
+
 export function clampScore(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }

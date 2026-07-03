@@ -104,10 +104,15 @@ model CandidateProfile {
   awards        Award[]
   projects      Project[]
   experiences   Experience[]
-  chapters      ChapterEvent[]
-  notifications CandidateNotification[]
-  applications  Application[]
-  midCareer     MidCareerProfile?
+  chapters       ChapterEvent[]
+  notifications  CandidateNotification[]
+  applications   Application[]
+  midCareer      MidCareerProfile?
+  resumeVersions ResumeVersion[]
+  personality    PersonalityResult?
+  xpEntries      XpLedger[]
+  streak         Streak?
+  badges         Badge[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -401,6 +406,9 @@ model Candidate {
   // `visible` is the live discovery flag (mirrors CandidateProfile.discoverable).
   source  String  @default("seed") // "seed" | "real"
   isDemo  Boolean @default(false) // seedable demo row (vs real/projected)
+  // Working-style archetype tag (descriptive context only — NEVER a
+  // filter or score input; see personalityEngine.ts + Bias Check copy).
+  archetype String @default("")
   userId  String? @unique
   user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   visible Boolean @default(true)
@@ -429,6 +437,13 @@ model Company {
   name      String   @unique
   sourceUrl String? // citation / company site
   isDemo    Boolean  @default(false)
+  // Fit signals for the mid-career "better-fit" comparison
+  // (local vs MNC vs smaller-company-more-leadership). String enums
+  // per project convention — TS layer owns legal values.
+  size     String @default("") // "startup" | "midsize" | "enterprise"
+  type     String @default("") // "local" | "mnc" | "startup" | "public-sector"
+  location String @default("")
+
   jobs      Job[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -548,4 +563,93 @@ model MidCareerProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ── Personality (Feature 2) ─────────────────────────────────────
+// One working-style archetype per candidate, computed DETERMINISTICALLY
+// from quiz answers by `personalityEngine.ts`. Descriptive context only —
+// never a match-score input, never a filter (bias risk backup).
+
+model PersonalityResult {
+  id                 String           @id @default(cuid())
+  candidateProfileId String           @unique
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  archetype String // ARCHETYPES id in scoringConfig.ts
+  scores    Json // per-archetype points breakdown (the "why")
+  answers   Json // raw answers, so a retake is reproducible
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── Gamification (Feature 4) ────────────────────────────────────
+// XP rewards REAL actions only; streaks are forgivable; cadence is
+// age-tuned per phase (daily for younger phases, a quiet monthly
+// Career Check-Up for mid-career+). See gamification.service.ts.
+
+model XpLedger {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  createdAt DateTime         @default(now())
+
+  @@index([profileId])
+}
+
+model Streak {
+  id          String           @id @default(cuid())
+  profileId   String           @unique
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  current     Int              @default(0)
+  best        Int              @default(0)
+  cadence     String           @default("daily") // "daily" | "monthly"
+  lastCheckIn DateTime?
+  updatedAt   DateTime         @updatedAt
+}
+
+model Badge {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  key       String // "first-checkin" | "streak-3" | "streak-7" | "streak-30" | ...
+  earnedAt  DateTime         @default(now())
+
+  @@unique([profileId, key])
+}
+
+// ── Leaderboard (Feature 9) ─────────────────────────────────────
+// Curated, cited university employability scores — demo data, seeded
+// from prisma/data/universities.csv. Never derived from real users.
+
+model University {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  country   String
+  score     Int // 0–100 curated employability score
+  sourceUrl String?
+  isDemo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── Resume versions (Living Portfolio) ──────────────────────────
+// Named snapshots of the candidate's resume at save time. `data` is the
+// full JSON snapshot the PDF template renders from, so an old version
+// stays reproducible even after the live profile changes.
+
+model ResumeVersion {
+  id                 String           @id @default(cuid())
+  candidateProfileId String
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  label   String
+  summary String @default("")
+  data    Json
+
+  createdAt DateTime @default(now())
+
+  @@index([candidateProfileId])
 }

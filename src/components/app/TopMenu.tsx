@@ -15,6 +15,12 @@ import {
   ChevronRight,
   MessageSquare,
   Settings,
+  Briefcase,
+  ClipboardList,
+  Building2,
+  FileText,
+  Fingerprint,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -133,6 +139,42 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
 
           {/* Nav links */}
           <nav className="flex flex-col py-1.5" role="none">
+            <MenuLink
+              href="/jobs"
+              icon={<Briefcase className="size-4 text-luminous" aria-hidden />}
+              label="Jobs"
+              hint="Openings matched to your skills"
+            />
+            <MenuLink
+              href="/candidate/applications"
+              icon={<ClipboardList className="size-4 text-luminous" aria-hidden />}
+              label="My Applications"
+              hint="Track every application's status"
+            />
+            <MenuLink
+              href="/companies"
+              icon={<Building2 className="size-4 text-luminous" aria-hidden />}
+              label="Companies"
+              hint="Who actually responds to candidates"
+            />
+            <MenuLink
+              href="/candidate/resume"
+              icon={<FileText className="size-4 text-luminous" aria-hidden />}
+              label="Resume"
+              hint="PDF export from your real data"
+            />
+            <MenuLink
+              href="/candidate/personality"
+              icon={<Fingerprint className="size-4 text-luminous" aria-hidden />}
+              label="Working Style"
+              hint="Your strengths archetype (context, not a label)"
+            />
+            <MenuLink
+              href="/leaderboard"
+              icon={<Trophy className="size-4 text-luminous" aria-hidden />}
+              label="Leaderboard"
+              hint="University employability signals (cited)"
+            />
             <MenuLink
               href="/candidate/portfolio"
               icon={<User className="size-4 text-luminous" aria-hidden />}

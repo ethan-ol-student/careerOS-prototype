@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:intelligence": "tsx src/lib/intelligence/__checks__/engines.check.ts",
+    "check:demo": "tsx src/lib/intelligence/__checks__/demoSnapshot.check.ts",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@react-pdf/renderer": "^4.5.1",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
     "lucide-react": "^1.16.0",

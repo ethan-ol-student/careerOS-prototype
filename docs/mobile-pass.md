@@ -15,6 +15,14 @@ concrete fixes are done; the per-page audit continues in the Day-7 buffer.
 - **App header** — the "· Candidate" sub-label hides under `sm` so the brand +
   bell + menu never crowd on narrow screens.
 
+## Week 2 additions (built mobile-first)
+
+- `/jobs`, `/jobs/[id]`, `/companies`, `/companies/[id]`,
+  `/candidate/applications`, `/candidate/resume`, `/employers/applicants`
+  all use single-column layouts that expand at `sm`/`md`/`lg`
+  (`flex-col sm:flex-row`, `grid-cols-1 sm:grid-cols-2`, `Grid12` spans).
+- Mid-career Career Health home cards reflow to one column under `lg`.
+
 ## Remaining (buffer / Week 4)
 
 Audit each at 360px and 768px:

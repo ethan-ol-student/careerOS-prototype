@@ -15,6 +15,12 @@ import { scoreCandidateMatch } from "../candidateMatchEngine";
 import { scoreCareerHealth } from "../careerHealthEngine";
 import { scoreTransferableSkills } from "../transferableSkillEngine";
 import { scoreSkillBridge } from "../skillBridgeEngine";
+import { pickBenchmark, scoreFairPay, scoreLifeImpact, type BenchmarkRow } from "../fairPayEngine";
+import { analyzeCareerStory } from "../careerStoryEngine";
+import { scoreQuiz, QUIZ_QUESTIONS } from "../personalityEngine";
+import { ARCHETYPES } from "../scoringConfig";
+import { candidateInsight } from "../employerCandidateInsightEngine";
+import { simulateNextMoves } from "../nextMoveSimulator";
 
 function assertScoreResult(name: string, r: ScoreResult) {
   assert.ok(Number.isInteger(r.score), `${name}: score must be an integer`);
@@ -87,7 +93,88 @@ function main() {
   assert.deepEqual(bridge.missing.sort(), ["leadership coaching", "rust"], "exact bridge gap");
   assert.equal(bridge.complete, false);
 
-  // 6) Determinism — identical inputs → identical outputs
+  // 6) Fair Pay — banded percentile compare, optional salary honored
+  const benchmarks: BenchmarkRow[] = [
+    {
+      role: "Machine Learning Engineer", industry: "Technology",
+      companySize: "enterprise", location: "Remote-US", currency: "USD",
+      p25: 160000, p50: 200000, p75: 245000, p90: 300000,
+      sourceUrl: null, isDemo: true,
+    },
+    {
+      role: "Product Manager", industry: "Technology",
+      companySize: "midsize", location: "Remote-US", currency: "USD",
+      p25: 130000, p50: 160000, p75: 195000, p90: 235000,
+      sourceUrl: null, isDemo: true,
+    },
+  ];
+  const picked = pickBenchmark("Principal Engineer", "Remote (US)", benchmarks);
+  assert.equal(picked?.role, "Machine Learning Engineer", "role-token match wins");
+  const fair = scoreFairPay(185000, picked);
+  assertScoreResult("fairPay", fair);
+  assert.equal(fair.band, "p25-p50", "185k lands between p25 and p50");
+  const noSalary = scoreFairPay(null, picked);
+  assert.equal(noSalary.band, "unknown", "no salary → honest unknown, never a guess");
+
+  // 7) Career story — pattern detection + hidden strengths for the demo
+  const story = analyzeCareerStory({
+    experiences: MID_CAREER_DEMO.experiences,
+    careerPattern: "",
+    problemsSolved: MID_CAREER_DEMO.midCareer.problemsSolved,
+  });
+  assertScoreResult("careerStory", story);
+  assert.equal(story.pattern, "specialist", "3 engineer roles → specialist");
+  assert.ok(story.hiddenStrengths.length >= 3, "problems solved surface as strengths");
+
+  // 8) Personality quiz — deterministic archetype, all-builder answers win
+  const builderAnswers = Object.fromEntries(QUIZ_QUESTIONS.map((q) => [q.id, "a"]));
+  const quiz = scoreQuiz(builderAnswers);
+  assert.equal(quiz.archetype, "builder", "all-'a' answers → builder");
+  assert.ok(ARCHETYPES[quiz.archetype], "archetype id resolves to a definition");
+  assert.deepEqual(scoreQuiz(builderAnswers), quiz, "quiz scoring is deterministic");
+  assert.ok(
+    quiz.reasons.some((r) => r.includes("never changes match scores")),
+    "descriptive-only guardrail copy present",
+  );
+
+  // 9) Employer insight — signal map + confidence + interview kit
+  const insight = candidateInsight(c0);
+  assertScoreResult("candidateInsight", insight);
+  assert.ok(insight.strengths.length > 0, "strengths found");
+  assert.ok(insight.interviewKit.length >= 2, "interview kit generated");
+
+  // 10) Next Move Simulator — 3 explainable pathways for the demo user
+  const moves = simulateNextMoves({
+    currentSkills: ai.currentSkills,
+    desiredNextMove: ai.desiredNextMove,
+    topJobs: [
+      { id: "j1", title: "Platform Engineer", company: "Atlassian", score: 50, missing: ["kubernetes", "ci cd"] },
+      { id: "j2", title: "Backend Engineer", company: "Stripe", score: 50, missing: ["api design", "databases"] },
+    ],
+    salary: MID_CAREER_DEMO.midCareer.salaryPrivate,
+    benchmark: benchmarks[0],
+  });
+  assert.equal(moves.length, 3, "exactly 3 pathways");
+  assert.deepEqual(moves.map((m) => m.flavor), ["safe", "growth", "bold"], "safe/growth/bold");
+  for (const m of moves) {
+    assertScoreResult(`pathway:${m.id}`, m);
+    assert.ok(m.timeMonths > 0 && ["low", "medium", "high"].includes(m.difficulty));
+  }
+
+  // 11) Life impact — verdict + take-home delta + life factors honored
+  const impact = scoreLifeImpact(150000, benchmarks[0], ["remote-only", "caregiver"]);
+  assertScoreResult("lifeImpact", impact);
+  assert.equal(impact.verdict, "balanced", "underpaid but constrained → balanced");
+  assert.ok(impact.takeHomeDeltaPct !== null && impact.takeHomeDeltaPct > 0, "positive delta to median");
+  assert.equal(impact.lifeNotes.length, 2, "both life factors surfaced");
+  assert.equal(
+    scoreLifeImpact(150000, benchmarks[0], []).verdict,
+    "smart",
+    "underpaid + unconstrained → smart",
+  );
+  assert.equal(scoreLifeImpact(null, benchmarks[0], []).verdict, "unknown", "no salary → honest unknown");
+
+  // 12) Determinism — identical inputs → identical outputs
   assert.deepEqual(
     scoreCareerHealth({
       currentSkills: ai.currentSkills,
@@ -99,7 +186,7 @@ function main() {
     "careerHealth is deterministic",
   );
 
-  console.log("OK — intelligence engine checks passed (5 engines, deterministic).");
+  console.log("OK — intelligence engine checks passed (11 engines, deterministic).");
 }
 
 main();

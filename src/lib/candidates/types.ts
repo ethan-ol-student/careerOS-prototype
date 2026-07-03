@@ -53,6 +53,11 @@ export interface Candidate {
   source?: "seed" | "real";
   /** Discovery visibility for real candidates (mirrors discoverable). */
   visible?: boolean;
+  /**
+   * Working-style archetype id (see ARCHETYPES in scoringConfig).
+   * Descriptive context ONLY — never a filter, never a score input.
+   */
+  archetype?: string;
 }
 
 export type TalentType =

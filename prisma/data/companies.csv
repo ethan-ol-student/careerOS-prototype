@@ -1,21 +1,21 @@
-name,sourceUrl
-Tesla,https://www.tesla.com/careers
-Dyson,https://careers.dyson.com
-Universal Robots,https://www.universal-robots.com/careers
-Honda Mfg.,https://www.honda.jobs
-Grab,https://grab.careers
-Stripe,https://stripe.com/jobs
-Shopify,https://www.shopify.com/careers
-Atlassian,https://www.atlassian.com/company/careers
-Siemens,https://jobs.siemens.com
-Bosch,https://www.bosch.com/careers
-ABB,https://careers.abb
-Nvidia,https://www.nvidia.com/en-us/about-nvidia/careers
-Airbus,https://www.airbus.com/careers
-Rolls-Royce,https://careers.rolls-royce.com
-Sea Limited,https://career.sea.com
-GovTech Singapore,https://www.tech.gov.sg/careers
-DBS Bank,https://www.dbs.com/careers
-Samsung,https://www.samsung.com/us/careers
-Foxconn,https://www.foxconn.com/en-us/careers
-Keysight,https://careers.keysight.com
+name,sourceUrl,size,type,location
+Tesla,https://www.tesla.com/careers,enterprise,mnc,Austin / Singapore
+Dyson,https://careers.dyson.com,enterprise,mnc,Singapore / UK
+Universal Robots,https://www.universal-robots.com/careers,midsize,mnc,Odense / Remote
+Honda Mfg.,https://www.honda.jobs,enterprise,mnc,Kuala Lumpur / Tokyo
+Grab,https://grab.careers,enterprise,local,Singapore
+Stripe,https://stripe.com/jobs,enterprise,mnc,Remote / SF
+Shopify,https://www.shopify.com/careers,enterprise,mnc,Remote / Ottawa
+Atlassian,https://www.atlassian.com/company/careers,enterprise,mnc,Sydney / Remote
+Siemens,https://jobs.siemens.com,enterprise,mnc,Munich
+Bosch,https://www.bosch.com/careers,enterprise,mnc,Stuttgart
+ABB,https://careers.abb,enterprise,mnc,Zurich
+Nvidia,https://www.nvidia.com/en-us/about-nvidia/careers,enterprise,mnc,Santa Clara
+Airbus,https://www.airbus.com/careers,enterprise,mnc,Toulouse
+Rolls-Royce,https://careers.rolls-royce.com,enterprise,mnc,Derby
+Sea Limited,https://career.sea.com,enterprise,local,Singapore
+GovTech Singapore,https://www.tech.gov.sg/careers,midsize,public-sector,Singapore
+DBS Bank,https://www.dbs.com/careers,enterprise,local,Singapore
+Samsung,https://www.samsung.com/us/careers,enterprise,mnc,Seoul
+Foxconn,https://www.foxconn.com/en-us/careers,enterprise,mnc,Taipei / Shenzhen
+Keysight,https://careers.keysight.com,midsize,mnc,Penang / Santa Rosa

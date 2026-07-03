@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Chip } from "@/components/ui/Chip";
 import { getPhaseConfig } from "@/lib/dashboard/phaseConfig";
 import { DashboardCard, WidgetHeader } from "./PhaseWidgetGrid";
+import { ArchetypeBadge, GamificationWidget } from "./GamificationWidget";
 import { MilestonesProvider } from "./MilestonesContext";
 import { PhaseIndicator } from "./PhaseIndicator";
 import { TrajectoriesPanel } from "./TrajectoriesPanel";
@@ -42,14 +43,21 @@ export function DashboardShell({
         title={config.goalHeader}
         description={summary}
         actions={
-          <Badge variant="outline" className="hidden sm:inline-flex">
-            <Sparkles className="size-3 text-luminous" />
-            <span className="text-muted-foreground">
-              Good day, {data.firstName}
-            </span>
-          </Badge>
+          <span className="flex items-center gap-2">
+            <ArchetypeBadge />
+            <Badge variant="outline" className="hidden sm:inline-flex">
+              <Sparkles className="size-3 text-luminous" />
+              <span className="text-muted-foreground">
+                Good day, {data.firstName}
+              </span>
+            </Badge>
+          </span>
         }
       />
+
+      {/* Age-tuned engagement: daily ring/XP for younger phases, a quiet
+          Monthly Career Check-Up for mid-career+. */}
+      <GamificationWidget data={data} />
 
       {/* Persistent phase band — focus overview + active phase indicator. */}
       <section className="px-4 pt-8">

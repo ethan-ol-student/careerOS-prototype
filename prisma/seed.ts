@@ -40,8 +40,16 @@ async function main() {
 
   if (demo) {
     console.log(`Seeding ${MOCK_CANDIDATES.length} marketplace candidates…`);
+    // Deterministic demo archetype (stable across reseeds) — display
+    // context only, never a filter.
+    const ARCHETYPE_IDS = ["builder", "strategist", "connector", "explorer"];
+    const pickArchetype = (name: string) =>
+      ARCHETYPE_IDS[
+        [...name].reduce((s, ch) => s + ch.charCodeAt(0), 0) % ARCHETYPE_IDS.length
+      ];
     for (const c of MOCK_CANDIDATES) {
       const fields = {
+        archetype: pickArchetype(c.name),
         name: c.name,
         careerDirection: c.careerDirection,
         targetRole: c.targetRole,
@@ -149,6 +157,18 @@ async function seedMidCareerDemo() {
     update: d.midCareer,
   });
 
+  // Working-style profile so the dashboard badge + employer tag demo fully.
+  const personality = {
+    archetype: "strategist",
+    scores: { strategist: 14, builder: 8, connector: 4, explorer: 2 },
+    answers: {},
+  };
+  await prisma.personalityResult.upsert({
+    where: { candidateProfileId: profileId },
+    create: { candidateProfileId: profileId, ...personality },
+    update: personality,
+  });
+
   // Replace history rows so re-seeding stays idempotent (no duplicates).
   await prisma.project.deleteMany({ where: { profileId } });
   await prisma.experience.deleteMany({ where: { profileId } });
@@ -169,10 +189,17 @@ async function seedDemoCatalog() {
   const companies = readCsv("companies.csv");
   console.log(`Seeding ${companies.length} demo companies…`);
   for (const c of companies) {
+    const fit = {
+      sourceUrl: c.sourceUrl || null,
+      size: c.size ?? "",
+      type: c.type ?? "",
+      location: c.location ?? "",
+      isDemo: true,
+    };
     await prisma.company.upsert({
       where: { name: c.name },
-      create: { name: c.name, sourceUrl: c.sourceUrl || null, isDemo: true },
-      update: { sourceUrl: c.sourceUrl || null, isDemo: true },
+      create: { name: c.name, ...fit },
+      update: fit,
     });
   }
 
@@ -199,6 +226,22 @@ async function seedDemoCatalog() {
     await prisma.job.upsert({
       where: { id: j.id },
       create: { id: j.id, ...fields },
+      update: fields,
+    });
+  }
+
+  const universities = readCsv("universities.csv");
+  console.log(`Seeding ${universities.length} universities…`);
+  for (const u of universities) {
+    const fields = {
+      country: u.country,
+      score: Number(u.score),
+      sourceUrl: u.sourceUrl || null,
+      isDemo: true,
+    };
+    await prisma.university.upsert({
+      where: { name: u.name },
+      create: { name: u.name, ...fields },
       update: fields,
     });
   }
