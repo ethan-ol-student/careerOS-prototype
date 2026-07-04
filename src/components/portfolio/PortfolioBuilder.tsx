@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
 import { cn } from "@/lib/utils";
 
-type Section =
+export type Section =
   | "identity"
   | "skills"
   | "experience"
@@ -33,11 +33,19 @@ const SECTIONS: { id: Section; label: string; icon: typeof User }[] = [
   { id: "awards", label: "Awards", icon: AwardIcon },
 ];
 
-export function PortfolioBuilder() {
-  const [section, setSection] = useState<Section>("identity");
-
+export function PortfolioBuilder({
+  section,
+  onSectionChange,
+}: {
+  /** Controlled by the page so the completeness checklist can deep-link. */
+  section: Section;
+  onSectionChange: (s: Section) => void;
+}) {
   return (
-    <div className="glass-4 ring-luminous/20 relative flex flex-col overflow-hidden rounded-2xl p-6 ring-1">
+    <div
+      id="portfolio-builder"
+      className="glass-4 ring-luminous/20 relative flex scroll-mt-24 flex-col overflow-hidden rounded-2xl p-6 ring-1"
+    >
       <div
         aria-hidden
         className="from-luminous/15 pointer-events-none absolute -right-12 -top-12 size-48 rounded-full bg-radial to-transparent"
@@ -67,7 +75,7 @@ export function PortfolioBuilder() {
             <button
               key={s.id}
               type="button"
-              onClick={() => setSection(s.id)}
+              onClick={() => onSectionChange(s.id)}
               aria-pressed={active}
               className={cn(
                 "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors",

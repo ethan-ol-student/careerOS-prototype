@@ -34,6 +34,14 @@ export type CareerPhase = (typeof CAREER_PHASES)[number];
 export type PhaseAccent = "luminous" | "clover";
 
 /**
+ * Age-adaptive UI density (Feature 14). "vibrant" = the visual, gamified
+ * default for younger phases; "calm" = the editorial, higher-readability
+ * 30–55+ experience. Resolved per user in `uiDensity.ts` — phase default
+ * plus a settings override, never locked to age.
+ */
+export type UiDensity = "calm" | "vibrant";
+
+/**
  * Lightweight descriptor for a phase's "focus widgets" — the headline
  * areas a phase is about. Rendered as a quick overview in the shell /
  * phase indicator. The actual interactive widgets are React components
@@ -83,6 +91,8 @@ export interface PhaseDashboardConfig {
   purpose: string;
   /** Accent used for the phase indicator / progress meter. */
   accent: PhaseAccent;
+  /** Default UI density for this phase (user-overridable in Settings). */
+  density: UiDensity;
   /** Headline focus areas for the phase (overview only). */
   focusWidgets: PhaseWidget[];
   /** Criteria required to transition out of this phase. */

@@ -285,6 +285,25 @@
   }
 }
 
+/* ── Age-adaptive UI density (Feature 14) ─────────────────────────
+   `[data-ui-density]` is set by DashboardShell (phase default + the
+   user's Settings override — never locked to age). "vibrant" is the
+   unchanged default. "calm" is the editorial 30–55+ experience:
+   readability goes UP (larger body sizes, relaxed leading), visual
+   noise goes DOWN (no decorative card glows). Colors and contrast are
+   deliberately untouched so accessibility is identical in both modes. */
+[data-ui-density="calm"] .text-xs {
+  font-size: 0.8125rem; /* 12px → 13px */
+  line-height: 1.55;
+}
+[data-ui-density="calm"] .text-sm {
+  font-size: 0.9375rem; /* 14px → 15px */
+  line-height: 1.6;
+}
+[data-ui-density="calm"] [data-glow] {
+  display: none; /* editorial: no decorative radial glows */
+}
+
 @layer base {
   * {
     @apply border-border;

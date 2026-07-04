@@ -18,6 +18,20 @@ export function isTestModeEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_TEST_MODE === "true";
 }
 
+/**
+ * Judge Demo gate — DECOUPLED from full test mode so production can run
+ * the judge experience (homepage button, /judge hub, demo-login for the
+ * two seeded demo accounts) WITHOUT exposing the dev harness
+ * (/dev/test-mode, the admin123 account, seed/reset/state routes, which
+ * all stay behind `isTestModeEnabled`). Test mode implies judge demo so
+ * local dev needs only one flag.
+ */
+export function isJudgeDemoEnabled(): boolean {
+  return (
+    process.env.NEXT_PUBLIC_ENABLE_JUDGE_DEMO === "true" || isTestModeEnabled()
+  );
+}
+
 // ── Dev-only test account (seeded ONLY when test mode is enabled) ───
 export const TEST_ADMIN_USERNAME = "admin123";
 /**

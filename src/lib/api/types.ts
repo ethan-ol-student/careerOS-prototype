@@ -54,6 +54,7 @@ export interface ApiError {
 export type ApiErrorCode =
   | "network"
   | "unauthenticated"
+  | "payment_required"
   | "forbidden"
   | "not_found"
   | "validation"

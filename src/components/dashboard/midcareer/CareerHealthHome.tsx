@@ -12,6 +12,7 @@ import {
   Wrench,
   Lightbulb,
   Signpost,
+  Lock,
 } from "lucide-react";
 import { Col } from "@/components/app/Grid";
 import { Button } from "@/components/ui/Button";
@@ -31,9 +32,12 @@ import { scoreTransferableSkills } from "@/lib/intelligence/transferableSkillEng
 import { scoreLifeImpact, type BenchmarkRow } from "@/lib/intelligence/fairPayEngine";
 import { analyzeCareerStory, type StoryExperience } from "@/lib/intelligence/careerStoryEngine";
 import { simulateNextMoves } from "@/lib/intelligence/nextMoveSimulator";
+import { UpgradeModal } from "@/components/billing/UpgradeModal";
 
 /** Extras fetched once from /api/me/mid-career (candidate-scoped). */
 interface MidCareerExtras {
+  /** Freemium: false = Fair Pay + Skill Bridge detail are server-redacted. */
+  entitled: boolean;
   midCareer: {
     problemsSolved: string[];
     careerPattern: string;
@@ -52,7 +56,29 @@ interface MidCareerExtras {
     matched: string[];
     missing: string[];
     reasons: string[];
+    gapCount: number;
   }[];
+}
+
+/** Locked-teaser body for Pro-gated cards (server redacts the data too). */
+function LockedTeaser({
+  copy,
+  onUnlock,
+}: {
+  copy: string;
+  onUnlock: () => void;
+}) {
+  return (
+    <div className="border-border/40 bg-card/40 rounded-xl border border-dashed p-4">
+      <p className="text-muted-foreground flex items-start gap-2 text-sm">
+        <Lock className="text-luminous mt-0.5 size-4 shrink-0" aria-hidden />
+        {copy}
+      </p>
+      <Button size="sm" className="mt-3" onClick={onUnlock}>
+        Unlock with Pro
+      </Button>
+    </div>
+  );
 }
 
 /** "Why this recommendation?" expander — one contract for every card. */
@@ -88,6 +114,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
   const [extras, setExtras] = useState<MidCareerExtras | null>(null);
   const [salaryDraft, setSalaryDraft] = useState("");
   const [savingSalary, setSavingSalary] = useState(false);
+  const [upgradeFor, setUpgradeFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/me/mid-career", { cache: "no-store" });
@@ -139,6 +166,10 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
 
   const bestJob = extras?.topJobs[0] ?? null;
   const skillGaps = bestJob?.missing.slice(0, 3) ?? [];
+  // Freemium: server already redacted the gated fields; `locked` only
+  // switches the UI to honest teasers instead of empty-looking cards.
+  const locked = !!extras && !extras.entitled;
+  const gapCount = bestJob?.gapCount ?? 0;
 
   // Transferable map: current skills vs each top job's requirements.
   const doors = (extras?.topJobs ?? []).map((job) => ({
@@ -165,9 +196,11 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
       ? `Refresh one at-risk skill this month: start with "${health.atRisk[0]}".`
       : skillGaps[0]
         ? `Close one bridge skill toward ${bestJob?.title}: "${skillGaps[0]}".`
-        : extras?.midCareer?.salaryPrivate == null
-          ? "Add your salary (optional, private) to unlock the fair-pay check."
-          : "Document one more problem you solved — proof compounds.";
+        : locked && gapCount > 0
+          ? `${gapCount} skill${gapCount === 1 ? "" : "s"} stand between you and ${bestJob?.title} — unlock your Skill Bridge plan to see them.`
+          : extras?.midCareer?.salaryPrivate == null
+            ? "Add your salary (optional, private) to unlock the fair-pay check."
+            : "Document one more problem you solved — proof compounds.";
 
   return (
     <>
@@ -263,6 +296,13 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               title="Is a move smart or risky?"
               action={fairPay.benchmark?.isDemo ? <MockBadge label="Demo data" /> : undefined}
             />
+            {locked ? (
+              <LockedTeaser
+                copy="Compare your (private) salary against curated market benchmarks — percentile band, take-home delta, and a smart/balanced/risky verdict with its reasoning."
+                onUnlock={() => setUpgradeFor("Fair Pay & Salary Benchmark report")}
+              />
+            ) : (
+              <>
             {lifeImpact.verdict !== "unknown" && (
               <p
                 className={
@@ -322,6 +362,8 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               </Button>
             </div>
             <WhyExpander result={lifeImpact} />
+              </>
+            )}
           </DashboardCard>
         </Col>
 
@@ -364,7 +406,13 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               eyebrow="This month"
               title="Top skill gaps & one action"
             />
-            {skillGaps.length ? (
+            {locked && gapCount > 0 ? (
+              <p className="text-muted-foreground mb-3 flex items-center gap-2 text-sm">
+                <Lock className="text-luminous size-4 shrink-0" aria-hidden />
+                {gapCount} gap{gapCount === 1 ? "" : "s"} found — the exact
+                skills are part of your Pro Skill Bridge plan.
+              </p>
+            ) : skillGaps.length ? (
               <ul className="mb-3 flex flex-wrap gap-1.5">
                 {skillGaps.map((s) => (
                   <li key={s}>
@@ -528,11 +576,16 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               title="Minimum skill upgrade"
               description={
                 bestJob
-                  ? `The shortest path to "${bestJob.title}" — close these ${skillGaps.length || 0} skill${skillGaps.length === 1 ? "" : "s"}, keep everything you already have.`
+                  ? `The shortest path to "${bestJob.title}" — close ${locked ? gapCount : skillGaps.length || 0} skill${(locked ? gapCount : skillGaps.length) === 1 ? "" : "s"}, keep everything you already have.`
                   : "Your shortest path to the next role."
               }
             />
-            {bestJob ? (
+            {locked && bestJob ? (
+              <LockedTeaser
+                copy={`You already cover ${bestJob.matched.length}/${bestJob.requiredSkills.length} of "${bestJob.title}"'s requirements. Pro names the exact ${gapCount} skill${gapCount === 1 ? "" : "s"} to close — the minimum upgrade, nothing more.`}
+                onUnlock={() => setUpgradeFor("Skill Bridge plan")}
+              />
+            ) : bestJob ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="text-clover mb-2 text-[11px] font-semibold uppercase tracking-wider">
@@ -569,6 +622,13 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
           </DashboardCard>
         </Col>
       </PhaseWidgetGrid>
+
+      <UpgradeModal
+        isOpen={upgradeFor !== null}
+        onClose={() => setUpgradeFor(null)}
+        onUpgraded={load}
+        feature={upgradeFor ?? undefined}
+      />
     </>
   );
 }

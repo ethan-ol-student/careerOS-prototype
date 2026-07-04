@@ -23,6 +23,7 @@ interface StoredResult {
  */
 export default function PersonalityPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(0);
   const [result, setResult] = useState<StoredResult | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -64,6 +65,16 @@ export default function PersonalityPage() {
 
   const answered = QUIZ_QUESTIONS.filter((q) => answers[q.id]).length;
   const archetype = result ? ARCHETYPES[result.archetype] : null;
+  const q = QUIZ_QUESTIONS[step];
+
+  /** Record the answer, then auto-advance to the next question. */
+  function pick(optionId: string) {
+    setAnswers((a) => ({ ...a, [q.id]: optionId }));
+    if (step < QUIZ_QUESTIONS.length - 1) {
+      // ponytail: 250ms pause so the selection highlight registers before the slide
+      setTimeout(() => setStep(step + 1), 250);
+    }
+  }
 
   return (
     <AppShell>
@@ -141,6 +152,7 @@ export default function PersonalityPage() {
               onClick={() => {
                 setResult(null);
                 setAnswers({});
+                setStep(0);
               }}
             >
               <RotateCcw />
@@ -148,48 +160,65 @@ export default function PersonalityPage() {
             </Button>
           </section>
         ) : (
-          /* ── Quiz view ── */
+          /* ── Quiz view — one question at a time, auto-advance ── */
           <>
-            <div className="mt-8 space-y-6">
-              {QUIZ_QUESTIONS.map((q, qi) => (
-                <section key={q.id} className="glass-3 rounded-2xl p-6">
-                  <p className="font-medium">
-                    <span className="text-luminous mr-2">{qi + 1}.</span>
-                    {q.prompt}
-                  </p>
-                  <Grid12 className="mt-4">
-                    {q.options.map((o) => (
-                      <Col key={o.id} span={12} md={6}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setAnswers((a) => ({ ...a, [q.id]: o.id }))
-                          }
-                          className={cn(
-                            "min-h-11 w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors",
-                            answers[q.id] === o.id
-                              ? "border-luminous/60 bg-luminous/10"
-                              : "border-border/40 bg-card/40 hover:border-luminous/40",
-                          )}
-                        >
-                          {o.label}
-                        </button>
-                      </Col>
-                    ))}
-                  </Grid12>
-                </section>
-              ))}
-            </div>
+            <section
+              key={q.id}
+              className="glass-3 animate-appear mt-8 rounded-2xl p-6"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-luminous text-xs font-semibold uppercase tracking-wider">
+                  Question {step + 1} of {QUIZ_QUESTIONS.length}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {answered}/{QUIZ_QUESTIONS.length} answered
+                </p>
+              </div>
+              <p className="mt-3 font-medium">{q.prompt}</p>
+              <Grid12 className="mt-4">
+                {q.options.map((o) => (
+                  <Col key={o.id} span={12} md={6}>
+                    <button
+                      type="button"
+                      onClick={() => pick(o.id)}
+                      className={cn(
+                        "min-h-11 w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                        answers[q.id] === o.id
+                          ? "border-luminous/60 bg-luminous/10"
+                          : "border-border/40 bg-card/40 hover:border-luminous/40",
+                      )}
+                    >
+                      {o.label}
+                    </button>
+                  </Col>
+                ))}
+              </Grid12>
+            </section>
             <div className="mt-6 flex items-center justify-between">
-              <p className="text-muted-foreground text-sm">
-                {answered}/{QUIZ_QUESTIONS.length} answered
-              </p>
-              <Button
-                onClick={submit}
-                disabled={busy || answered < QUIZ_QUESTIONS.length}
-              >
-                {busy ? "Scoring…" : "See my working style"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={step === 0}
+                  onClick={() => setStep(step - 1)}
+                >
+                  Back
+                </Button>
+                {answers[q.id] && step < QUIZ_QUESTIONS.length - 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setStep(step + 1)}
+                  >
+                    Next
+                  </Button>
+                )}
+              </div>
+              {answered === QUIZ_QUESTIONS.length && (
+                <Button onClick={submit} disabled={busy}>
+                  {busy ? "Scoring…" : "See my working style"}
+                </Button>
+              )}
             </div>
             {error && <p className="text-destructive mt-3 text-sm">{error}</p>}
           </>

@@ -4,6 +4,7 @@ import { getCurrentCandidateProfile } from "@/lib/api/currentUser";
 import { toTargetJob } from "@/lib/services/jobs.service";
 import { scoreSkillBridge } from "@/lib/intelligence/skillBridgeEngine";
 import { pickBenchmark, type BenchmarkRow } from "@/lib/intelligence/fairPayEngine";
+import { checkEntitlement } from "@/lib/billing/entitlements";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 /**
@@ -17,18 +18,26 @@ import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 export async function GET() {
   try {
     const profile = await getCurrentCandidateProfile();
-    const [midCareer, experiences, ai, benchmarks, jobRows] = await Promise.all([
-      prisma.midCareerProfile.findUnique({
-        where: { candidateProfileId: profile.id },
-      }),
-      prisma.experience.findMany({
-        where: { profileId: profile.id },
-        orderBy: { id: "asc" },
-      }),
-      prisma.candidatesAI.findUnique({ where: { userId: profile.userId } }),
-      prisma.salaryBenchmark.findMany(),
-      prisma.job.findMany({ include: { company: true } }),
-    ]);
+    // Freemium (Feature 15): Career Health Score + story map + best-move
+    // scores stay FREE. Pro gates only the Fair Pay benchmark report and
+    // the Skill Bridge gap detail — redacted field-level below, enforced
+    // server-side. Judges bypass via isJudgeAccount.
+    const [entitled, [midCareer, experiences, ai, benchmarks, jobRows]] =
+      await Promise.all([
+        checkEntitlement(profile.userId),
+        Promise.all([
+          prisma.midCareerProfile.findUnique({
+            where: { candidateProfileId: profile.id },
+          }),
+          prisma.experience.findMany({
+            where: { profileId: profile.id },
+            orderBy: { id: "asc" },
+          }),
+          prisma.candidatesAI.findUnique({ where: { userId: profile.userId } }),
+          prisma.salaryBenchmark.findMany(),
+          prisma.job.findMany({ include: { company: true } }),
+        ]),
+      ]);
 
     const skills = [
       ...new Set([...profile.skills, ...(ai?.currentSkills ?? [])]),
@@ -54,14 +63,18 @@ export async function GET() {
           requiredSkills: t.requiredSkills,
           score: bridge.score,
           matched: bridge.matched,
-          missing: bridge.missing,
-          reasons: bridge.reasons,
+          // Pro gate (Skill Bridge plan): coarse score + what you already
+          // have stay free; the exact missing-skill plan is entitled.
+          missing: entitled ? bridge.missing : [],
+          reasons: entitled ? bridge.reasons : [],
+          gapCount: bridge.missing.length,
         };
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
 
     return ok({
+      entitled,
       midCareer,
       experiences: experiences.map((e) => ({
         role: e.role,
@@ -69,7 +82,9 @@ export async function GET() {
         period: e.period,
         detail: e.detail,
       })),
-      benchmark,
+      // Pro gate (Fair Pay report): the benchmark comparison is entitled;
+      // the private salary itself is always the owner's to see/edit.
+      benchmark: entitled ? benchmark : null,
       topJobs,
     });
   } catch (err) {

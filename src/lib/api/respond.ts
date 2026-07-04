@@ -17,6 +17,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  PaymentRequiredError,
   UnauthorizedError,
 } from "./errors";
 import type { ApiError, ApiErrorCode } from "./types";
@@ -43,6 +44,7 @@ export function failFromCode(
 const GENERIC_MESSAGE: Record<number, string> = {
   400: "Invalid request.",
   401: "Authentication required.",
+  402: "This feature is part of Career OS Pro.",
   403: "You don't have access to this resource.",
   404: "Not found.",
   409: "That conflicts with an existing record.",
@@ -75,6 +77,14 @@ export function failFromUnknown(err: unknown) {
       "unauthenticated",
       clientMessage(401, err.message),
       401,
+    );
+  }
+  // 402 — freemium gate: authenticated, feature needs Pro.
+  if (err instanceof PaymentRequiredError) {
+    return failFromCode(
+      "payment_required",
+      clientMessage(402, err.message),
+      402,
     );
   }
   // 403 — authenticated but not allowed.

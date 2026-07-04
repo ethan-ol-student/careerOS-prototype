@@ -67,6 +67,7 @@ export function DashboardCard({
       {glow ? (
         <div
           aria-hidden
+          data-glow
           className={cn(
             "pointer-events-none absolute -right-12 -top-12 size-48 rounded-full bg-radial to-transparent",
             glow === "luminous" ? "from-luminous/15" : "from-clover/15",

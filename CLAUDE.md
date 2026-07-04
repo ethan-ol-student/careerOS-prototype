@@ -95,10 +95,36 @@ No test runner is configured. Validate changes with `npm run lint` + `npm run bu
   mount in `DashboardShell`.
 - **Leaderboard**: `/leaderboard` + `GET /api/leaderboard` — curated, cited `University`
   rows (CSV-seeded, demo-labelled). Never ranks or exposes real users.
-- **Resume (Living Portfolio)**: `/candidate/resume` + `GET /api/me/resume{,/pdf,/versions}`.
-  PDF via `@react-pdf/renderer` (Node runtime), template in `src/lib/resume/pdfTemplate.tsx`;
-  `ResumeVersion` stores named JSON snapshots. Mid-career resumes lead with
-  `MidCareerProfile.problemsSolved` (proof of capability).
+- **Age-adaptive UI (Feature 14)**: `PhaseDashboardConfig.density` ("calm" for
+  mid-career+, "vibrant" for younger) + `CandidateProfile.uiDensity` override
+  (Settings → Dashboard style, `GET/PATCH /api/me/ui-density`). Resolution in
+  `src/lib/dashboard/uiDensity.ts` (`resolveUiDensity`, mirrors `cadenceForPhase`);
+  `DashboardShell` sets `data-ui-density`; calm styles live in `globals.css`
+  (readability UP, decorative glows OFF, contrast untouched). Never locked to age.
+- **Freemium (Feature 15, MOCK billing)**: `Subscription` model (`plan` "free"|"pro",
+  TS truth in `src/lib/billing/plans.ts`); `entitlements.ts` (`requireEntitlement` throws
+  `PaymentRequiredError`→402, `checkEntitlement` for field redaction); judge bypass =
+  `isJudgeAccount` inside `resolveIsPro`. Exactly 3 Pro gates: resume PDF
+  (`/api/me/resume/pdf`), Fair Pay report (`/api/me/fair-pay` + `benchmark` redacted in
+  `/api/me/mid-career`), Skill Bridge detail (`topJobs[].missing/reasons` redacted; coarse
+  `score`/`matched`/`gapCount` stay free). Career Health Score is always free. Upgrade =
+  `POST /api/me/subscription` (mock, no processor). UI: `UpgradeModal`, `/pricing`.
+- **Judge demo flag (DECOUPLED)**: `isJudgeDemoEnabled()` in `testMode.ts` —
+  `NEXT_PUBLIC_ENABLE_JUDGE_DEMO` (prod-safe: homepage button + `/judge` + demo-login for
+  the 2 seeded demo accounts only) OR full test mode. The dev harness/admin123 stays
+  behind `NEXT_PUBLIC_ENABLE_TEST_MODE` (never in prod).
+- **PWA (Feature 11)**: `src/app/manifest.ts`, icons generated via `ImageResponse`
+  (`src/lib/pwa/brandIcon.tsx` → `/icons/[size]` + `apple-icon.tsx`, no binary assets),
+  minimal `public/sw.js` (shell cache-first, navigations network-first, `/api/*` NEVER
+  cached), `PwaProvider` in the root layout (SW registration + install banner).
+- **Resume (Living Portfolio)**: merged into `/candidate/portfolio` (old `/candidate/resume`
+  redirects there) + `GET /api/me/resume{,/pdf,/versions}`. The page hosts the clickable
+  completeness checklist (deep-links into `PortfolioBuilder` sections / the problems-solved
+  editor via `CompletenessItem.key`), saved versions, and the PDF export (100%-complete +
+  Pro gated). PDF via `@react-pdf/renderer` (Node runtime), template in
+  `src/lib/resume/pdfTemplate.tsx`; `ResumeVersion` stores named JSON snapshots. Mid-career
+  resumes lead with `MidCareerProfile.problemsSolved` (proof of capability — editable on the
+  portfolio page, PATCHed via `/api/me/mid-career`).
 - **Settings**: `/candidate/settings` + `/employers/settings` (mode-aware, shells gate them).
   Shared sections in `src/components/settings/*`. `PATCH/DELETE /api/account` edits safe user
   fields / deletes the account (password re-entry, cascades, clears session — real, not faked).

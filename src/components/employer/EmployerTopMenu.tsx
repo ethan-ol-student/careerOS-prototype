@@ -4,14 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Menu as MenuIcon,
-  Bell,
   Bookmark,
   Briefcase,
   ChevronRight,
-  LogIn,
   LogOut,
   MessageSquare,
   Settings,
+  Sparkles,
   Store,
   UsersRound,
 } from "lucide-react";
@@ -33,6 +32,7 @@ interface EmployerTopMenuProps {
  */
 export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<"features" | "career" | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
@@ -81,7 +81,7 @@ export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
       {isOpen && (
         <div
           role="menu"
-          className="bg-popover text-popover-foreground border-border/60 absolute right-0 top-full z-50 mt-2 w-80 origin-top-right overflow-hidden rounded-xl border shadow-xl"
+          className="bg-popover text-popover-foreground border-border/60 absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-xl border shadow-xl"
         >
           {/* Profile / mode preview */}
           <div className="flex items-center gap-3 border-b border-border/40 px-4 py-4">
@@ -96,57 +96,60 @@ export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
             </div>
           </div>
 
-          {/* Sign-in / switch account */}
-          <div className="border-b border-border/40 p-3">
-            <Link
-              href="/auth"
-              className="border-border/60 hover:border-clover/60 text-foreground hover:text-clover focus-visible:ring-clover/40 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-            >
-              <LogIn className="size-4" />
-              Sign in / Switch account
-            </Link>
-          </div>
-
-          {/* Nav links — every employer surface lives here so the
-              header itself can stay minimal. */}
+          {/* Nav — three primaries mirroring the candidate menu:
+              Features / Career flyouts + a direct Settings link.
+              Notifications lives on the header bell, not here. */}
           <nav className="flex flex-col py-1.5" role="none">
-            <MenuLink
-              href="/employers/marketplace"
-              icon={<Store className="text-clover size-4" aria-hidden />}
-              label="Marketplace"
-              hint="Browse candidates on trajectory"
-              onClick={() => setIsOpen(false)}
-            />
-            <MenuLink
-              href="/employers/applicants"
-              icon={<UsersRound className="text-clover size-4" aria-hidden />}
-              label="Applicants"
-              hint="Review applications & set statuses"
-              onClick={() => setIsOpen(false)}
-            />
-            <MenuLink
-              href="/employers/saved"
-              icon={<Bookmark className="text-clover size-4" aria-hidden />}
-              label="Saved Candidates"
-              hint="Candidates you've bookmarked"
-              onClick={() => setIsOpen(false)}
-            />
-            <MenuLink
-              href="/employers/messages"
-              icon={
-                <MessageSquare className="text-clover size-4" aria-hidden />
+            <MenuGroup
+              icon={<Sparkles className="text-clover size-4" aria-hidden />}
+              label="Features"
+              hint="Messages & tools"
+              open={openGroup === "features"}
+              onToggle={() =>
+                setOpenGroup((g) => (g === "features" ? null : "features"))
               }
-              label="Messages"
-              hint="Your candidate chat threads"
-              onClick={() => setIsOpen(false)}
-            />
-            <MenuLink
-              href="/employers/notifications"
-              icon={<Bell className="text-clover size-4" aria-hidden />}
-              label="Notifications"
-              hint="Invite replies & activity"
-              onClick={() => setIsOpen(false)}
-            />
+            >
+              <MenuLink
+                href="/employers/messages"
+                icon={
+                  <MessageSquare className="text-clover size-4" aria-hidden />
+                }
+                label="Messages"
+                hint="Your candidate chat threads"
+                onClick={() => setIsOpen(false)}
+              />
+            </MenuGroup>
+            <MenuGroup
+              icon={<Briefcase className="text-clover size-4" aria-hidden />}
+              label="Career"
+              hint="Marketplace, applicants & saved talent"
+              open={openGroup === "career"}
+              onToggle={() =>
+                setOpenGroup((g) => (g === "career" ? null : "career"))
+              }
+            >
+              <MenuLink
+                href="/employers/marketplace"
+                icon={<Store className="text-clover size-4" aria-hidden />}
+                label="Marketplace"
+                hint="Browse candidates on trajectory"
+                onClick={() => setIsOpen(false)}
+              />
+              <MenuLink
+                href="/employers/applicants"
+                icon={<UsersRound className="text-clover size-4" aria-hidden />}
+                label="Applicants"
+                hint="Review applications & set statuses"
+                onClick={() => setIsOpen(false)}
+              />
+              <MenuLink
+                href="/employers/saved"
+                icon={<Bookmark className="text-clover size-4" aria-hidden />}
+                label="Saved Candidates"
+                hint="Candidates you've bookmarked"
+                onClick={() => setIsOpen(false)}
+              />
+            </MenuGroup>
             <MenuLink
               href="/employers/settings"
               icon={<Settings className="text-clover size-4" aria-hidden />}
@@ -170,6 +173,66 @@ export function EmployerTopMenu({ onSignOut }: EmployerTopMenuProps) {
               Sign out
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Primary menu button with a side flyout (inline expand on mobile). */
+function MenuGroup({
+  icon,
+  label,
+  hint,
+  open,
+  onToggle,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative" role="none">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={onToggle}
+        className={cn(
+          "hover:bg-accent focus-visible:ring-clover/40 group flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2",
+          open && "bg-accent",
+        )}
+      >
+        <span
+          aria-hidden
+          className="bg-clover/10 flex size-8 items-center justify-center rounded-md"
+        >
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">{label}</span>
+          <span className="text-muted-foreground block truncate text-[11px]">
+            {hint}
+          </span>
+        </span>
+        <ChevronRight
+          aria-hidden
+          className={cn(
+            "text-muted-foreground group-hover:text-foreground size-3.5 transition-transform",
+            open && "max-sm:rotate-90 sm:rotate-180",
+          )}
+        />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="bg-popover border-border/60 rounded-xl border py-1.5 shadow-xl max-sm:mx-2 max-sm:my-1 sm:absolute sm:right-full sm:top-0 sm:z-10 sm:mr-1 sm:w-72"
+        >
+          {children}
         </div>
       )}
     </div>

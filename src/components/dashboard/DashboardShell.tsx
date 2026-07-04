@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Chip } from "@/components/ui/Chip";
 import { getPhaseConfig } from "@/lib/dashboard/phaseConfig";
+import { useUiDensity } from "@/lib/dashboard/useUiDensity";
 import { DashboardCard, WidgetHeader } from "./PhaseWidgetGrid";
 import { ArchetypeBadge, GamificationWidget } from "./GamificationWidget";
 import { MilestonesProvider } from "./MilestonesContext";
@@ -35,9 +36,13 @@ export function DashboardShell({
   const config = getPhaseConfig(data.phase);
   const summary =
     data.ai?.dashboardPersonalizationSummary?.trim() || config.purpose;
+  // Age-adaptive density: phase default + user override (Feature 14).
+  // The `[data-ui-density="calm"]` styles live in globals.css.
+  const uiDensity = useUiDensity(data.phase);
 
   return (
     <MilestonesProvider config={config} data={data}>
+      <div data-ui-density={uiDensity}>
       <PageHeader
         eyebrow={`${config.label} phase · ${config.ageHint}`}
         title={config.goalHeader}
@@ -98,6 +103,7 @@ export function DashboardShell({
       {/* Phase-agnostic landscape view — multiple realistic paths with
           honest trade-offs (principles #1 & #2). Shown for every phase. */}
       <TrajectoriesPanel data={data} />
+      </div>
     </MilestonesProvider>
   );
 }

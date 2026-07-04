@@ -45,10 +45,28 @@ model User {
   candidatesAI     CandidatesAI?
   employersAI      EmployersAI?
   oauthAccounts    OAuthAccount[]
+  subscription     Subscription?
 
   // Optional projection of this user into the marketplace catalog
   // (only for real candidates who opt into discovery). See `Candidate`.
   marketplaceCandidate Candidate?
+}
+
+// ── Subscription (Feature 15 — freemium) ────────────────────────
+// One row per user; `plan` legal values owned by src/lib/billing/plans.ts.
+// MOCK billing: upgrading flips `plan` locally (POST /api/me/subscription);
+// real payment processing is explicitly post-deploy scope. Judges bypass
+// entitlements entirely via User.isJudgeAccount — see entitlements.ts.
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan String @default("free") // "free" | "pro"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ── OAuth / SSO (Google) ────────────────────────────────────────
@@ -99,6 +117,10 @@ model CandidateProfile {
 
   totalAdditions Int       @default(0)
   lastUpdated    DateTime?
+
+  // Age-adaptive UI override (never locked to age): "" = use the phase
+  // default; legal values owned by src/lib/dashboard/uiDensity.ts.
+  uiDensity String @default("") // "" | "calm" | "vibrant"
 
   certificates  Certificate[]
   awards        Award[]

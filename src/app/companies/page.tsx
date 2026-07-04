@@ -57,6 +57,14 @@ export default function CompaniesPage() {
                   <span className="text-luminous w-8 shrink-0 text-lg font-semibold">
                     {i + 1}
                   </span>
+                  {/* ponytail: monogram placeholder — swap for <img> when
+                      Company grows a logo field */}
+                  <span
+                    aria-hidden
+                    className="border-border/40 bg-luminous/10 text-luminous flex size-11 shrink-0 items-center justify-center rounded-xl border text-base font-semibold"
+                  >
+                    {c.name.charAt(0).toUpperCase()}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="font-semibold">{c.name}</h2>

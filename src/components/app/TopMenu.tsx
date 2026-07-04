@@ -11,15 +11,14 @@ import {
   User,
   BookOpen,
   LogOut,
-  LogIn,
   ChevronRight,
   MessageSquare,
   Settings,
   Briefcase,
   ClipboardList,
   Building2,
-  FileText,
   Fingerprint,
+  Sparkles,
   Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,11 +34,12 @@ interface TopMenuProps {
 /**
  * Top-right dropdown menu. Opens on hover, click, OR keyboard
  * focus-within and does NOT navigate when opened — it stays on the
- * current page. The "Sign in" button is a static UI placeholder
- * styled as an outline so it doesn't impersonate a working CTA.
+ * current page. Nav is grouped into three primaries: Features and
+ * Career (side flyouts) plus a direct Settings link.
  */
 export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<"features" | "career" | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -104,7 +104,7 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
       {isOpen && (
         <div
           role="menu"
-          className="bg-popover text-popover-foreground border-border/60 absolute right-0 top-full z-50 mt-2 w-80 origin-top-right overflow-hidden rounded-xl border shadow-xl"
+          className="bg-popover text-popover-foreground border-border/60 absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-xl border shadow-xl"
         >
           {/* Profile preview */}
           <div className="flex items-center gap-3 border-b border-border/40 px-4 py-4">
@@ -123,76 +123,76 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
             </div>
           </div>
 
-          {/* Sign-in / switch account */}
-          <div className="border-b border-border/40 p-3">
-            <Link
-              href="/auth"
-              className="border-border/60 hover:border-luminous/60 text-foreground hover:text-luminous focus-visible:ring-luminous/40 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
-            >
-              <LogIn className="size-4" />
-              Sign in / Switch account
-            </Link>
-            <p className="text-muted-foreground mt-2 text-center text-[10px]">
-              Your saved data syncs across devices.
-            </p>
-          </div>
-
-          {/* Nav links */}
+          {/* Nav — three primaries: Features / Career flyouts + Settings */}
           <nav className="flex flex-col py-1.5" role="none">
-            <MenuLink
-              href="/jobs"
+            <MenuGroup
+              icon={<Sparkles className="size-4 text-luminous" aria-hidden />}
+              label="Features"
+              hint="Portfolio, working style & more"
+              open={openGroup === "features"}
+              onToggle={() =>
+                setOpenGroup((g) => (g === "features" ? null : "features"))
+              }
+            >
+              <MenuLink
+                href="/candidate/portfolio"
+                icon={<User className="size-4 text-luminous" aria-hidden />}
+                label="Living Portfolio"
+                hint="Your profile, CV & PDF export in one place"
+              />
+              <MenuLink
+                href="/candidate/personality"
+                icon={<Fingerprint className="size-4 text-luminous" aria-hidden />}
+                label="Working Style"
+                hint="Your strengths archetype (context, not a label)"
+              />
+              <MenuLink
+                href="/candidate/chapters"
+                icon={<BookOpen className="size-4 text-luminous" aria-hidden />}
+                label="Life Chapter Designer"
+                hint="Design and compare next-chapter scenarios"
+              />
+              <MenuLink
+                href="/leaderboard"
+                icon={<Trophy className="size-4 text-luminous" aria-hidden />}
+                label="Leaderboard"
+                hint="University employability signals (cited)"
+              />
+              <MenuLink
+                href="/candidate/messages"
+                icon={<MessageSquare className="size-4 text-luminous" aria-hidden />}
+                label="Messages"
+                hint="Your employer conversations"
+              />
+            </MenuGroup>
+            <MenuGroup
               icon={<Briefcase className="size-4 text-luminous" aria-hidden />}
-              label="Jobs"
-              hint="Openings matched to your skills"
-            />
-            <MenuLink
-              href="/candidate/applications"
-              icon={<ClipboardList className="size-4 text-luminous" aria-hidden />}
-              label="My Applications"
-              hint="Track every application's status"
-            />
-            <MenuLink
-              href="/companies"
-              icon={<Building2 className="size-4 text-luminous" aria-hidden />}
-              label="Companies"
-              hint="Who actually responds to candidates"
-            />
-            <MenuLink
-              href="/candidate/resume"
-              icon={<FileText className="size-4 text-luminous" aria-hidden />}
-              label="Resume"
-              hint="PDF export from your real data"
-            />
-            <MenuLink
-              href="/candidate/personality"
-              icon={<Fingerprint className="size-4 text-luminous" aria-hidden />}
-              label="Working Style"
-              hint="Your strengths archetype (context, not a label)"
-            />
-            <MenuLink
-              href="/leaderboard"
-              icon={<Trophy className="size-4 text-luminous" aria-hidden />}
-              label="Leaderboard"
-              hint="University employability signals (cited)"
-            />
-            <MenuLink
-              href="/candidate/portfolio"
-              icon={<User className="size-4 text-luminous" aria-hidden />}
-              label="Living Portfolio"
-              hint="AI-built profile that grows with you"
-            />
-            <MenuLink
-              href="/candidate/chapters"
-              icon={<BookOpen className="size-4 text-luminous" aria-hidden />}
-              label="Life Chapter Designer"
-              hint="Design and compare next-chapter scenarios"
-            />
-            <MenuLink
-              href="/candidate/messages"
-              icon={<MessageSquare className="size-4 text-luminous" aria-hidden />}
-              label="Messages"
-              hint="Your employer conversations"
-            />
+              label="Career"
+              hint="Jobs, applications & resume"
+              open={openGroup === "career"}
+              onToggle={() =>
+                setOpenGroup((g) => (g === "career" ? null : "career"))
+              }
+            >
+              <MenuLink
+                href="/jobs"
+                icon={<Briefcase className="size-4 text-luminous" aria-hidden />}
+                label="Jobs"
+                hint="Openings matched to your skills"
+              />
+              <MenuLink
+                href="/candidate/applications"
+                icon={<ClipboardList className="size-4 text-luminous" aria-hidden />}
+                label="My Applications"
+                hint="Track every application's status"
+              />
+              <MenuLink
+                href="/companies"
+                icon={<Building2 className="size-4 text-luminous" aria-hidden />}
+                label="Companies"
+                hint="Who actually responds to candidates"
+              />
+            </MenuGroup>
             <MenuLink
               href="/candidate/settings"
               icon={<Settings className="size-4 text-luminous" aria-hidden />}
@@ -215,6 +215,66 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
               Sign out
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Primary menu button with a side flyout (inline expand on mobile). */
+function MenuGroup({
+  icon,
+  label,
+  hint,
+  open,
+  onToggle,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative" role="none">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={onToggle}
+        className={cn(
+          "hover:bg-accent focus-visible:ring-luminous/40 group flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2",
+          open && "bg-accent",
+        )}
+      >
+        <span
+          aria-hidden
+          className="bg-luminous/10 flex size-8 items-center justify-center rounded-md"
+        >
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">{label}</span>
+          <span className="text-muted-foreground block truncate text-[11px]">
+            {hint}
+          </span>
+        </span>
+        <ChevronRight
+          aria-hidden
+          className={cn(
+            "text-muted-foreground group-hover:text-foreground size-3.5 transition-transform",
+            open && "max-sm:rotate-90 sm:rotate-180",
+          )}
+        />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="bg-popover border-border/60 rounded-xl border py-1.5 shadow-xl max-sm:mx-2 max-sm:my-1 sm:absolute sm:right-full sm:top-0 sm:z-10 sm:mr-1 sm:w-72"
+        >
+          {children}
         </div>
       )}
     </div>

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/context/AuthContext";
+import { isTestModeEnabled } from "@/lib/dev/testMode";
+import { cn } from "@/lib/utils";
 
 type Account = "judge" | "mid-career";
 type Role = "candidate" | "employer";
@@ -70,6 +72,8 @@ export function JudgeHub() {
     }
   }
 
+  // Strict per-mode color coding: judge tour = red, candidate = blue
+  // (luminous), employer = green (clover), Career Health = neutral/white.
   const steps = [
     {
       key: "tour",
@@ -78,6 +82,10 @@ export function JudgeHub() {
       body: "Sign in as the pre-filled judge candidate and walk the product tour.",
       action: () => demoLogin("judge", "candidate", "/judge/tour", "tour"),
       label: "Start tour",
+      mode: "Judge demo",
+      card: "border-destructive/40",
+      accent: "bg-destructive/15 text-destructive",
+      text: "text-destructive",
     },
     {
       key: "candidate",
@@ -86,6 +94,10 @@ export function JudgeHub() {
       body: "See the phase-based dashboard with seeded portfolio + chapters.",
       action: () => demoLogin("judge", "candidate", "/candidate/dashboard", "candidate"),
       label: "Candidate view",
+      mode: "Candidate mode",
+      card: "border-luminous/40",
+      accent: "bg-luminous/15 text-luminous",
+      text: "text-luminous",
     },
     {
       key: "employer",
@@ -94,6 +106,10 @@ export function JudgeHub() {
       body: "Same account, employer mode — marketplace, saved talent, messages.",
       action: () => demoLogin("judge", "employer", "/employers/marketplace", "employer"),
       label: "Employer view",
+      mode: "Employer mode",
+      card: "border-clover/40",
+      accent: "bg-clover/15 text-clover",
+      text: "text-clover",
     },
     {
       key: "midcareer",
@@ -102,6 +118,10 @@ export function JudgeHub() {
       body: "A 35+ staff engineer with rich history — the fully-populated Career Health dashboard.",
       action: () => demoLogin("mid-career", "candidate", "/candidate/dashboard", "midcareer"),
       label: "Open Career Health",
+      mode: "Career Health",
+      card: "border-foreground/30",
+      accent: "bg-foreground/10 text-foreground",
+      text: "text-foreground",
     },
   ];
 
@@ -127,14 +147,33 @@ export function JudgeHub() {
 
       <ol className="mt-8 space-y-4">
         {steps.map((s, i) => (
-          <li key={s.key} className="glass-3 flex items-center gap-4 rounded-2xl p-5">
-            <span className="bg-luminous/15 text-luminous flex size-9 shrink-0 items-center justify-center rounded-lg font-semibold">
+          <li
+            key={s.key}
+            className={cn(
+              "glass-3 flex items-center gap-4 rounded-2xl border p-5",
+              s.card,
+            )}
+          >
+            <span
+              className={cn(
+                "flex size-9 shrink-0 items-center justify-center rounded-lg font-semibold",
+                s.accent,
+              )}
+            >
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-2 font-semibold">
-                <s.icon className="text-luminous size-4 shrink-0" />
+              <p className="flex flex-wrap items-center gap-2 font-semibold">
+                <s.icon className={cn("size-4 shrink-0", s.text)} />
                 {s.title}
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                    s.accent,
+                  )}
+                >
+                  {s.mode}
+                </span>
               </p>
               <p className="text-muted-foreground mt-0.5 text-sm">{s.body}</p>
             </div>
@@ -145,13 +184,17 @@ export function JudgeHub() {
         ))}
       </ol>
 
-      <div className="line-t mt-8 flex items-center justify-between pt-6">
-        <p className="text-muted-foreground text-sm">Made a mess? Put the demo data back.</p>
-        <Button variant="outline" onClick={safeReset} disabled={busy !== null}>
-          <RotateCcw />
-          {busy === "reset" ? "Resetting…" : "Reset demo data"}
-        </Button>
-      </div>
+      {/* Reset uses the full dev harness (/api/dev/reset), which stays
+          test-mode-only — hidden when only the judge-demo flag is on. */}
+      {isTestModeEnabled() && (
+        <div className="line-t mt-8 flex items-center justify-between pt-6">
+          <p className="text-muted-foreground text-sm">Made a mess? Put the demo data back.</p>
+          <Button variant="outline" onClick={safeReset} disabled={busy !== null}>
+            <RotateCcw />
+            {busy === "reset" ? "Resetting…" : "Reset demo data"}
+          </Button>
+        </div>
+      )}
     </main>
   );
 }

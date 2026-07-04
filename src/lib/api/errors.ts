@@ -38,3 +38,11 @@ export class ConflictError extends Error {
     this.name = "ConflictError";
   }
 }
+
+/** 402 — authenticated but the feature needs a Pro plan (freemium gate). */
+export class PaymentRequiredError extends Error {
+  constructor(message = "This feature is part of Career OS Pro.") {
+    super(message);
+    this.name = "PaymentRequiredError";
+  }
+}

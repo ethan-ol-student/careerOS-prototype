@@ -14,6 +14,7 @@ import {
 import { AccountInfoForm } from "@/components/settings/AccountInfoForm";
 import { PrivacySection } from "@/components/settings/PrivacySection";
 import { DiscoverySection } from "@/components/settings/DiscoverySection";
+import { UiDensitySection } from "@/components/settings/UiDensitySection";
 import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection";
 import { useIntent } from "@/lib/context/IntentContext";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
@@ -138,6 +139,14 @@ function CandidateSettingsContent() {
                   Edit Living Portfolio
                 </LinkButton>
               </div>
+            </SettingsSection>
+
+            {/* Age-adaptive dashboard style (Feature 14) */}
+            <SettingsSection
+              title="Dashboard style"
+              description="Calm & editorial, or visual & gamified — your call, never locked to age."
+            >
+              <UiDensitySection />
             </SettingsSection>
 
             {/* Marketplace discovery opt-in */}

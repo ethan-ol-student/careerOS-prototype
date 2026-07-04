@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
-import { isTestModeEnabled } from "@/lib/dev/testMode";
+import { isJudgeDemoEnabled } from "@/lib/dev/testMode";
 import { JudgeHub } from "@/components/judge/JudgeHub";
 
 /**
- * /judge — guided demo hub. Flag-gated: 404s in production (no test mode),
- * so it's invisible to real users. The interactive pieces live in JudgeHub.
+ * /judge — guided demo hub. Gated by the judge-demo flag (decoupled from
+ * full test mode so production can run the judge experience without the
+ * dev harness); 404s when the flag is off.
  */
 export default function JudgeLandingPage() {
-  if (!isTestModeEnabled()) notFound();
+  if (!isJudgeDemoEnabled()) notFound();
   return <JudgeHub />;
 }

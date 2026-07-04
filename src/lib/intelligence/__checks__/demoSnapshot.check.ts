@@ -96,27 +96,14 @@ async function computeCanonical() {
   });
 
   const completeness = resumeCompleteness({
-    name: profile.name,
-    email: user.email,
     headline: profile.headline,
     summary: profile.summary,
-    field: profile.field,
-    targetJob: profile.targetJob,
     skills: profile.skills,
     problemsSolved: profile.midCareer?.problemsSolved ?? [],
-    careerPattern: profile.midCareer?.careerPattern ?? "",
-    experiences: profile.experiences.map((e) => ({
-      role: e.role, company: e.company, period: e.period, detail: e.detail,
-    })),
-    projects: profile.projects.map((p) => ({
-      title: p.title, description: p.description, link: p.link,
-    })),
-    certificates: profile.certificates.map((c) => ({
-      title: c.title, issuer: c.issuer, year: c.year,
-    })),
-    awards: profile.awards.map((a) => ({
-      title: a.title, year: a.year, description: a.description,
-    })),
+    experiences: profile.experiences,
+    projects: profile.projects,
+    certificates: profile.certificates,
+    awards: profile.awards,
   });
 
   // The canonical judge-facing numbers, in one comparable object.
@@ -151,7 +138,15 @@ async function computeCanonical() {
 }
 
 async function main() {
-  const actual = await computeCanonical();
+  // Neon auto-suspends; the first connection after idle can fail. One
+  // retry keeps this check honest without false reds on deploy day.
+  let actual: Awaited<ReturnType<typeof computeCanonical>>;
+  try {
+    actual = await computeCanonical();
+  } catch {
+    await new Promise((r) => setTimeout(r, 3000));
+    actual = await computeCanonical();
+  }
 
   if (process.argv.includes("--update")) {
     writeFileSync(FIXTURE, JSON.stringify(actual, null, 2) + "\n");

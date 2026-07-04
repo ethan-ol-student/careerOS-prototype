@@ -66,6 +66,7 @@ export const PHASE_CONFIG: Record<CareerPhase, PhaseDashboardConfig> = {
     goalHeader: "Discover interests and paths",
     purpose: "Explore directions, log what you're curious about, and start your first proof of skill.",
     accent: "luminous",
+    density: "vibrant",
     focusWidgets: [
       { id: "exploration", label: "Exploration tools", hint: "Find directions that fit" },
       { id: "subject-logs", label: "Subject logs", hint: "Track what you're studying" },
@@ -102,6 +103,7 @@ export const PHASE_CONFIG: Record<CareerPhase, PhaseDashboardConfig> = {
     goalHeader: "Build portfolio and internship readiness",
     purpose: "Map target roles to skills, fill portfolio gaps, and reach application readiness.",
     accent: "luminous",
+    density: "vibrant",
     focusWidgets: [
       { id: "target-role", label: "Target role metrics", hint: "Where you're aiming" },
       { id: "skill-mapping", label: "Skill mapping", hint: "Have vs. need" },
@@ -135,6 +137,7 @@ export const PHASE_CONFIG: Record<CareerPhase, PhaseDashboardConfig> = {
     goalHeader: "Land the right job and grow market value",
     purpose: "Run your job search like a pipeline and track your readiness toward the next role.",
     accent: "clover",
+    density: "vibrant",
     focusWidgets: [
       { id: "pipeline", label: "Job pipeline (Kanban)", hint: "Applied → Offer" },
       { id: "applications", label: "Active applications", hint: "What's in flight" },
@@ -165,6 +168,7 @@ export const PHASE_CONFIG: Record<CareerPhase, PhaseDashboardConfig> = {
     goalHeader: "Prevent stagnation and plan your next move",
     purpose: "Watch for skill decay, deepen a specialization, and weigh leadership branches.",
     accent: "luminous",
+    density: "calm",
     focusWidgets: [
       { id: "risk-matrix", label: "Skill deprecation risk", hint: "What's at risk" },
       { id: "specialization", label: "Specialization tracking", hint: "Go deeper" },
@@ -195,6 +199,7 @@ export const PHASE_CONFIG: Record<CareerPhase, PhaseDashboardConfig> = {
     goalHeader: "Move into leadership, advisory, and mentorship",
     purpose: "Convert experience into influence — advisory seats, mentorship, and exec readiness.",
     accent: "clover",
+    density: "calm",
     focusWidgets: [
       { id: "leadership-metrics", label: "Leadership metrics", hint: "Scope of impact" },
       { id: "advisory", label: "Advisory board tracking", hint: "External seats" },
@@ -225,6 +230,7 @@ export const PHASE_CONFIG: Record<CareerPhase, PhaseDashboardConfig> = {
     goalHeader: "Convert experience into legacy and influence",
     purpose: "Board roles, consulting, and master mentorship — your experience becomes a shortcut for others.",
     accent: "luminous",
+    density: "calm",
     focusWidgets: [
       { id: "board-seats", label: "Board seats", hint: "Governance roles" },
       { id: "consulting", label: "Consulting pipeline", hint: "Advisory engagements" },

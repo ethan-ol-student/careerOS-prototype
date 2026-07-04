@@ -5,6 +5,7 @@ import {
   scoreLifeImpact,
   type BenchmarkRow,
 } from "@/lib/intelligence/fairPayEngine";
+import { requireEntitlement } from "@/lib/billing/entitlements";
 import { ok, failFromUnknown } from "@/lib/api/respond";
 
 /**
@@ -16,6 +17,8 @@ import { ok, failFromUnknown } from "@/lib/api/respond";
 export async function GET() {
   try {
     const profile = await getCurrentCandidateProfile();
+    // Pro gate (Fair Pay & Salary Benchmark report) — judges bypass.
+    await requireEntitlement();
     const [midCareer, ai, benchmarks] = await Promise.all([
       prisma.midCareerProfile.findUnique({
         where: { candidateProfileId: profile.id },

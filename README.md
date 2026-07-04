@@ -31,57 +31,74 @@ CareerOS connects career growth with hiring discovery:
   - Mid-Career
   - Senior Career
   - Executive
+- 💼 Jobs with explainable match scores: `/jobs` → Easy apply
+- 📋 Application tracker with status timelines: `/candidate/applications`
+- 🏢 Company responsiveness leaderboard: `/companies`
+- 📄 Resume / Career Report with PDF export + versions: embedded in `/candidate/portfolio` (old `/candidate/resume` redirects)
+- 🧠 Working-style profile (descriptive, never a filter): `/candidate/personality`
+- 🏆 University employability leaderboard (curated, cited): `/leaderboard`
 - 🧾 Living Portfolio: `/candidate/portfolio`
 - 🗺️ Life Chapter Designer: `/candidate/chapters`
+- 🌱 Career Second Act Lab (senior phases): `/candidate/second-act`
 - 💬 Candidate messages: `/candidate/messages`
-- ⚙️ Candidate settings, account, privacy, and discovery controls
+- ⚙️ Settings: account, privacy, discovery, and **Dashboard style** (age-adaptive UI override)
+
+### 🌟 Mid-Career Career Health suite (the 35+ centerpiece)
+
+For the `mid-career`/`senior-career`/`executive` phases the dashboard
+reshapes into a calm, editorial **Career Health home** — *"your second
+career does not start from zero"*:
+
+- ❤️ Career Health Score (skill maintenance + specialization + direction)
+- 🛡️ Skill relevance: maintained vs. at-risk, decay exposure
+- ⚖️ Fair Pay & Life Impact calculator (private salary vs. cited benchmarks)
+- 🧭 Best next move + Top-3 skill gaps + one recommended action per month
+- 🗺️ Career Story Map (pattern detection + hidden strengths)
+- 🚪 Transferable Skill Map ("Same skill, different door")
+- 🛤️ Next Move Navigator (safe / growth / bold pathways)
+- 🌉 Skill Bridge Plan (the minimum skill upgrade)
+- ❓ Every card carries a **"Why this recommendation?"** expander — all
+  scores come from deterministic, CI-checked engines (`src/lib/intelligence/*`)
 
 ### Employer Experience 🏢
 
 - 🚪 Employer onboarding
 - 🛒 Marketplace: `/employers/marketplace`
-- 🧩 Candidate recommendation cards and profile details
+- 🧩 Candidate cards with working-style tags (bias-check note included)
+- 🔬 Employer intelligence: hiring confidence, strengths/risks, interview kit
+- 📥 Applicant review with status flow: `/employers/applicants`
 - ⭐ Saved candidates
 - ✉️ Invite/contact flow
 - 💬 Employer messages
 - 🔔 Employer notifications and settings
 
-## Judge Evaluation Tour 🧑‍⚖️
+## Judge Demo 🧑‍⚖️
 
-A dedicated judge-only guided product tour is available at:
+One click from the homepage: the **Judge Demo** button opens the `/judge`
+hub — four one-click, pre-signed-in views (guided tour, candidate
+dashboard, employer marketplace, and the **mid-career Career Health**
+walkthrough as a seeded 35+ staff engineer). No credentials needed; the
+hub's demo-login only works for the two seeded demo accounts, enforced
+server-side via `User.isJudgeAccount`.
 
-```text
-/judge/tour
-```
+Enable it with `NEXT_PUBLIC_ENABLE_JUDGE_DEMO=true` — **safe for
+production**: it exposes only the demo experience, never the dev harness
+(which stays behind `NEXT_PUBLIC_ENABLE_TEST_MODE`, local-only).
 
-Seeded judge credentials:
-
-```text
-username: judge
-password: judge123
-```
-
-Judge access is protected by a backend/database flag, not by client-side username checks. Normal Candidate, Employer, Admin/dev, and anonymous users cannot access the judge tour.
-
-The judge tour demonstrates:
-
-- 🧱 Candidate dashboard architecture
-- All six Candidate phases
-- ✅ Gatekeeper milestones
-- 🧾 Living Portfolio
-- 🗺️ Life Chapter Designer
-- 🌉 Candidate messaging bridge
-- 🔎 Employer marketplace matching
-- 🧑‍💼 Candidate profile evaluation
-- ⭐ Save/invite flows
-- 💬 Employer messages
-- 📝 Functional vs prototype vs planned implementation notes
+👉 Full walkthrough script: [`docs/judge-demo-script.md`](docs/judge-demo-script.md)
 
 ## Current Functional Features ✅
 
 - 🔐 First-party username/email + password authentication
+- 🔑 Google SSO (PKCE + verified-email account linking, mints the same session)
 - 🍪 Signed HTTP-only JWT session cookie
 - 👥 Candidate and Employer account roles
+- 💼 Full jobs → apply → application-timeline → employer-status loop
+- 🧮 Eleven deterministic, explainable intelligence engines (CI-checked)
+- 🎮 Age-tuned gamification: daily streaks/XP for younger phases, a quiet Monthly Career Check-Up for 35+
+- 🎨 Age-adaptive UI (calm/editorial vs. vibrant) with a persisted Settings override
+- 💎 Freemium gates (mock billing): Career Report PDF, Fair Pay report, Skill Bridge plan — Career Health Score always free
+- 📱 Installable PWA (manifest + generated icons + minimal service worker)
 - 🎯 Candidate onboarding and dashboard personalization storage
 - 🏢 Employer onboarding and hiring preference storage
 - 🗄️ Prisma-backed PostgreSQL persistence
@@ -101,6 +118,8 @@ These features are usable for demos, but are not production-complete:
 
 - 📈 Match score and readiness score are explainable prototype signals, not a production AI model
 - 🌱 Candidate recommendation logic is early-stage and partly seeded/demo-driven
+- 💳 "Upgrading to Pro" is a mock flow (instant, no payment processor) — real billing is post-deploy scope
+- 💰 Salary benchmarks and university scores are curated, cited demo data, always labelled
 - 🧑‍⚖️ Candidate phase simulation in the judge tour is scoped to judge demo state
 - 📊 Some dashboard widgets show mock or derived values where backend signals are not complete yet
 - 💬 Messaging demonstrates the Candidate-Employer bridge, but is not a full production messaging platform
@@ -147,13 +166,18 @@ DIRECT_URL=
 AUTH_SECRET=
 ```
 
-Optional public flags:
+Optional variables (see `.env.example` for full annotations):
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=
-NEXT_PUBLIC_USE_LOCAL_ADAPTER=false
+SEED_DEMO=true                      # seed the labelled demo catalog
+NEXT_PUBLIC_API_BASE_URL=           # blank = same-origin
 NEXT_PUBLIC_ENABLE_DEMO_CHAT=false
-NEXT_PUBLIC_ENABLE_TEST_MODE=false
+NEXT_PUBLIC_ENABLE_JUDGE_DEMO=false # judge demo (prod-safe)
+NEXT_PUBLIC_ENABLE_TEST_MODE=false  # full dev harness (local ONLY)
+GOOGLE_CLIENT_ID=                   # Google SSO (routes 404 without both)
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=                # optional host override
+NEXT_PUBLIC_ENABLE_GOOGLE_SSO=false # shows the Google button
 ```
 
 Generate a local `AUTH_SECRET`:
@@ -188,15 +212,22 @@ http://localhost:3000
 
 ## Production Deployment Notes 🚢
 
+👉 **Full step-by-step guide:** [`docs/deployment-runbook.md`](docs/deployment-runbook.md)
+(env-var table, migrate/seed steps, smoke-test checklist, rollback plan).
+
 Set production environment variables in the deployment provider, not in Git:
 
 ```text
 DATABASE_URL=<Neon pooled connection string>
 DIRECT_URL=<Neon direct connection string>
 AUTH_SECRET=<strong random secret>
-NEXT_PUBLIC_USE_LOCAL_ADAPTER=false
+SEED_DEMO=true                       # or false to skip demo catalog
+NEXT_PUBLIC_ENABLE_JUDGE_DEMO=true   # prod-safe judge demo
 NEXT_PUBLIC_ENABLE_DEMO_CHAT=false
-NEXT_PUBLIC_ENABLE_TEST_MODE=false
+NEXT_PUBLIC_ENABLE_TEST_MODE=false   # NEVER true in production
+GOOGLE_CLIENT_ID=<from Google Cloud Console>
+GOOGLE_CLIENT_SECRET=<from Google Cloud Console>
+NEXT_PUBLIC_ENABLE_GOOGLE_SSO=true
 ```
 
 For Neon + Prisma:
@@ -235,8 +266,14 @@ npm.cmd run db:seed
 npm.cmd run dev
 npm.cmd run lint
 npm.cmd run build
+npm.cmd run check:intelligence   # deterministic engine assertions (runs in CI)
+npm.cmd run check:demo           # pins the judge-facing demo numbers (needs DB)
 .\node_modules\.bin\tsc.cmd --noEmit
 .\node_modules\.bin\prisma.cmd validate
 .\node_modules\.bin\prisma.cmd migrate deploy
 npm.cmd run db:seed
 ```
+
+CI (`.github/workflows/ci.yml`) gates every push with lint + engine checks +
+build — no secrets required. Deploys go through Vercel's GitHub integration;
+migrations are applied manually (see the runbook).

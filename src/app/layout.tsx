@@ -3,6 +3,7 @@ import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { SessionTimeout } from "@/components/app/SessionTimeout";
+import { PwaProvider } from "@/components/app/PwaProvider";
 import { IntentProvider } from "@/lib/context/IntentContext";
 import { PortfolioProvider } from "@/lib/hooks/usePortfolio";
 import { ChaptersProvider } from "@/lib/context/ChaptersContext";
@@ -25,12 +26,21 @@ export const metadata: Metadata = {
   title: "Career OS — Navigate your career with intent",
   description:
     "Career OS is the candidate-centered career intelligence platform. See where you stand, where you can go, and what to do next.",
+  // PWA (Feature 11): standalone launch on iOS; manifest + icons come
+  // from the app/manifest.ts and app/apple-icon.tsx file conventions.
+  appleWebApp: {
+    capable: true,
+    title: "Career OS",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 // Mobile pass: explicit, responsive viewport (no forced zoom lock).
+// themeColor matches the dark app ground (dark-mode-only app).
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#0b0d14",
 };
 
 export default function RootLayout({
@@ -48,6 +58,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <SessionTimeout />
+          <PwaProvider />
           <IntentProvider>
             <NotificationsProvider>
               <PortfolioProvider>

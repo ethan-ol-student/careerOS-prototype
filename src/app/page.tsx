@@ -22,8 +22,9 @@ import { Mockup, MockupFrame } from "@/components/ui/Mockup";
 import { Navbar } from "@/components/marketing/Navbar";
 import { DashboardPreview } from "@/components/marketing/DashboardPreview";
 import { FeaturesCarousel } from "@/components/marketing/FeaturesCarousel";
+import { LiveMatchDemo } from "@/components/marketing/LiveMatchDemo";
 import { Parallax } from "@/components/marketing/Parallax";
-import { isTestModeEnabled } from "@/lib/dev/testMode";
+import { isJudgeDemoEnabled } from "@/lib/dev/testMode";
 import { cn } from "@/lib/utils";
 
 const CANDIDATE_BENEFITS = [
@@ -44,6 +45,24 @@ const CANDIDATE_BENEFITS = [
   },
 ];
 
+const MID_CAREER_VALUE = [
+  {
+    icon: Activity,
+    title: "A Career Health Score, not a job board",
+    body: "Skill relevance, fair pay, and your best next move — one calm monthly check-up instead of daily noise.",
+  },
+  {
+    icon: Compass,
+    title: "Same skill, different door",
+    body: "The Transferable Skill Map shows how much of each nearby role you already cover — and the Skill Bridge names the exact few skills to close.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Every recommendation explains itself",
+    body: 'Safe, growth, and bold pathways each carry a "Why this recommendation?" — reasons and trade-offs, never a verdict from a black box.',
+  },
+];
+
 const EMPLOYER_VALUE = [
   {
     icon: Search,
@@ -59,6 +78,26 @@ const EMPLOYER_VALUE = [
     icon: ShieldCheck,
     title: "Transparent matches",
     body: "Every match is explainable: the exact skills, evidence, and chapters behind a candidate's readiness score.",
+  },
+];
+
+// Trust = methodology, not vanity metrics: every claim here is verifiable
+// in-product (this is a research preview — we don't invent user counts).
+const TRUST_POINTS = [
+  {
+    icon: ShieldCheck,
+    title: "Deterministic scoring",
+    body: "Same inputs, same score, every time. Eleven engines, assertion-checked on every release.",
+  },
+  {
+    icon: Eye,
+    title: "Explainable by contract",
+    body: 'Every score ships with its reasons — the "Why this recommendation?" button is never paywalled.',
+  },
+  {
+    icon: Handshake,
+    title: "Honest demo data",
+    body: "Seeded content is curated, cited, and always labelled — and your salary input stays private to you.",
   },
 ];
 
@@ -159,7 +198,7 @@ export default function LandingPage() {
               >
                 Find talent
               </LinkButton>
-              {isTestModeEnabled() && (
+              {isJudgeDemoEnabled() && (
                 <LinkButton href="/judge" variant="outline" icon={<Sparkles />}>
                   Judge Demo
                 </LinkButton>
@@ -255,6 +294,52 @@ export default function LandingPage() {
                 Start your journey
               </LinkButton>
             </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ─────────────── EXPERIENCED PROFESSIONALS (35+) ─────────────── */}
+      <Section id="second-career" className="relative">
+        <div className="max-w-container mx-auto grid items-center gap-12 md:grid-cols-12">
+          {/* Content */}
+          <div className="md:col-span-7">
+            <Badge variant="outline" className="mb-4">
+              <span className="text-muted-foreground">
+                For experienced professionals 35+
+              </span>
+            </Badge>
+            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl md:text-5xl">
+              Your second career does{" "}
+              <span className="text-luminous">not start from zero</span>.
+            </h2>
+            <p className="text-muted-foreground mt-4 max-w-2xl text-pretty text-base sm:text-lg">
+              Two decades of solved problems is capital, not baggage. Career
+              OS reads your history as proof of capability and shows — with
+              reasons, never black boxes — where it transfers next.
+            </p>
+
+            <ul className="mt-8 flex flex-col gap-5">
+              {MID_CAREER_VALUE.map(({ icon: Icon, title, body }) => (
+                <li key={title} className="flex items-start gap-4">
+                  <span className="bg-luminous/15 text-luminous flex size-10 shrink-0 items-center justify-center rounded-xl">
+                    <Icon className="size-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold tracking-tight">
+                      {title}
+                    </h3>
+                    <p className="text-muted-foreground mt-1 text-pretty text-sm leading-relaxed">
+                      {body}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Wildcard: the real engine, live, no login */}
+          <div className="md:col-span-5">
+            <LiveMatchDemo />
           </div>
         </div>
       </Section>
@@ -384,6 +469,25 @@ export default function LandingPage() {
               );
             })}
           </ol>
+        </div>
+      </Section>
+
+      {/* ───────────────────── TRUST — HONEST METHODOLOGY ───────────────────── */}
+      <Section className="bg-card/40 relative py-10 sm:py-12">
+        <div className="max-w-container mx-auto grid gap-6 sm:grid-cols-3">
+          {TRUST_POINTS.map(({ icon: Icon, title, body }) => (
+            <div key={title} className="flex items-start gap-3">
+              <span className="bg-luminous/15 text-luminous flex size-9 shrink-0 items-center justify-center rounded-lg">
+                <Icon className="size-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+                <p className="text-muted-foreground mt-1 text-pretty text-xs leading-relaxed">
+                  {body}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </Section>
 

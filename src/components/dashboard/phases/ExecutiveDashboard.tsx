@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Landmark,
   Briefcase,
@@ -167,6 +168,20 @@ export function ExecutiveDashboard({ data }: PhaseDashboardProps) {
 
       <PhaseWidgetGrid topLine>
         <Col span={12}>
+          {/* Second Act Lab — static explorer for senior phases (stretch). */}
+          <Link
+            href="/candidate/second-act"
+            className="glass-2 border-border/40 hover:border-luminous/40 mb-4 flex items-center justify-between gap-3 rounded-2xl border px-5 py-4 transition-colors"
+          >
+            <div>
+              <p className="font-semibold">Career Second Act Lab</p>
+              <p className="text-muted-foreground text-sm">
+                Advisory, consulting, mentorship, or a deliberate downshift —
+                four honest pathways plus the Never Too Late Map.
+              </p>
+            </div>
+            <ArrowUpRight className="text-luminous size-5 shrink-0" />
+          </Link>
           <GatekeeperChecklist />
         </Col>
       </PhaseWidgetGrid>
