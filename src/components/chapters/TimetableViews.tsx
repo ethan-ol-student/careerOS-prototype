@@ -49,14 +49,14 @@ export function TimetableHeader({
   };
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div className="inline-flex overflow-hidden rounded-md border border-border/60 bg-card/40">
+      <div className="inline-flex overflow-hidden rounded-lg border border-border/15 bg-foreground/2">
         {(["week","month","year"] as Timeframe[]).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => onViewChange(t)}
             className={cn(
-              "min-h-9 px-3 py-1.5 text-xs uppercase tracking-wider transition-colors",
+              "min-h-9 px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors",
               view === t ? "bg-luminous text-white" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -69,7 +69,7 @@ export function TimetableHeader({
           type="button"
           onClick={() => shift(-1)}
           aria-label="Previous"
-          className="border-border/60 bg-card/40 hover:text-luminous text-muted-foreground flex size-9 items-center justify-center rounded-md border"
+          className="border-border/15 bg-foreground/2 hover:text-luminous text-muted-foreground flex size-9 items-center justify-center rounded-lg border"
         >
           <ChevronLeft className="size-4" />
         </button>
@@ -78,14 +78,14 @@ export function TimetableHeader({
           type="button"
           onClick={() => shift(1)}
           aria-label="Next"
-          className="border-border/60 bg-card/40 hover:text-luminous text-muted-foreground flex size-9 items-center justify-center rounded-md border"
+          className="border-border/15 bg-foreground/2 hover:text-luminous text-muted-foreground flex size-9 items-center justify-center rounded-lg border"
         >
           <ChevronRight className="size-4" />
         </button>
         <button
           type="button"
           onClick={() => onAnchorChange(new Date())}
-          className="border-border/60 bg-card/40 hover:text-luminous text-muted-foreground min-h-9 rounded-md border px-3 text-xs"
+          className="border-border/15 bg-foreground/2 hover:text-luminous text-muted-foreground min-h-9 rounded-lg border px-3 text-xs"
         >
           Today
         </button>
@@ -125,7 +125,7 @@ export function WeeklyView({ anchor }: { anchor: Date }) {
             )}
           >
             <div className="mb-2 flex items-baseline justify-between">
-              <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
+              <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-wider">
                 {DOW[i]}
               </p>
               <p className={cn("font-mono text-sm", today && "text-luminous font-semibold")}>
@@ -160,7 +160,7 @@ export function MonthlyView({ anchor }: { anchor: Date }) {
 
   return (
     <div className="glass-3 rounded-2xl p-4">
-      <div className="text-muted-foreground mb-2 grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-wider">
+      <div className="text-muted-foreground mb-2 grid grid-cols-7 gap-1 text-center font-mono text-[10px] uppercase tracking-wider">
         {DOW.map((d) => <span key={d}>{d}</span>)}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -174,7 +174,7 @@ export function MonthlyView({ anchor }: { anchor: Date }) {
               key={iso}
               className={cn(
                 "min-h-[88px] rounded-lg border p-2 text-left transition-colors",
-                inMonth ? "border-border/40 bg-card/40" : "border-border/20 bg-card/10 opacity-60",
+                inMonth ? "border-border/15 bg-foreground/2" : "border-border/20 bg-card/10 opacity-60",
                 today && "ring-luminous/40 border-luminous/50 ring-2",
               )}
             >
@@ -223,7 +223,7 @@ export function YearlyView({ anchor }: { anchor: Date }) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
       {MONTHS.map((m, i) => (
         <div key={m} className="glass-3 flex flex-col gap-2 rounded-xl p-4">
-          <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
+          <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-wider">
             {m} {String(year).slice(2)}
           </p>
           <p className="font-mono text-2xl">{counts[i]}</p>
@@ -243,7 +243,7 @@ function EventChip({ event }: { event: ChapterEvent }) {
   const meta = PRIORITY_META[event.priority];
   const done = event.subtasks.filter((s) => s.done).length;
   return (
-    <li className={cn("rounded-md border p-2", meta.tone.replace("text-", "border-"), "bg-card/40")}>
+    <li className={cn("rounded-lg border p-2", meta.tone.replace("text-", "border-"), "bg-card/40")}>
       {/* <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -304,7 +304,7 @@ function EventChip({ event }: { event: ChapterEvent }) {
       </div>
 
       {open && event.subtasks.length > 0 && (
-        <ul className="border-border/40 mt-2 flex flex-col gap-1 border-t pt-2">
+        <ul className="border-border/15 mt-2 flex flex-col gap-1 border-t pt-2">
           {event.subtasks.map((s) => (
             <li key={s.id} className="flex items-center gap-2 text-[11px]">
               <button
@@ -313,7 +313,7 @@ function EventChip({ event }: { event: ChapterEvent }) {
                 aria-pressed={s.done}
                 className={cn(
                   "flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
-                  s.done ? "bg-clover border-clover text-white" : "border-border/60",
+                  s.done ? "bg-clover border-clover text-white" : "border-border/20",
                 )}
               >
                 {s.done && <CalendarDays className="size-2.5" />}

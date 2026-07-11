@@ -84,7 +84,7 @@ export function ContactForm({ candidate }: ContactFormProps) {
         </Link>
 
         <div className="glass-4 ring-luminous/20 rounded-2xl p-6 ring-1 sm:p-8">
-          <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
             New message
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -94,10 +94,10 @@ export function ContactForm({ candidate }: ContactFormProps) {
             {candidate.targetRole} · {candidate.industry} · {candidate.location}
           </p>
 
-          <div className="border-border/40 mt-6 flex flex-col gap-4 border-t pt-6">
+          <div className="border-border/15 mt-6 flex flex-col gap-4 border-t pt-6">
             <Field label="To">
-              <div className="glass-3 flex items-center gap-2 rounded-md px-3 py-2 text-sm">
-                <span className="bg-luminous/15 text-luminous flex size-7 items-center justify-center rounded-full text-xs font-semibold">
+              <div className="glass-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm">
+                <span className="bg-luminous/15 text-luminous-soft flex size-7 items-center justify-center rounded-full text-xs font-semibold">
                   {candidate.name
                     .split(" ")
                     .map((p) => p[0])
@@ -130,7 +130,7 @@ export function ContactForm({ candidate }: ContactFormProps) {
                   errors.subject ? "contact-subject-error" : undefined
                 }
                 className={cn(
-                  "glass-3 focus-visible:border-luminous focus-visible:ring-luminous/40 w-full rounded-md border border-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2",
+                  "bg-foreground/2 border-border/15 focus-visible:border-luminous/60 focus-visible:ring-luminous/40 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2",
                   errors.subject &&
                     "border-destructive/60 focus-visible:ring-destructive/40",
                 )}
@@ -153,7 +153,7 @@ export function ContactForm({ candidate }: ContactFormProps) {
                   errors.message ? "contact-message-error" : undefined
                 }
                 className={cn(
-                  "glass-3 focus-visible:border-luminous focus-visible:ring-luminous/40 w-full resize-y rounded-md border border-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2",
+                  "bg-foreground/2 border-border/15 focus-visible:border-luminous/60 focus-visible:ring-luminous/40 w-full resize-y rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2",
                   errors.message &&
                     "border-destructive/60 focus-visible:ring-destructive/40",
                 )}
@@ -180,7 +180,7 @@ export function ContactForm({ candidate }: ContactFormProps) {
       {/* Candidate side panel */}
       <aside className="col-span-12 lg:col-span-4">
         <div className="glass-3 rounded-2xl p-5">
-          <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
             Reaching out to
           </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight">
@@ -194,18 +194,18 @@ export function ContactForm({ candidate }: ContactFormProps) {
             {candidate.topSkills.slice(0, 5).map((skill) => (
               <span
                 key={skill}
-                className="bg-card/60 border-border/60 text-foreground/90 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px]"
+                className="bg-card/60 border-border/20 text-foreground/90 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px]"
               >
                 {skill}
               </span>
             ))}
           </div>
 
-          <div className="border-border/40 mt-4 flex items-center gap-2 border-t pt-4 text-xs">
-            <span className="bg-luminous/10 text-luminous border-luminous/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
+          <div className="border-border/15 mt-4 flex items-center gap-2 border-t pt-4 text-xs">
+            <span className="bg-luminous/10 text-luminous-soft border-luminous/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
               Match {candidate.matchScore}
             </span>
-            <span className="bg-clover/10 text-clover border-clover/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
+            <span className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
               Readiness {candidate.readinessScore}
             </span>
           </div>
@@ -233,7 +233,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-[11px] uppercase tracking-wider">
+      <span className="text-muted-foreground font-mono text-[11px] uppercase tracking-wider">
         {label}
       </span>
       {children}
@@ -261,7 +261,7 @@ function SuccessModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Invite sent" size="sm" hideVisibleTitle>
       <div className="flex flex-col items-center gap-4 py-2 text-center">
-        <div className="bg-clover/15 text-clover ring-2 ring-clover/40 flex size-14 items-center justify-center rounded-full">
+        <div className="bg-clover/15 text-clover-soft ring-2 ring-clover/40 flex size-14 items-center justify-center rounded-full">
           <Check className="size-7" strokeWidth={2.5} />
         </div>
         <h3 className="text-lg font-semibold leading-tight">

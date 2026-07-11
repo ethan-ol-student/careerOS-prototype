@@ -1,11 +1,11 @@
 /**
  * Type contract for the phase-driven Candidate dashboard.
  *
- * One unified dashboard route (`/candidate/dashboard`) renders a
- * persistent shell and then selects a phase-specific inner view via
- * the Registry Pattern (see `PhaseDashboardRegistry`). The user's
- * phase comes from the backend (`CandidatesAI.careerStage`) and is
- * normalized into the `CareerPhase` union below.
+ * One unified dashboard route (`/candidate/dashboard`) renders the
+ * four-question cockpit (`CockpitDashboard`). The user's phase comes
+ * from the backend (`CandidatesAI.careerStage`) and is normalized into
+ * the `CareerPhase` union below; per-phase config is now display
+ * metadata only (label/purpose/accent/density).
  */
 
 import type { CandidatesAIData } from "@/lib/hooks/useCandidatesAI";
@@ -41,66 +41,17 @@ export type PhaseAccent = "luminous" | "clover";
  */
 export type UiDensity = "calm" | "vibrant";
 
-/**
- * Lightweight descriptor for a phase's "focus widgets" — the headline
- * areas a phase is about. Rendered as a quick overview in the shell /
- * phase indicator. The actual interactive widgets are React components
- * composed inside each phase dashboard.
- */
-export interface PhaseWidget {
-  id: string;
-  label: string;
-  hint?: string;
-}
-
-/**
- * A single criterion a candidate must satisfy to transition to the
- * next phase. `derive` lets a milestone read its completion straight
- * from real candidate data when the backend supports it; milestones
- * without a `derive` fall back to manual (local) check state.
- */
-export interface TransitionMilestone {
-  id: string;
-  label: string;
-  description?: string;
-  /**
-   * Optional predicate that derives completion from real candidate
-   * data (portfolio / onboarding answers). When present the checkbox
-   * reflects live data unless the user explicitly overrides it.
-   */
-  derive?: (data: CandidateDashboardData) => boolean;
-}
-
-/**
- * Explicit user overrides for milestone check state, keyed by
- * milestone id. Stored locally today (see `useMilestoneProgress`);
- * shaped so a future `/api/me/milestones` route can persist it 1:1.
- */
-export type MilestoneProgress = Record<string, boolean>;
-
-/** Static config that describes one phase's dashboard. */
+/** Static display metadata for one phase. */
 export interface PhaseDashboardConfig {
   phase: CareerPhase;
   /** Human label, e.g. "Young Adult". */
   label: string;
-  /** Rough age band shown beside the label, e.g. "18–22". */
-  ageHint: string;
-  /** Main goal header for the phase, e.g. "Discover interests and paths". */
-  goalHeader: string;
-  /** One-line purpose surfaced in the phase indicator. */
+  /** One-line purpose (used by the judge demo data builder). */
   purpose: string;
-  /** Accent used for the phase indicator / progress meter. */
+  /** Accent token for phase-tinted UI. */
   accent: PhaseAccent;
   /** Default UI density for this phase (user-overridable in Settings). */
   density: UiDensity;
-  /** Headline focus areas for the phase (overview only). */
-  focusWidgets: PhaseWidget[];
-  /** Criteria required to transition out of this phase. */
-  milestones: TransitionMilestone[];
-  /** The phase a candidate moves to next, or null for the terminal phase. */
-  nextPhase: CareerPhase | null;
-  /** True for the terminal phase (executive). */
-  isFinal: boolean;
 }
 
 /** Compact portfolio snapshot derived from `usePortfolio`. */
@@ -150,9 +101,4 @@ export interface CandidateDashboardPayload {
   data: CandidateDashboardData | null;
   /** True when the phase is missing and onboarding isn't complete. */
   needsSetup: boolean;
-}
-
-/** Props every phase-specific dashboard component receives. */
-export interface PhaseDashboardProps {
-  data: CandidateDashboardData;
 }

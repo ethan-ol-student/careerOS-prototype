@@ -12,7 +12,7 @@
  */
 
 /** Legacy/global prefix used by older keys (drafts, dev caches, adapters). */
-export const LEGACY_CACHE_PREFIX = "career-os-";
+const LEGACY_CACHE_PREFIX = "career-os-";
 /** Prefix for the new per-user scoped keys. */
 export const SCOPED_CACHE_PREFIX = "careeros:";
 
@@ -41,7 +41,7 @@ export const CACHE_BASE = {
  * the same browser) and purge stale caches. Intentionally uses the
  * legacy prefix so `clearAllAppCache()` also clears it.
  */
-export const ACTIVE_USER_KEY = `${LEGACY_CACHE_PREFIX}active-user`;
+const ACTIVE_USER_KEY = `${LEGACY_CACHE_PREFIX}active-user`;
 
 /** Minimal shape we need to scope a key — matches `AuthUser`. */
 interface ScopeUser {
@@ -110,7 +110,7 @@ export function clearAllAppCache(): void {
 }
 
 /** Read the cached "active user" marker, or null. */
-export function readActiveUserMarker(): string | null {
+function readActiveUserMarker(): string | null {
   if (typeof window === "undefined") return null;
   try {
     return localStorage.getItem(ACTIVE_USER_KEY);
@@ -120,7 +120,7 @@ export function readActiveUserMarker(): string | null {
 }
 
 /** Record the active user id (after any account-switch purge). */
-export function writeActiveUserMarker(userId: string): void {
+function writeActiveUserMarker(userId: string): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(ACTIVE_USER_KEY, userId);

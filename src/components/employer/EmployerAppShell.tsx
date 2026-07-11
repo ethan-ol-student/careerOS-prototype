@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { LayoutLines } from "@/components/ui/LayoutLines";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { EmployerTopMenu } from "./EmployerTopMenu";
+import { EmployerSidebar } from "./EmployerSidebar";
 import { EmployerNotificationsBell } from "./EmployerNotificationsBell";
 import { DemoDataBanner } from "./DemoDataBanner";
 
@@ -74,35 +75,42 @@ export default function EmployerAppShell({
   };
 
   return (
-    <div className="bg-background text-foreground relative min-h-screen w-full">
+    /* Zero-scroll frame mirroring the candidate AppShell: header +
+       persistent sidebar (desktop) + internally-scrolling content. */
+    <div
+      data-role-accent="employer"
+      className="bg-background text-foreground relative flex h-dvh w-full flex-col overflow-hidden"
+    >
       <LayoutLines />
       <DemoDataBanner />
-      <header className="sticky top-0 z-50 -mb-4 px-4 pb-4">
+      <header className="relative z-50 -mb-4 shrink-0 pb-4">
         <div className="fade-bottom bg-background/15 absolute left-0 h-24 w-full backdrop-blur-lg" />
-        <div className="max-w-container relative mx-auto">
-          <nav className="flex items-center justify-between py-4">
-            {/* Employer logo stays inside the employer experience —
-                clicking it returns to the marketplace, not the landing
-                page. The clover-tinted Compass + "Employer" label make
-                the current mode unmistakable. */}
+        <nav className="relative flex items-center justify-between py-4 pr-4">
+          {/* Logo slot mirrors the sidebar width; clicking it returns to
+              the employer dashboard. Clover Compass = employer mode. */}
+          <div className="flex shrink-0 items-center px-4 lg:w-60 lg:px-6">
             <Link
-              href="/employers/marketplace"
+              href="/employers/dashboard"
               className="flex items-center gap-2 text-base font-semibold tracking-tight"
             >
               <Compass className="size-5 text-clover" />
               Career OS
-              <span className="text-muted-foreground ml-1 text-[10px] font-medium uppercase tracking-wider">
+              <span className="text-muted-foreground ml-1 hidden text-[10px] font-mono font-medium uppercase tracking-wider sm:inline">
                 · Employer
               </span>
             </Link>
-            <div className="flex items-center gap-2">
-              <EmployerNotificationsBell />
-              <EmployerTopMenu onSignOut={() => setShowSignOut(true)} />
-            </div>
-          </nav>
-        </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <EmployerNotificationsBell />
+            <EmployerTopMenu onSignOut={() => setShowSignOut(true)} />
+          </div>
+        </nav>
       </header>
-      <div className="relative z-10">{children}</div>
+
+      <div className="relative z-10 flex min-h-0 flex-1">
+        <EmployerSidebar onSignOut={() => setShowSignOut(true)} />
+        <div className="min-w-0 flex-1 overflow-y-auto">{children}</div>
+      </div>
 
       <ConfirmDialog
         isOpen={showSignOut}

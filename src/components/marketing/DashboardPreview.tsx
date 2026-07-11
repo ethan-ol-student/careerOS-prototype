@@ -16,7 +16,7 @@ export function DashboardPreview() {
   return (
     <div className="bg-background relative w-full overflow-hidden text-left text-foreground">
       {/* Title bar */}
-      <div className="flex items-center gap-3 border-b border-border/40 px-4 py-2.5">
+      <div className="flex items-center gap-3 border-b border-border/15 px-4 py-2.5">
         <div className="flex gap-1.5">
           <span className="size-2.5 rounded-full bg-muted-foreground/40" />
           <span className="size-2.5 rounded-full bg-muted-foreground/40" />
@@ -41,7 +41,7 @@ export function DashboardPreview() {
             <div
               key={item.label}
               className={
-                "rounded-md px-3 py-2 text-xs font-medium transition-colors " +
+                "rounded-lg px-3 py-2 text-xs font-medium transition-colors " +
                 (item.active
                   ? "bg-muted text-foreground"
                   : "text-muted-foreground")
@@ -56,7 +56,7 @@ export function DashboardPreview() {
         <div className="col-span-12 flex flex-col gap-4 md:col-span-9">
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 Career state
               </p>
               <h3 className="text-lg font-semibold tracking-tight sm:text-xl">
@@ -93,9 +93,9 @@ export function DashboardPreview() {
             ].map((kpi) => (
               <div
                 key={kpi.label}
-                className="rounded-lg border border-border/40 bg-card/60 p-3"
+                className="rounded-lg border border-border/15 bg-card/60 p-3"
               >
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   {kpi.icon}
                   {kpi.label}
                 </div>
@@ -106,7 +106,7 @@ export function DashboardPreview() {
           </div>
 
           {/* Trajectory chart */}
-          <div className="rounded-lg border border-border/40 bg-card/60 p-3">
+          <div className="rounded-lg border border-border/15 bg-card/60 p-3">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-medium">
                 <TrendingUp className="size-3.5 text-brand" />
@@ -183,7 +183,7 @@ export function DashboardPreview() {
           </div>
 
           {/* Recommended actions */}
-          <div className="rounded-lg border border-border/40 bg-card/60 p-3">
+          <div className="rounded-lg border border-border/15 bg-card/60 p-3">
             <div className="mb-2 flex items-center justify-between text-xs font-medium">
               <span className="flex items-center gap-1.5">
                 <Sparkles className="size-3.5 text-brand" />

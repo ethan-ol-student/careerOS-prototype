@@ -53,7 +53,7 @@ export function SettingsField({
 }) {
   return (
     <label htmlFor={htmlFor} className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-[11px] font-medium uppercase tracking-wider">
+      <span className="text-muted-foreground text-[11px] font-mono font-medium uppercase tracking-wider">
         {label}
       </span>
       {children}
@@ -65,4 +65,4 @@ export function SettingsField({
 }
 
 export const settingsInputClass =
-  "glass-3 focus-visible:border-luminous focus-visible:ring-luminous/40 w-full rounded-md border border-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2 disabled:opacity-60";
+  "bg-foreground/2 border-border/15 focus-visible:border-luminous/60 focus-visible:ring-luminous/40 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2 disabled:opacity-60";

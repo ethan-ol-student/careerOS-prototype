@@ -21,7 +21,7 @@ export function TestDataControls({
     <div className="grid gap-5 lg:grid-cols-2">
       {/* Candidate data */}
       <div className="flex flex-col gap-2">
-        <p className="text-luminous text-[11px] font-semibold uppercase tracking-wider">
+        <p className="text-luminous text-[11px] font-mono font-semibold uppercase tracking-wider">
           Candidate data
         </p>
         <Row
@@ -57,7 +57,7 @@ export function TestDataControls({
 
       {/* Employer data */}
       <div className="flex flex-col gap-2">
-        <p className="text-clover text-[11px] font-semibold uppercase tracking-wider">
+        <p className="text-clover text-[11px] font-mono font-semibold uppercase tracking-wider">
           Employer data
         </p>
         <Row label="Saved candidates" state={status ? `${status.employer.saved}` : undefined}>

@@ -33,6 +33,7 @@ export async function GET() {
         id: a.job.id,
         title: a.job.title,
         company: a.job.company.name,
+        status: a.job.status, // "fulfilled" = hired for the funnel
       },
       candidate: {
         name: a.candidateProfile.name || "Unnamed candidate",

@@ -5,6 +5,7 @@ import { Users, Loader2, Clock } from "lucide-react";
 import EmployerAppShell from "@/components/employer/EmployerAppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Chip } from "@/components/ui/Chip";
+import { Select } from "@/components/ui/Select";
 
 interface ApplicantRow {
   id: string;
@@ -62,7 +63,7 @@ export default function ApplicantsPage() {
   return (
     <EmployerAppShell>
       <main className="max-w-container mx-auto px-4 pb-16 pt-6">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Hiring loop
         </p>
         <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold sm:text-3xl">
@@ -123,7 +124,7 @@ export default function ApplicantsPage() {
                       <div className="shrink-0">
                         <label className="text-muted-foreground block text-xs">
                           Status
-                          <select
+                          <Select
                             value={
                               EMPLOYER_STATUSES.includes(
                                 a.status as (typeof EMPLOYER_STATUSES)[number],
@@ -135,7 +136,8 @@ export default function ApplicantsPage() {
                               if (e.target.value) void setStatus(a.id, e.target.value);
                             }}
                             disabled={busy === a.id}
-                            className="border-border/60 bg-card text-foreground mt-1 block min-h-11 w-44 rounded-md border px-2 text-sm"
+                            wrapperClassName="mt-1 w-44"
+                            className="min-h-11"
                           >
                             <option value="" disabled>
                               {a.status === "submitted" ? "Choose a response…" : a.status}
@@ -145,7 +147,7 @@ export default function ApplicantsPage() {
                                 {s}
                               </option>
                             ))}
-                          </select>
+                          </Select>
                         </label>
                       </div>
                     </div>

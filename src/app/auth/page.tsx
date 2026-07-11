@@ -77,7 +77,7 @@ export default function AuthPage() {
     if (user.role === "employer") {
       router.replace(
         employerOnboardingCompleted
-          ? "/employers/marketplace"
+          ? "/employers/dashboard"
           : "/employers/onboarding",
       );
     } else {
@@ -215,7 +215,7 @@ export default function AuthPage() {
           <div
             role="tablist"
             aria-label="Authentication mode"
-            className="bg-card/40 border-border/60 mb-6 grid grid-cols-2 gap-1 rounded-lg border p-1 text-sm"
+            className="bg-card/40 border-border/20 mb-6 grid grid-cols-2 gap-1 rounded-lg border p-1 text-sm"
           >
             <button
               type="button"
@@ -226,7 +226,7 @@ export default function AuthPage() {
                 setError(null);
               }}
               className={cn(
-                "rounded-md px-3 py-2 font-medium transition-colors",
+                "rounded-lg px-3 py-2 font-medium transition-colors",
                 mode === "signup"
                   ? cn("bg-background shadow-sm", accent.text)
                   : "text-muted-foreground hover:text-foreground",
@@ -244,7 +244,7 @@ export default function AuthPage() {
                 setError(null);
               }}
               className={cn(
-                "rounded-md px-3 py-2 font-medium transition-colors",
+                "rounded-lg px-3 py-2 font-medium transition-colors",
                 mode === "login"
                   ? cn("bg-background shadow-sm", accent.text)
                   : "text-muted-foreground hover:text-foreground",
@@ -262,7 +262,7 @@ export default function AuthPage() {
             <div className="mb-6">
               <a
                 href="/api/auth/google/start"
-                className="border-border/60 bg-card/40 hover:border-luminous/60 hover:text-luminous inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors"
+                className="border-border/15 bg-foreground/2 hover:border-luminous/60 hover:text-luminous inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
               >
                 <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
                   <path
@@ -272,7 +272,7 @@ export default function AuthPage() {
                 </svg>
                 Continue with Google
               </a>
-              <div className="text-muted-foreground mt-4 flex items-center gap-3 text-[11px] uppercase tracking-wider">
+              <div className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-[11px] uppercase tracking-wider">
                 <span className="line-t h-px flex-1" />
                 or use email
                 <span className="line-t h-px flex-1" />
@@ -292,7 +292,7 @@ export default function AuthPage() {
 
               {/* Role picker (drives the accent tint) */}
               <fieldset>
-                <legend className="text-muted-foreground mb-2 text-xs uppercase tracking-wider">
+                <legend className="text-muted-foreground mb-2 font-mono text-xs uppercase tracking-wider">
                   Account type
                 </legend>
                 <div className="grid grid-cols-2 gap-2">
@@ -494,7 +494,7 @@ export default function AuthPage() {
 
 function inputClasses(borderActive: string) {
   return cn(
-    "glass-3 focus-visible:ring-2 mt-1.5 w-full rounded-md border border-transparent px-3 py-2 text-sm outline-none transition-colors",
+    "bg-foreground/2 border-border/15 focus-visible:ring-2 mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors",
     `focus-visible:${borderActive}`,
   );
 }
@@ -516,7 +516,7 @@ function Field({
     <div className="flex flex-col">
       <label
         htmlFor={htmlFor}
-        className="text-muted-foreground text-[11px] uppercase tracking-wider"
+        className="text-muted-foreground font-mono text-[11px] uppercase tracking-wider"
       >
         {label}
         {required ? <span aria-hidden> *</span> : null}
@@ -560,8 +560,8 @@ function RoleCard({
 }) {
   const tone =
     accent === "luminous"
-      ? "border-luminous bg-luminous/10 text-luminous ring-luminous/40"
-      : "border-clover bg-clover/10 text-clover ring-clover/40";
+      ? "border-luminous bg-luminous/10 text-luminous-soft ring-luminous/40"
+      : "border-clover bg-clover/10 text-clover-soft ring-clover/40";
   return (
     <button
       type="button"
@@ -570,7 +570,7 @@ function RoleCard({
         "flex flex-col items-start gap-1 rounded-lg border px-3 py-2 text-left text-sm transition-all",
         active
           ? cn("ring-2", tone)
-          : "border-border/60 bg-card/40 hover:border-border",
+          : "border-border/15 bg-foreground/2 hover:border-border",
       )}
       aria-pressed={active}
     >

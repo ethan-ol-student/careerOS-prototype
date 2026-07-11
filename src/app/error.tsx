@@ -34,7 +34,7 @@ export default function RouteError({
           <AlertTriangle className="size-6" aria-hidden />
         </span>
 
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Something went sideways
         </p>
 
@@ -57,14 +57,14 @@ export default function RouteError({
           <button
             type="button"
             onClick={() => reset()}
-            className="text-primary-foreground bg-linear-to-b from-primary/60 to-primary/100 dark:from-primary/100 dark:to-primary/70 border-t border-t-primary hover:from-primary/70 hover:to-primary/90 dark:hover:from-primary/80 dark:hover:to-primary/70 focus-visible:ring-luminous/40 inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium shadow-sm transition-colors focus:outline-none focus-visible:ring-2"
+            className="text-primary-foreground bg-linear-to-b from-primary/60 to-primary/100 dark:from-primary/100 dark:to-primary/70 border-t border-t-primary hover:from-primary/70 hover:to-primary/90 dark:hover:from-primary/80 dark:hover:to-primary/70 focus-visible:ring-luminous/40 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-medium shadow-sm transition-colors focus:outline-none focus-visible:ring-2"
           >
             <RotateCcw className="size-4" aria-hidden />
             Try again
           </button>
           <Link
             href="/"
-            className="border-border/60 hover:border-luminous/60 hover:text-luminous focus-visible:ring-luminous/40 inline-flex min-h-10 items-center justify-center gap-2 rounded-md border px-5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
+            className="border-border/20 hover:border-luminous/60 hover:text-luminous focus-visible:ring-luminous/40 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
           >
             <Home className="size-4" aria-hidden />
             Back to landing

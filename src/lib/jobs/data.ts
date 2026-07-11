@@ -2,7 +2,6 @@
 //   • Onboarding "desired job" picker.
 //   • Career Readiness panel (progress toward picked job).
 //   • Notification system (matches when all required skills are met).
-//   • Trajectory destinations.
 
 export interface TargetJob {
   id: string;

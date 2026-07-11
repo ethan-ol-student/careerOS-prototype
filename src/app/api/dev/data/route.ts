@@ -135,6 +135,9 @@ export async function POST(request: Request) {
         break;
       }
       case "candidate.skills.empty": {
+        // Clear the SkillClaim rows too — they're the trust source the
+        // mirror is derived from (added with the Skills Truth model).
+        await prisma.skillClaim.deleteMany({ where: { profileId } });
         await prisma.candidateProfile.update({
           where: { id: profileId },
           data: { skills: [] },

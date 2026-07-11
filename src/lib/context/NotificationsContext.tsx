@@ -9,7 +9,8 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { getApiAdapter } from "@/lib/api";
+import { httpAdapter as api } from "@/lib/api/httpAdapter";
+import { useAuth } from "@/lib/context/AuthContext";
 import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
 import type { ContextStatus } from "@/lib/types/contextStatus";
 
@@ -54,9 +55,24 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  // Initial load: quick paint from cache, then authoritative fetch.
+  // Auth-keyed hydration: re-runs on login/logout so a fresh sign-in
+  // gets data without a manual reload (providers mount at the root).
+  const { user, status: authStatus } = useAuth();
+  const userId = user?.id ?? null;
+  const userRole = user?.role ?? null;
+
+  // Load on auth change: quick paint from cache, then authoritative fetch.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
+    if (authStatus !== "ready") return;
+    if (!userId || userRole !== "candidate") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth-keyed reset
+      setNotifications([]);
+      setStatus("idle");
+      setError(null);
+      setIsHydrated(true);
+      return;
+    }
+     
     setStatus("loading");
     try {
       const cached = localStorage.getItem(currentScopedKey(CACHE_BASE.candidateNotifications));
@@ -71,7 +87,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const api = await getApiAdapter();
         const result = await api.getCandidateProfile();
         if (cancelled) return;
         if (!result.ok) {
@@ -104,7 +119,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authStatus, userId, userRole]);
 
   // Persistence side-effect: write the React state back to the cache
   // whenever it changes (post-hydration), so a refresh paints fast.

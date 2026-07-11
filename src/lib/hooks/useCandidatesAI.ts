@@ -36,6 +36,8 @@ export interface CandidatesAIData {
   interviewConfidence: "low" | "medium" | "high" | null;
   dashboardPersonalizationSummary: string | null;
   onboardingCompleted: boolean;
+  // Onboarding v2 — preference signals surfaced on the dashboard.
+  topValues?: string[];
 }
 
 

@@ -26,7 +26,7 @@ function JudgeTourShell() {
           <div className="flex items-center gap-2 text-base font-semibold tracking-tight">
             <Compass className="size-5 text-luminous" />
             Career OS
-            <span className="text-muted-foreground ml-1 text-[10px] font-medium uppercase tracking-wider">
+            <span className="text-muted-foreground ml-1 text-[10px] font-mono font-medium uppercase tracking-wider">
               Judge Tour
             </span>
           </div>
@@ -34,7 +34,7 @@ function JudgeTourShell() {
             <button
               type="button"
               onClick={restart}
-              className="text-luminous hover:text-luminous-soft text-xs font-semibold uppercase tracking-[0.18em] transition-colors"
+              className="text-luminous hover:text-luminous-soft text-xs font-mono font-semibold uppercase tracking-[0.18em] transition-colors"
             >
               Restart guided tour
             </button>

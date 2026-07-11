@@ -42,7 +42,7 @@ export default function ConfirmDialog({
           </Button>
           <button
             onClick={onConfirm}
-            className="bg-destructive hover:bg-destructive/80 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+            className="bg-destructive hover:bg-destructive/80 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
           >
             {confirmLabel}
           </button>

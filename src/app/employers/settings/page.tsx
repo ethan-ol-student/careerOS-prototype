@@ -22,7 +22,7 @@ export default function EmployerSettingsPage() {
       <main className="px-4 pb-16 pt-8">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
           <header className="flex flex-col gap-2">
-            <p className="text-clover text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-clover text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Settings
             </p>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -180,15 +180,15 @@ function CompanyProfileSection() {
         </div>
       </form>
 
-      <div className="border-border/40 mt-5 grid gap-4 border-t pt-5 sm:grid-cols-2">
+      <div className="border-border/15 mt-5 grid gap-4 border-t pt-5 sm:grid-cols-2">
         <div>
-          <p className="text-muted-foreground mb-1 text-[11px] font-medium uppercase tracking-wider">
+          <p className="text-muted-foreground mb-1 text-[11px] font-mono font-medium uppercase tracking-wider">
             Company type
           </p>
           <p className="text-sm">{ai?.companyType || "—"}</p>
         </div>
         <div>
-          <p className="text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wider">
+          <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
             Industries
           </p>
           {industries.length ? (
@@ -204,7 +204,7 @@ function CompanyProfileSection() {
           )}
         </div>
         <div className="sm:col-span-2">
-          <p className="text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wider">
+          <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
             Hiring focus
           </p>
           {hiringReasons.length ? (

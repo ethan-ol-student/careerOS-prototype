@@ -4,7 +4,7 @@ import { getCurrentCandidateProfile } from "@/lib/api/currentUser";
 import { toTargetJob } from "@/lib/services/jobs.service";
 import { scoreSkillBridge } from "@/lib/intelligence/skillBridgeEngine";
 import { pickBenchmark, type BenchmarkRow } from "@/lib/intelligence/fairPayEngine";
-import { checkEntitlement } from "@/lib/billing/entitlements";
+import { resolveIsPro } from "@/lib/billing/entitlements";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 /**
@@ -22,21 +22,19 @@ export async function GET() {
     // scores stay FREE. Pro gates only the Fair Pay benchmark report and
     // the Skill Bridge gap detail — redacted field-level below, enforced
     // server-side. Judges bypass via isJudgeAccount.
-    const [entitled, [midCareer, experiences, ai, benchmarks, jobRows]] =
+    const [entitled, midCareer, experiences, ai, benchmarks, jobRows] =
       await Promise.all([
-        checkEntitlement(profile.userId),
-        Promise.all([
-          prisma.midCareerProfile.findUnique({
-            where: { candidateProfileId: profile.id },
-          }),
-          prisma.experience.findMany({
-            where: { profileId: profile.id },
-            orderBy: { id: "asc" },
-          }),
-          prisma.candidatesAI.findUnique({ where: { userId: profile.userId } }),
-          prisma.salaryBenchmark.findMany(),
-          prisma.job.findMany({ include: { company: true } }),
-        ]),
+        resolveIsPro(profile.userId),
+        prisma.midCareerProfile.findUnique({
+          where: { candidateProfileId: profile.id },
+        }),
+        prisma.experience.findMany({
+          where: { profileId: profile.id },
+          orderBy: { id: "asc" },
+        }),
+        prisma.candidatesAI.findUnique({ where: { userId: profile.userId } }),
+        prisma.salaryBenchmark.findMany(),
+        prisma.job.findMany({ include: { company: true } }),
       ]);
 
     const skills = [

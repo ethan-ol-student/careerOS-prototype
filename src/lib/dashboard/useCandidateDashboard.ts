@@ -26,8 +26,8 @@ import type {
  */
 export function useCandidateDashboard(): CandidateDashboardPayload {
   const { user, candidateOnboardingCompleted, status: authStatus } = useAuth();
-  const { intent } = useIntent();
-  const { portfolio } = usePortfolio();
+  const { intent, status: intentStatus } = useIntent();
+  const { portfolio, status: portfolioStatus } = usePortfolio();
   const { data: ai, status: aiStatus, error: aiError } = useCandidatesAI();
 
   return useMemo<CandidateDashboardPayload>(() => {
@@ -46,6 +46,17 @@ export function useCandidateDashboard(): CandidateDashboardPayload {
     // AppShell already redirects non-candidates; render a calm loading
     // state here rather than flashing an error during that redirect.
     if (!user || user.role !== "candidate") {
+      return { status: "loading", error: null, data: null, needsSetup: false };
+    }
+
+    // Wait for the data contexts too, so the dashboard never paints
+    // with a half-hydrated name/portfolio right after login.
+    if (
+      intentStatus === "idle" ||
+      intentStatus === "loading" ||
+      portfolioStatus === "idle" ||
+      portfolioStatus === "loading"
+    ) {
       return { status: "loading", error: null, data: null, needsSetup: false };
     }
 
@@ -112,7 +123,9 @@ export function useCandidateDashboard(): CandidateDashboardPayload {
     user,
     candidateOnboardingCompleted,
     intent,
+    intentStatus,
     portfolio,
+    portfolioStatus,
     ai,
     aiStatus,
     aiError,

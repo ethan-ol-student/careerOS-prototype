@@ -4,8 +4,7 @@ import { Loader2, TriangleAlert, Compass, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { useCandidateDashboard } from "@/lib/dashboard/useCandidateDashboard";
-import { DashboardShell } from "./DashboardShell";
-import { PhaseDashboardRegistry } from "./PhaseDashboardRegistry";
+import { CockpitDashboard } from "./CockpitDashboard";
 
 /**
  * The single Candidate dashboard container.
@@ -14,8 +13,7 @@ import { PhaseDashboardRegistry } from "./PhaseDashboardRegistry";
  *  - read the signed-in candidate's resolved dashboard payload
  *    (`useCandidateDashboard`), whose phase comes from the backend;
  *  - render loading / error / setup-required states safely;
- *  - hand the ready payload to the persistent `DashboardShell` and let
- *    `PhaseDashboardRegistry` pick the phase-specific inner view.
+ *  - hand the ready payload to the four-question `CockpitDashboard`.
  *
  * It NEVER changes the URL when the phase changes — switching phases
  * just swaps the inner component the registry returns. Routing /
@@ -28,11 +26,10 @@ export function MainDashboardWrapper() {
   if (status === "error") return <DashboardError message={error} />;
   if (needsSetup || !data) return <DashboardSetupRequired />;
 
-  return (
-    <DashboardShell data={data}>
-      <PhaseDashboardRegistry data={data} />
-    </DashboardShell>
-  );
+  // Cockpit view (mentor spec): the four-question single screen. The
+  // phase-specific deep modules live behind each card's drill-down link
+  // (mid-career+ Career Health at /candidate/career-health).
+  return <CockpitDashboard data={data} />;
 }
 
 // ── States ──────────────────────────────────────────────────────────
@@ -90,7 +87,7 @@ function DashboardSetupRequired() {
     <CenteredState>
       <span
         aria-hidden
-        className="bg-luminous/15 text-luminous mx-auto flex size-12 items-center justify-center rounded-full"
+        className="bg-luminous/15 text-luminous-soft mx-auto flex size-12 items-center justify-center rounded-full"
       >
         <Compass className="size-6" />
       </span>

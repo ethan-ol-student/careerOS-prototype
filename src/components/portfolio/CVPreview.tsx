@@ -33,15 +33,15 @@ export function CVPreview() {
   return (
     <div className="glass-3 rounded-2xl p-3 sm:p-4">
       {/* "Paper" surface */}
-      <div className="bg-background text-foreground border-border/60 relative overflow-hidden rounded-xl border shadow-2xl">
+      <div className="bg-background text-foreground border-border/15 relative overflow-hidden rounded-xl border shadow-2xl">
         <div
           aria-hidden
           className="from-luminous/10 pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b to-transparent"
         />
 
         {/* Header */}
-        <header className="border-border/40 relative border-b px-6 py-6 sm:px-8 sm:py-8">
-          <p className="text-luminous text-[10px] font-semibold uppercase tracking-[0.22em]">
+        <header className="border-border/15 relative border-b px-6 py-6 sm:px-8 sm:py-8">
+          <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.22em]">
             Living portfolio · live
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -157,7 +157,7 @@ export function CVPreview() {
                   {portfolio.skills.map((s) => (
                     <span
                       key={s}
-                      className="bg-luminous/15 text-luminous border-luminous/40 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                      className="bg-luminous/10 text-luminous-soft border-luminous/30 rounded-full border px-2 py-0.5 text-[11px] font-medium"
                     >
                       {s}
                     </span>
@@ -212,7 +212,7 @@ export function CVPreview() {
           </div>
         </div>
 
-        <footer className="border-border/40 flex items-center justify-between border-t px-6 py-3 sm:px-8">
+        <footer className="border-border/15 flex items-center justify-between border-t px-6 py-3 sm:px-8">
           <p className="text-muted-foreground text-[10px]">
             Updated in real time · saved locally
           </p>
@@ -245,7 +245,7 @@ function CVSection({
     <section>
       <div className="mb-2 flex items-center gap-1.5">
         {Icon && <Icon className="text-muted-foreground size-3" />}
-        <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-[0.18em]">
+        <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
           {title}
         </p>
       </div>

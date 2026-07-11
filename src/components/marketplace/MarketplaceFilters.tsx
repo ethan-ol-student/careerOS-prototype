@@ -17,6 +17,8 @@ interface MarketplaceFiltersProps {
   onQueryChange: (v: string) => void;
   category: CategoryFilter;
   onCategoryChange: (c: CategoryFilter) => void;
+  /** Optional action rendered beside the search box (e.g. Quick Post). */
+  action?: React.ReactNode;
 }
 
 export function MarketplaceFilters({
@@ -24,19 +26,23 @@ export function MarketplaceFilters({
   onQueryChange,
   category,
   onCategoryChange,
+  action,
 }: MarketplaceFiltersProps) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="glass-3 relative flex items-center gap-2 rounded-xl px-4 py-2">
-        <Search className="text-muted-foreground size-4 shrink-0" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search by role, skill, or career direction…"
-          aria-label="Search candidates"
-          className="placeholder:text-muted-foreground w-full bg-transparent py-2 text-sm outline-none"
-        />
+      <div className="flex items-center gap-3">
+        <div className="glass-3 relative flex min-w-0 flex-1 items-center gap-2 rounded-xl px-4 py-2">
+          <Search className="text-muted-foreground size-4 shrink-0" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Search by role, skill, or career direction…"
+            aria-label="Search candidates"
+            className="placeholder:text-muted-foreground w-full bg-transparent py-2 text-sm outline-none"
+          />
+        </div>
+        {action}
       </div>
 
       <div
@@ -56,8 +62,8 @@ export function MarketplaceFilters({
               className={cn(
                 "rounded-full border px-4 py-1.5 text-xs font-medium transition-all",
                 isActive
-                  ? "border-clover bg-clover/10 text-clover ring-2 ring-clover/20"
-                  : "border-border/60 bg-card/40 text-muted-foreground hover:border-clover/60 hover:text-foreground",
+                  ? "border-clover/40 bg-clover/12 text-clover-soft"
+                  : "border-border/15 bg-foreground/2 text-muted-foreground hover:border-clover/60 hover:text-foreground",
               )}
             >
               {c}

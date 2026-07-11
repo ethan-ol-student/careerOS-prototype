@@ -99,7 +99,7 @@ export default function CompanyDetailPage({
                       <li key={job.id}>
                         <Link
                           href={`/jobs/${job.id}`}
-                          className="border-border/40 bg-card/40 hover:border-luminous/40 flex items-center justify-between gap-3 rounded-lg border px-4 py-3 transition-colors"
+                          className="border-border/15 bg-foreground/2 hover:border-luminous/40 flex items-center justify-between gap-3 rounded-lg border px-4 py-3 transition-colors"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium">{job.title}</p>

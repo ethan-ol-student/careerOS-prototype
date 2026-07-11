@@ -17,7 +17,7 @@ const steps = [
 export default function ProcessFlow({ currentStep }: ProcessFlowProps) {
   return (
     <div className="glass-3 rounded-2xl px-5 py-4">
-      <p className="text-muted-foreground mb-4 text-xs font-medium uppercase tracking-[0.18em]">
+      <p className="text-muted-foreground mb-4 text-xs font-mono font-medium uppercase tracking-[0.18em]">
         How Living Portfolio works
       </p>
       <div className="flex items-center gap-2 md:gap-3">
@@ -36,8 +36,8 @@ export default function ProcessFlow({ currentStep }: ProcessFlowProps) {
                     "flex size-9 items-center justify-center rounded-xl border transition-colors",
                     isActive &&
                       "border-luminous bg-luminous text-white shadow-[0_0_0_4px_rgba(77,122,255,0.18)]",
-                    isComplete && "border-clover/40 bg-clover/15 text-clover",
-                    !isActive && !isComplete && "border-border/60 bg-card/40 text-muted-foreground",
+                    isComplete && "border-clover/40 bg-clover/15 text-clover-soft",
+                    !isActive && !isComplete && "border-border/15 bg-foreground/2 text-muted-foreground",
                   )}
                 >
                   <Icon className="size-4" />

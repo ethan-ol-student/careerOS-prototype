@@ -144,6 +144,16 @@
   --clover: #4cbb55;
   --clover-soft: #6dd676;
 
+  /* Primary-button gradient (Career OS Design System — bevel CTA).
+     Role-scoped: an ancestor with [data-role-accent="employer"] swaps
+     the whole set to the clover ramp with dark-on-green text, so the
+     shared Button/LinkButton `default` variant recolors per side
+     without per-page variants. */
+  --btn-from: #4d7aff;
+  --btn-to: #3a63e0;
+  --btn-edge: #6d92ff;
+  --btn-fg: #ffffff;
+
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.141 0.005 285.823);
@@ -155,11 +165,12 @@
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.274 0.006 286.033);
-  /* Bumped from 0.705 → 0.78 for AA contrast (~4.7:1 over dark bg) */
-  --muted-foreground: oklch(0.78 0.012 286.067);
+  /* Design-system muted fg (#A5A5AD): ~8:1 over the dark ground, AA-safe */
+  --muted-foreground: #a5a5ad;
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
+  /* Design-system destructive (#F2555A): ~4.9:1 on the app ground */
+  --destructive: #f2555a;
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.885 0.006 286.033);
   --input: oklch(0.274 0.006 286.033);
@@ -285,8 +296,36 @@
   }
 }
 
+/* ── Performance mode (Settings → Motion & performance) ──────────
+   `html.reduce-motion` is toggled from localStorage by
+   usePerformanceMode — an explicit, device-level user choice that is
+   the ONLY off switch for in-app decorative motion (animations play
+   by default regardless of the OS reduced-motion setting).
+   `animation: none` (NOT `paused`) is load-bearing: paused would
+   freeze `animate-appear*` entrances at opacity 0; `none` lets
+   elements render their natural end state — spinners stay visible
+   but static, the ProgressRing snaps to its value.
+   NOTE for future motion effects: anything using `animation` or
+   `transition` is covered globally below; bespoke JS/transform motion
+   needs its own `html.reduce-motion` override like the orbit rules. */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+/* Orbit static fallback: keep job icons scattered around their rings
+   (wrapper takes a fixed angle, counter un-rotates to stay upright)
+   instead of piling up at one point when the spin is removed. */
+html.reduce-motion [data-orbit] {
+  transform: rotate(var(--orbit-angle, 0deg)) !important;
+}
+html.reduce-motion [data-orbit-counter] {
+  transform: rotate(calc(-1 * var(--orbit-angle, 0deg))) !important;
+}
+
 /* ── Age-adaptive UI density (Feature 14) ─────────────────────────
-   `[data-ui-density]` is set by DashboardShell (phase default + the
+   `[data-ui-density]` is set by CockpitDashboard (phase default + the
    user's Settings override — never locked to age). "vibrant" is the
    unchanged default. "calm" is the editorial 30–55+ experience:
    readability goes UP (larger body sizes, relaxed leading), visual
@@ -302,6 +341,18 @@
 }
 [data-ui-density="calm"] [data-glow] {
   display: none; /* editorial: no decorative radial glows */
+}
+
+/* ── Career OS Design System — role accent ────────────────────────
+   Employer shells mark their root with data-role-accent="employer";
+   every primary Button/LinkButton inside inherits the clover CTA ramp
+   (dark-on-green text per the design system). Candidate/neutral
+   surfaces keep the luminous ramp from `.dark`. */
+[data-role-accent="employer"] {
+  --btn-from: #4cbb55;
+  --btn-to: #39a442;
+  --btn-edge: #6dd676;
+  --btn-fg: #06210a;
 }
 
 @layer base {

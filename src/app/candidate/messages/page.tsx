@@ -116,7 +116,7 @@ function CandidateMessagesContent() {
               </div>
             ) : rows.length === 0 ? (
               <div className="glass-3 ring-luminous/20 flex flex-col items-center gap-4 rounded-2xl p-10 text-center ring-1">
-                <div className="bg-luminous/15 text-luminous flex size-14 items-center justify-center rounded-2xl">
+                <div className="bg-luminous/15 text-luminous-soft flex size-14 items-center justify-center rounded-2xl">
                   <MessageSquare className="size-6" />
                 </div>
                 <h2 className="text-lg font-semibold tracking-tight">No employer messages yet.</h2>
@@ -137,7 +137,7 @@ function CandidateMessagesContent() {
                       onClick={() => setActive(c)}
                       className="glass-3 hover:border-luminous/50 flex w-full items-center gap-4 rounded-xl p-4 text-left transition-colors"
                     >
-                      <div className="bg-luminous/15 ring-luminous/30 text-luminous flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
+                      <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
                         {c.employerName.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -258,7 +258,7 @@ function ThreadView({
       </button>
 
       <header className="glass-3 flex items-center gap-3 rounded-2xl p-4">
-        <div className="bg-luminous/15 ring-luminous/30 text-luminous flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
+        <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
           {conversation.employerName.slice(0, 2).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
@@ -297,7 +297,7 @@ function ThreadView({
                     "rounded-2xl px-4 py-2 text-sm leading-relaxed",
                     mine
                       ? "bg-luminous rounded-br-sm text-white"
-                      : "bg-card border-border/60 rounded-bl-sm border",
+                      : "bg-card border-border/20 rounded-bl-sm border",
                   )}
                 >
                   {m.body}

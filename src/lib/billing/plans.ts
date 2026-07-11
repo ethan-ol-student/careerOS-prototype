@@ -46,10 +46,3 @@ export const PLAN_INFO: Record<Plan, PlanInfo> = {
     ],
   },
 };
-
-/** The three Pro-gated features, named for gate checks + UI copy. */
-export const PRO_FEATURES = {
-  careerReport: "Career Report (PDF export)",
-  fairPayReport: "Fair Pay & Salary Benchmark report",
-  skillBridgePlan: "Skill Bridge plan",
-} as const;

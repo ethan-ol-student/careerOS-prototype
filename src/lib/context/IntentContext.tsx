@@ -10,7 +10,8 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { getApiAdapter } from "@/lib/api";
+import { httpAdapter as api } from "@/lib/api/httpAdapter";
+import { useAuth } from "@/lib/context/AuthContext";
 import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
 import type { ContextStatus } from "@/lib/types/contextStatus";
 
@@ -70,14 +71,31 @@ export function IntentProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Providers mount at the ROOT layout (i.e. while still signed out on
+  // /auth), so hydration is keyed to the authenticated user: it re-runs
+  // on login/logout/account-switch — no manual page reload needed.
+  const { user, status: authStatus } = useAuth();
+  const userId = user?.id ?? null;
+  const userRole = user?.role ?? null;
+
   // Debounce concurrent writes so the user typing into onboarding
   // doesn't fire one PATCH per keystroke.
   const pendingPatchRef = useRef<Partial<Intent> | null>(null);
   const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Initial load: cache → API ────────────────────────────────
+  // ── Load on auth change: cache → API ─────────────────────────
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
+    if (authStatus !== "ready") return; // wait for auth to resolve
+    if (!userId || userRole !== "candidate") {
+      // Signed out (or employer side) — nothing to fetch, clean slate.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth-keyed reset
+      setIntentState(initialIntent);
+      setStatus("idle");
+      setError(null);
+      setIsHydrated(true);
+      return;
+    }
+     
     setStatus("loading");
 
     // 1. Quick paint from local cache (best-effort, never authoritative).
@@ -95,7 +113,6 @@ export function IntentProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const api = await getApiAdapter();
         const result = await api.getCandidateProfile();
         if (cancelled) return;
         if (!result.ok) {
@@ -125,7 +142,7 @@ export function IntentProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authStatus, userId, userRole]);
 
   // ── Debounced patch flusher ──────────────────────────────────
   const flushPatch = useCallback(async () => {
@@ -133,7 +150,6 @@ export function IntentProvider({ children }: { children: ReactNode }) {
     pendingPatchRef.current = null;
     if (!patch || Object.keys(patch).length === 0) return;
     try {
-      const api = await getApiAdapter();
       const result = await api.patchIntent(patch);
       if (!result.ok) {
         setStatus("error");

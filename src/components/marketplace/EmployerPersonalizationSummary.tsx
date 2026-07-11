@@ -78,7 +78,7 @@ export function EmployerPersonalizationSummary({
       <div className="relative flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-clover text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-clover text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Your hiring snapshot
             </p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -87,7 +87,7 @@ export function EmployerPersonalizationSummary({
             <p className="text-muted-foreground mt-1 text-sm">{futurePath}</p>
           </div>
           {status === "loading" ? (
-            <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
               Loading…
             </span>
           ) : null}
@@ -115,7 +115,7 @@ export function EmployerPersonalizationSummary({
           />
         </div>
 
-        <div className="border-border/40 mt-2 flex items-baseline justify-between border-t pt-4">
+        <div className="border-border/15 mt-2 flex items-baseline justify-between border-t pt-4">
           <p className="text-muted-foreground text-xs">
             <Users className="mr-1 inline size-3.5" />
             Recommended Talent:{" "}
@@ -126,15 +126,15 @@ export function EmployerPersonalizationSummary({
             {recommended.length === MAX_RECOMMENDED ? " (showing top 25)" : ""}
           </p>
           {!hasAnswers ? (
-            <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
               Complete onboarding to personalize
             </span>
           ) : null}
         </div>
 
         {topMatches.length > 0 ? (
-          <div className="bg-card/40 border-border/40 flex flex-col gap-2 rounded-lg border p-3">
-            <p className="text-clover inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider">
+          <div className="bg-foreground/2 border-border/15 flex flex-col gap-2 rounded-lg border p-3">
+            <p className="text-clover inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider">
               <Sparkles className="size-3.5" />
               Top Match
             </p>
@@ -143,7 +143,7 @@ export function EmployerPersonalizationSummary({
                 <li key={candidate.id}>
                   <Link
                     href={`/candidates/${candidate.id}`}
-                    className="bg-clover/10 text-clover hover:bg-clover/20 inline-flex items-center gap-1.5 rounded-full border border-clover/30 px-2.5 py-1 text-xs font-medium transition-colors"
+                    className="bg-clover/10 text-clover-soft hover:bg-clover/20 inline-flex items-center gap-1.5 rounded-full border border-clover/30 px-2.5 py-1 text-xs font-medium transition-colors"
                   >
                     {candidate.name}
                     <span className="text-clover/70 font-mono text-[10px]">
@@ -155,8 +155,8 @@ export function EmployerPersonalizationSummary({
             </ul>
 
             {topExplanation && recommended[0] ? (
-              <div className="border-border/40 mt-1 border-t pt-2">
-                <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+              <div className="border-border/15 mt-1 border-t pt-2">
+                <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
                   Why {recommended[0].candidate.name.split(" ")[0]} ranks first
                 </p>
                 <ul className="mt-1 flex flex-col gap-0.5">
@@ -192,7 +192,7 @@ function Stat({
 }) {
   return (
     <div className="glass-3 flex flex-col gap-1 rounded-lg p-3">
-      <p className="text-muted-foreground inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider">
+      <p className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider">
         {icon}
         {label}
       </p>

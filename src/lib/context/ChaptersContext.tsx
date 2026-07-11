@@ -9,10 +9,10 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { getApiAdapter } from "@/lib/api";
+import { httpAdapter as api } from "@/lib/api/httpAdapter";
+import { useAuth } from "@/lib/context/AuthContext";
 import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
 import type {
-  Chapter,
   ChapterEvent,
   Priority,
   Subtask,
@@ -31,19 +31,9 @@ interface ChaptersContextValue {
   removeEvent: (id: string) => void;
   toggleSubtask: (eventId: string, subtaskId: string) => void;
   resetEvents: () => void;
-
-  // Legacy stubs
-  chapters: Chapter[];
   isHydrated: boolean;
   status: ContextStatus;
   error: string | null;
-  addChapter: (c: Omit<Chapter, "id" | "createdAt" | "updatedAt">) => string;
-  updateChapter: (
-    id: string,
-    updates: Partial<Omit<Chapter, "id" | "createdAt">>,
-  ) => void;
-  deleteChapter: (id: string) => void;
-  resetChapters: () => void;
 }
 
 const ChaptersContext = createContext<ChaptersContextValue | undefined>(
@@ -58,8 +48,23 @@ export function ChaptersProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Auth-keyed hydration: re-runs on login/logout so a fresh sign-in
+  // gets data without a manual reload (providers mount at the root).
+  const { user, status: authStatus } = useAuth();
+  const userId = user?.id ?? null;
+  const userRole = user?.role ?? null;
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
+    if (authStatus !== "ready") return;
+    if (!userId || userRole !== "candidate") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth-keyed reset
+      setEvents([]);
+      setStatus("idle");
+      setError(null);
+      setIsHydrated(true);
+      return;
+    }
+     
     setStatus("loading");
     try {
       const cached = localStorage.getItem(currentScopedKey(CACHE_BASE.chapters));
@@ -74,7 +79,6 @@ export function ChaptersProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const api = await getApiAdapter();
         const result = await api.getCandidateProfile();
         if (cancelled) return;
         if (!result.ok) {
@@ -103,7 +107,7 @@ export function ChaptersProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authStatus, userId, userRole]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -211,9 +215,6 @@ export function ChaptersProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const noopChapter = useCallback(() => "", []);
-  const noop = useCallback(() => {}, []);
-
   const value = useMemo<ChaptersContextValue>(
     () => ({
       events,
@@ -221,27 +222,11 @@ export function ChaptersProvider({ children }: { children: ReactNode }) {
       removeEvent,
       toggleSubtask,
       resetEvents,
-      chapters: [],
       isHydrated,
       status,
       error,
-      addChapter: noopChapter,
-      updateChapter: noop,
-      deleteChapter: noop,
-      resetChapters: resetEvents,
     }),
-    [
-      events,
-      addEvent,
-      removeEvent,
-      toggleSubtask,
-      resetEvents,
-      isHydrated,
-      status,
-      error,
-      noopChapter,
-      noop,
-    ],
+    [events, addEvent, removeEvent, toggleSubtask, resetEvents, isHydrated, status, error],
   );
 
   return (

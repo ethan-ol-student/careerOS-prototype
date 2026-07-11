@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import StepShell from "@/components/intent-form/steps/StepShell";
+import StepShell from "@/components/onboarding/StepShell";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { TalentType } from "@/lib/candidates/types";
@@ -80,14 +80,14 @@ export default function TalentTypeStep({
               className={cn(
                 "col-span-12 rounded-2xl border p-5 text-left transition-all md:col-span-6",
                 isActive
-                  ? "border-luminous bg-luminous/10 ring-2 ring-luminous/30"
+                  ? "border-clover/40 bg-clover/10"
                   : "glass-3 hover:bg-card/40",
               )}
             >
               <p
                 className={cn(
                   "mb-1 font-semibold",
-                  isActive && "text-luminous",
+                  isActive && "text-clover",
                 )}
               >
                 {t.label}

@@ -10,7 +10,8 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { getApiAdapter } from "@/lib/api";
+import { httpAdapter as api } from "@/lib/api/httpAdapter";
+import { useAuth } from "@/lib/context/AuthContext";
 import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
 import type { EmployerGoal } from "@/lib/candidates/types";
 import type { ContextStatus } from "@/lib/types/contextStatus";
@@ -45,11 +46,28 @@ export function EmployerProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Auth-keyed hydration: re-runs on login/logout so a fresh sign-in
+  // gets data without a manual reload (providers mount at the root).
+  const { user, status: authStatus } = useAuth();
+  const userId = user?.id ?? null;
+  const userRole = user?.role ?? null;
+
   const pendingRef = useRef<Partial<EmployerGoal> | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
+    if (authStatus !== "ready") return;
+    if (!userId || userRole !== "employer") {
+      // Signed out (or candidate side) — nothing to fetch, clean slate.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth-keyed reset
+      setGoalState(initialGoal);
+      setHasCompletedOnboarding(false);
+      setStatus("idle");
+      setError(null);
+      setIsHydrated(true);
+      return;
+    }
+     
     setStatus("loading");
     try {
       const cached = localStorage.getItem(currentScopedKey(CACHE_BASE.employerGoal));
@@ -67,7 +85,6 @@ export function EmployerProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const api = await getApiAdapter();
         const result = await api.getEmployerProfile();
         if (cancelled) return;
         if (!result.ok) {
@@ -102,14 +119,13 @@ export function EmployerProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authStatus, userId, userRole]);
 
   const flushPatch = useCallback(async () => {
     const patch = pendingRef.current;
     pendingRef.current = null;
     if (!patch || Object.keys(patch).length === 0) return;
     try {
-      const api = await getApiAdapter();
       const result = await api.patchEmployerGoal(patch);
       if (!result.ok) {
         setStatus("error");
@@ -167,7 +183,6 @@ export function EmployerProvider({ children }: { children: ReactNode }) {
     }
     void (async () => {
       try {
-        const api = await getApiAdapter();
         await api.completeEmployerOnboarding();
       } catch {
         /* ignore */

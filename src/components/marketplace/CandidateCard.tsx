@@ -37,7 +37,7 @@ export function CandidateCard({
         <button
           type="button"
           onClick={onOpenDetails}
-          className="bg-luminous/15 ring-luminous/30 text-luminous flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2 focus-visible:outline-none focus-visible:ring-luminous/60"
+          className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2 focus-visible:outline-none focus-visible:ring-luminous/60"
           aria-label={`Open ${candidate.name}'s details`}
         >
           {candidate.name
@@ -66,7 +66,7 @@ export function CandidateCard({
           aria-label={isSaved ? "Unsave candidate" : "Save candidate"}
           onClick={onSaveToggle}
           className={cn(
-            "text-muted-foreground hover:text-luminous shrink-0 rounded-md p-1.5 transition-colors",
+            "text-muted-foreground hover:text-luminous shrink-0 rounded-lg p-1.5 transition-colors",
             isSaved && "text-luminous",
           )}
         >

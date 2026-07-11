@@ -24,9 +24,19 @@ export function PwaProvider() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        /* SW is progressive enhancement — never block the app on it */
-      });
+      if (process.env.NODE_ENV === "production") {
+        navigator.serviceWorker.register("/sw.js").catch(() => {
+          /* SW is progressive enhancement — never block the app on it */
+        });
+      } else {
+        // Dev: cache-first /_next/static/* + Turbopack's unhashed dev chunk
+        // paths = stale-module errors after every edit. Unregister any
+        // previously-installed worker so dev browsers self-heal.
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((regs) => regs.forEach((r) => void r.unregister()))
+          .catch(() => {});
+      }
     }
 
     const onPrompt = (e: Event) => {

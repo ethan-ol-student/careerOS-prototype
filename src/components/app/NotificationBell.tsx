@@ -56,7 +56,7 @@ export function NotificationBell() {
         aria-expanded={isOpen}
         onClick={() => setIsOpen((v) => !v)}
         className={cn(
-          "border-border/60 bg-card/40 text-foreground hover:border-luminous/60 hover:text-luminous focus-visible:ring-luminous/40 relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border transition-colors focus:outline-none focus-visible:ring-2",
+          "border-border/15 bg-foreground/2 text-foreground hover:border-luminous/60 hover:text-luminous focus-visible:ring-luminous/40 relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border transition-colors focus:outline-none focus-visible:ring-2",
           isOpen && "border-luminous/60 text-luminous",
           hasImportant && "border-yellow-400/60",
         )}
@@ -76,7 +76,7 @@ export function NotificationBell() {
           <>
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-0 rounded-md ring-2 ring-yellow-400/40"
+              className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-yellow-400/40"
             />
             <span
               aria-hidden
@@ -89,14 +89,14 @@ export function NotificationBell() {
       {isOpen && (
         <div
           role="menu"
-          className="bg-popover text-popover-foreground border-border/60 absolute right-0 top-full z-50 mt-2 w-[min(380px,calc(100vw-2rem))] origin-top-right overflow-hidden rounded-xl border shadow-xl"
+          className="bg-popover text-popover-foreground border-border/20 absolute right-0 top-full z-50 mt-2 w-[min(380px,calc(100vw-2rem))] origin-top-right overflow-hidden rounded-xl border shadow-xl"
         >
-          <div className="flex items-center justify-between gap-3 border-b border-border/40 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-b border-border/15 px-4 py-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-tight">
                 Notifications
               </p>
-              <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+              <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
                 {notifications.length} total · {unreadCount} unread
               </p>
             </div>
@@ -104,7 +104,7 @@ export function NotificationBell() {
               type="button"
               onClick={markAllRead}
               disabled={unreadCount === 0}
-              className="text-luminous hover:text-luminous focus-visible:ring-luminous/40 disabled:text-muted-foreground/60 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:hover:text-muted-foreground/60"
+              className="text-luminous hover:text-luminous focus-visible:ring-luminous/40 disabled:text-muted-foreground/60 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:hover:text-muted-foreground/60"
             >
               Mark all as read
             </button>
@@ -132,11 +132,11 @@ export function NotificationBell() {
                     <span
                       aria-hidden
                       className={cn(
-                        "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md",
-                        n.kind === "skill" && "bg-luminous/15 text-luminous",
+                        "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
+                        n.kind === "skill" && "bg-luminous/15 text-luminous-soft",
                         n.kind === "job-match" &&
                           "bg-yellow-400/20 text-yellow-400 ring-2 ring-yellow-400/40",
-                        n.kind === "system" && "bg-clover/15 text-clover",
+                        n.kind === "system" && "bg-clover/15 text-clover-soft",
                       )}
                     >
                       {n.kind === "skill" && <Sparkles className="size-4" />}
@@ -260,7 +260,7 @@ function ReachOutModal({
         </>
       ) : (
         <div className="flex flex-col items-center gap-4 py-4 text-center">
-          <div className="bg-clover/15 text-clover ring-2 ring-clover/40 flex size-14 items-center justify-center rounded-full">
+          <div className="bg-clover/15 text-clover-soft ring-2 ring-clover/40 flex size-14 items-center justify-center rounded-full">
             <Check className="size-7" strokeWidth={2.5} />
           </div>
           <h3 className="text-lg font-semibold leading-tight">

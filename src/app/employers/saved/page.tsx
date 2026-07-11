@@ -70,7 +70,7 @@ export default function SavedCandidatesPage() {
       <main className="px-4 pb-16 pt-8">
         <div className="max-w-container mx-auto flex flex-col gap-6">
           <header className="flex flex-col gap-2">
-            <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Saved candidates
             </p>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -89,7 +89,7 @@ export default function SavedCandidatesPage() {
             </div>
           ) : saved.length === 0 ? (
             <div className="glass-3 ring-luminous/20 flex flex-col items-center gap-4 rounded-2xl p-10 text-center ring-1">
-              <div className="bg-luminous/15 text-luminous flex size-14 items-center justify-center rounded-2xl">
+              <div className="bg-luminous/15 text-luminous-soft flex size-14 items-center justify-center rounded-2xl">
                 <Bookmark className="size-6" />
               </div>
               <h2 className="text-lg font-semibold tracking-tight">

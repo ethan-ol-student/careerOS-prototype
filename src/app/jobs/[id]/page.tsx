@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { ScoreBar } from "@/components/ui/ScoreBar";
+import { MarketValuePanel } from "@/components/market/MarketValuePanel";
 
 interface JobDetail {
   id: string;
@@ -102,7 +103,12 @@ export default function JobDetailPage({
               <section className="glass-3 rounded-2xl p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h1 className="text-2xl font-semibold">{job.title}</h1>
+                    <p className="text-luminous font-mono text-xs font-semibold uppercase tracking-[0.18em]">
+                      Opportunity
+                    </p>
+                    <h1 className="mt-1.5 text-2xl font-bold tracking-tight sm:text-3xl">
+                      {job.title}
+                    </h1>
                     <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                       <span className="inline-flex items-center gap-1">
                         <Briefcase className="size-4" /> {job.company}
@@ -128,7 +134,9 @@ export default function JobDetailPage({
                   </Link>
                 </div>
 
-                <h2 className="mt-6 font-semibold">Required skills</h2>
+                <h2 className="text-muted-foreground mt-6 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                  Required skills
+                </h2>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {job.requiredSkills.map((s) => {
                     const have = job.matched.includes(s);
@@ -169,7 +177,9 @@ export default function JobDetailPage({
                   label={job.personalized ? "Your match" : "Base match"}
                   value={job.match}
                 />
-                <h2 className="mt-4 text-sm font-semibold">Why this score?</h2>
+                <h2 className="text-muted-foreground mt-4 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                  Why this score?
+                </h2>
                 <ul className="text-muted-foreground mt-2 space-y-1.5 text-sm">
                   {job.matchReasons.map((r) => (
                     <li key={r}>• {r}</li>
@@ -177,7 +187,9 @@ export default function JobDetailPage({
                 </ul>
                 {job.missing.length > 0 && (
                   <>
-                    <h3 className="mt-4 text-sm font-semibold">Bridge to close</h3>
+                    <h3 className="text-muted-foreground mt-4 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                      Bridge to close
+                    </h3>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {job.missing.map((s) => (
                         <Chip key={s} tone="warning">
@@ -187,6 +199,11 @@ export default function JobDetailPage({
                     </div>
                   </>
                 )}
+
+                {/* Market value for this role (Feature 5.7) */}
+                <div className="border-border/15 mt-4 border-t pt-4">
+                  <MarketValuePanel field={job.field} roleTitle={job.title} />
+                </div>
               </section>
             </Col>
           </Grid12>

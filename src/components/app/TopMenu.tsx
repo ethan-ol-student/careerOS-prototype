@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Building2,
   Fingerprint,
+  Radar,
   Sparkles,
   Trophy,
 } from "lucide-react";
@@ -93,7 +94,7 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
         aria-expanded={isOpen}
         onClick={() => setIsOpen((v) => !v)}
         className={cn(
-          "border-border/60 bg-card/40 text-foreground hover:border-luminous/60 hover:text-luminous focus-visible:ring-luminous/40 inline-flex min-h-11 items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors focus:outline-none focus-visible:ring-2",
+          "border-border/15 bg-foreground/2 text-foreground hover:border-luminous/60 hover:text-luminous focus-visible:ring-luminous/40 inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus-visible:ring-2",
           isOpen && "border-luminous/60 text-luminous",
         )}
       >
@@ -104,10 +105,10 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
       {isOpen && (
         <div
           role="menu"
-          className="bg-popover text-popover-foreground border-border/60 absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-xl border shadow-xl"
+          className="bg-popover text-popover-foreground border-border/20 absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-xl border shadow-xl"
         >
           {/* Profile preview */}
-          <div className="flex items-center gap-3 border-b border-border/40 px-4 py-4">
+          <div className="flex items-center gap-3 border-b border-border/15 px-4 py-4">
             <div className="bg-luminous/15 ring-luminous/30 flex size-11 shrink-0 items-center justify-center rounded-full ring-2">
               <span className="text-luminous text-base font-semibold">
                 {initial}
@@ -123,8 +124,11 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
             </div>
           </div>
 
-          {/* Nav — three primaries: Features / Career flyouts + Settings */}
+          {/* Nav — three primaries: Features / Career flyouts + Settings.
+              The flyout groups are mobile-only: at lg+ the persistent
+              CandidateSidebar carries the same links. */}
           <nav className="flex flex-col py-1.5" role="none">
+            <div className="lg:hidden" role="none">
             <MenuGroup
               icon={<Sparkles className="size-4 text-luminous" aria-hidden />}
               label="Features"
@@ -175,6 +179,12 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
               }
             >
               <MenuLink
+                href="/candidate/skills"
+                icon={<Radar className="size-4 text-luminous" aria-hidden />}
+                label="Skill Radar"
+                hint="Validated skills vs your target role"
+              />
+              <MenuLink
                 href="/jobs"
                 icon={<Briefcase className="size-4 text-luminous" aria-hidden />}
                 label="Jobs"
@@ -193,6 +203,7 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
                 hint="Who actually responds to candidates"
               />
             </MenuGroup>
+            </div>
             <MenuLink
               href="/candidate/settings"
               icon={<Settings className="size-4 text-luminous" aria-hidden />}
@@ -202,14 +213,14 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
           </nav>
 
           {/* Destructive action — full sign-out with confirmation */}
-          <div className="border-t border-border/40 p-1.5">
+          <div className="border-t border-border/15 p-1.5">
             <button
               type="button"
               onClick={() => {
                 setIsOpen(false);
                 onSignOut();
               }}
-              className="text-destructive/90 hover:text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/40 inline-flex min-h-11 w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
+              className="text-destructive/90 hover:text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/40 inline-flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2"
             >
               <LogOut className="size-4" />
               Sign out
@@ -251,7 +262,7 @@ function MenuGroup({
       >
         <span
           aria-hidden
-          className="bg-luminous/10 flex size-8 items-center justify-center rounded-md"
+          className="bg-luminous/10 flex size-8 items-center justify-center rounded-lg"
         >
           {icon}
         </span>
@@ -272,7 +283,7 @@ function MenuGroup({
       {open && (
         <div
           role="menu"
-          className="bg-popover border-border/60 rounded-xl border py-1.5 shadow-xl max-sm:mx-2 max-sm:my-1 sm:absolute sm:right-full sm:top-0 sm:z-10 sm:mr-1 sm:w-72"
+          className="bg-popover border-border/20 rounded-xl border py-1.5 shadow-xl max-sm:mx-2 max-sm:my-1 sm:absolute sm:right-full sm:top-0 sm:z-10 sm:mr-1 sm:w-72"
         >
           {children}
         </div>
@@ -300,7 +311,7 @@ function MenuLink({
     >
       <span
         aria-hidden
-        className="bg-luminous/10 flex size-8 items-center justify-center rounded-md"
+        className="bg-luminous/10 flex size-8 items-center justify-center rounded-lg"
       >
         {icon}
       </span>

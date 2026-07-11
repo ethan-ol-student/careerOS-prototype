@@ -30,7 +30,7 @@ export default function CompaniesPage() {
   return (
     <AppShell>
       <main className="max-w-container mx-auto px-4 pb-16 pt-6">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Who treats candidates well
         </p>
         <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold sm:text-3xl">
@@ -52,7 +52,7 @@ export default function CompaniesPage() {
               <li key={c.id}>
                 <Link
                   href={`/companies/${c.id}`}
-                  className="glass-3 border-border/40 hover:border-luminous/40 flex flex-col gap-3 rounded-2xl border p-5 transition-colors sm:flex-row sm:items-center"
+                  className="glass-3 border-border/15 hover:border-luminous/40 flex flex-col gap-3 rounded-2xl border p-5 transition-colors sm:flex-row sm:items-center"
                 >
                   <span className="text-luminous w-8 shrink-0 text-lg font-semibold">
                     {i + 1}
@@ -61,7 +61,7 @@ export default function CompaniesPage() {
                       Company grows a logo field */}
                   <span
                     aria-hidden
-                    className="border-border/40 bg-luminous/10 text-luminous flex size-11 shrink-0 items-center justify-center rounded-xl border text-base font-semibold"
+                    className="border-border/15 bg-luminous/10 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-xl border text-base font-semibold"
                   >
                     {c.name.charAt(0).toUpperCase()}
                   </span>

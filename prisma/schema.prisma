@@ -110,6 +110,10 @@ model CandidateProfile {
   skills   String[] @default([])
   bio      String   @default("")
 
+  // Contact (onboarding v2) — optional, owner-visible
+  phone    String @default("")
+  location String @default("")
+
   // Candidate-controlled discovery opt-in. When true, the candidate is
   // projected into the marketplace `Candidate` catalog (visible to
   // employers). Off by default — discovery is the candidate's choice.
@@ -121,6 +125,13 @@ model CandidateProfile {
   // Age-adaptive UI override (never locked to age): "" = use the phase
   // default; legal values owned by src/lib/dashboard/uiDensity.ts.
   uiDensity String @default("") // "" | "calm" | "vibrant"
+
+  // Timeline / Living Portfolio (Phase 2) — display metadata ONLY. Entries
+  // themselves derive from experiences/certificates/projects/skillClaims;
+  // this stores the customisable heading prefix and the per-entry flags:
+  // { [entryKey]: { major?: boolean, ai?: boolean, evidence?: string } }.
+  timelinePrefix String @default("My Journey")
+  timelineMeta   Json?
 
   certificates  Certificate[]
   awards        Award[]
@@ -135,9 +146,32 @@ model CandidateProfile {
   xpEntries      XpLedger[]
   streak         Streak?
   badges         Badge[]
+  skillClaims    SkillClaim[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ── Skills Truth (flagship) ────────────────────────────────────────
+// Every skill carries a trust tier: 1 self-claimed, 2 evidence-backed,
+// 3 endorsed. The tier is DERIVED server-side from evidence/endorsement
+// (never client-set); weights live in src/lib/intelligence/skillTruthEngine.ts.
+model SkillClaim {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name         String
+  level        Int    @default(3) // claimed proficiency 1–5
+  tier         Int    @default(1) // 1 | 2 | 3 — derived from the fields below
+  evidence     String @default("") // link or concrete situation proving it (tier 2)
+  endorsedBy   String @default("") // endorser name (tier 3)
+  endorserNote String @default("") // endorser relationship/context
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profileId, name])
 }
 
 model Certificate {
@@ -232,6 +266,7 @@ model EmployerProfile {
   invitedCandidates EmployerInvitedCandidate[]
   notifications     EmployerNotification[]
   conversations     ChatConversation[]
+  jobs              Job[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -349,6 +384,22 @@ model CandidatesAI {
 
   dashboardPersonalizationSummary String?
   onboardingCompleted             Boolean @default(false)
+
+  // Onboarding v2 — preferences (additive; TS layer owns legal values)
+  desiredLocations    String[] @default([])
+  openToRelocate      Boolean  @default(false)
+  workArrangement     String[] @default([]) // "remote" | "hybrid" | "onsite"
+  topValues           String[] @default([]) // ordered, max 3
+  scheduleFlexibility String[] @default([])
+  travelWillingness   String   @default("") // "" | "none" | "occasional" | "frequent"
+  workEnvironment     String   @default("") // "" | "structured" | "fast_moving" | "independent" | "collaborative"
+  maxCommuteMinutes   Int?
+  minSalaryAmount     Int?
+  minSalaryPeriod     String   @default("") // "" | "hourly" | "monthly" | "yearly"
+  links               String[] @default([]) // LinkedIn / GitHub / portfolio URLs
+  languages           String[] @default([])
+  fieldOfStudy        String   @default("") // student stage only
+  expectedGraduation  String   @default("")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -474,7 +525,7 @@ model Company {
 }
 
 model Job {
-  id             String   @id // natural slug
+  id             String   @id @default(cuid()) // seed rows keep natural slugs
   title          String
   location       String
   duration       String
@@ -488,6 +539,23 @@ model Job {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  // ── Employer-posted jobs (additive; seeded catalogue rows keep the
+  // defaults: no owner, "active", never expire). Status values owned by
+  // src/lib/services/jobs.service.ts: "active" | "expired" | "fulfilled".
+  // Soft-delete by design — status flips, rows are never hard-deleted.
+  employerId    String?
+  employer      EmployerProfile? @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  status        String           @default("active")
+  expiresAt     DateTime? // null = catalogue job, never expires
+  description   String           @default("")
+  requirements  String[]         @default([])
+  skillWeights  Json? // { [skill]: 1–10 } — skill-matrix vertex values
+  budgetMin     Int?
+  budgetMax     Int?
+  startDate     DateTime?
+  timelineWeeks Int?
+  teamSize      Int?
+
   applications Application[]
 
   createdAt DateTime @default(now())
@@ -496,6 +564,8 @@ model Job {
   @@index([companyId])
   @@index([field])
   @@index([isDemo])
+  @@index([employerId])
+  @@index([status])
 }
 
 // ── Applications data spine ─────────────────────────────────────

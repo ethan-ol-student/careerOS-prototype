@@ -34,7 +34,7 @@ export default function LeaderboardPage() {
   return (
     <AppShell>
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-6">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Signals
         </p>
         <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold sm:text-3xl">

@@ -8,7 +8,9 @@ import { useIntent } from "@/lib/context/IntentContext";
 import { useAuth } from "@/lib/context/AuthContext";
 import { LayoutLines } from "@/components/ui/LayoutLines";
 import { TopMenu } from "@/components/app/TopMenu";
+import { CandidateSidebar } from "@/components/app/CandidateSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { StreakChip } from "@/components/app/StreakChip";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
 interface AppShellProps {
@@ -38,7 +40,7 @@ export default function AppShell({
 
   // Auth-driven gating: wait for the AuthProvider to hydrate, then:
   //   - no user → bounce to /auth
-  //   - employer user → bounce to /employers/marketplace
+  //   - employer user → bounce to /employers/dashboard
   //   - candidate without advanced onboarding → bounce to /candidate/onboarding
   useEffect(() => {
     if (!requireIntent) return;
@@ -48,7 +50,7 @@ export default function AppShell({
       return;
     }
     if (user.role === "employer") {
-      router.replace("/employers/marketplace");
+      router.replace("/employers/dashboard");
       return;
     }
     if (!candidateOnboardingCompleted) {
@@ -85,36 +87,44 @@ export default function AppShell({
   };
 
   return (
-    <div className="bg-background text-foreground relative min-h-screen w-full">
+    /* Zero-scroll frame: the app is exactly one viewport tall; only the
+       content region (and, if needed, the sidebar) scrolls internally. */
+    <div className="bg-background text-foreground relative flex h-dvh w-full flex-col overflow-hidden">
       <LayoutLines />
-      <header className="sticky top-0 z-50 -mb-4 px-4 pb-4">
+      <header className="relative z-50 -mb-4 shrink-0 pb-4">
         <div className="fade-bottom bg-background/15 absolute left-0 h-24 w-full backdrop-blur-lg" />
-        <div className="max-w-container relative mx-auto">
-          <nav className="flex items-center justify-between py-4">
-            {/* Candidate logo always returns to the candidate dashboard
-                so the user never loses progress by clicking the brand. */}
+        <nav className="relative flex items-center justify-between py-4 pr-4">
+          {/* Logo slot mirrors the sidebar width so the brand sits flush
+              above the left nav on desktop. Clicking it returns to the
+              dashboard so the user never loses progress. */}
+          <div className="flex shrink-0 items-center px-4 lg:w-60 lg:px-6">
             <Link
               href="/candidate/dashboard"
               className="flex items-center gap-2 text-base font-semibold tracking-tight"
             >
               <Compass className="size-5 text-luminous" />
               Career OS
-              <span className="text-muted-foreground ml-1 hidden text-[10px] font-medium uppercase tracking-wider sm:inline">
+              <span className="text-muted-foreground ml-1 hidden text-[10px] font-mono font-medium uppercase tracking-wider sm:inline">
                 · Candidate
               </span>
             </Link>
-            <div className="flex items-center gap-2">
-              <NotificationBell />
-              <TopMenu
-                userName={intent.name}
-                userField={intent.field}
-                onSignOut={() => setShowSignOut(true)}
-              />
-            </div>
-          </nav>
-        </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <StreakChip />
+            <NotificationBell />
+            <TopMenu
+              userName={intent.name}
+              userField={intent.field}
+              onSignOut={() => setShowSignOut(true)}
+            />
+          </div>
+        </nav>
       </header>
-      <div className="relative z-10">{children}</div>
+
+      <div className="relative z-10 flex min-h-0 flex-1">
+        <CandidateSidebar onSignOut={() => setShowSignOut(true)} />
+        <div className="min-w-0 flex-1 overflow-y-auto">{children}</div>
+      </div>
 
       <ConfirmDialog
         isOpen={showSignOut}

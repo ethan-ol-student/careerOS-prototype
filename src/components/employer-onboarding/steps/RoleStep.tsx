@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
-import StepShell from "@/components/intent-form/steps/StepShell";
+import StepShell from "@/components/onboarding/StepShell";
 import { Button } from "@/components/ui/Button";
 import { validateRoleTitle } from "@/lib/validation";
 import { cn } from "@/lib/utils";
@@ -78,7 +78,7 @@ export default function RoleStep({
         <div className="col-span-12">
           <label
             htmlFor="role-input"
-            className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]"
+            className="text-clover font-mono text-xs font-semibold uppercase tracking-[0.18em]"
           >
             Role title
           </label>
@@ -95,7 +95,7 @@ export default function RoleStep({
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "role-input-error" : undefined}
             className={cn(
-              "glass-3 focus-visible:border-luminous focus-visible:ring-luminous/40 mt-2 w-full rounded-xl border border-transparent px-4 py-3 text-base outline-none transition-colors focus-visible:ring-2",
+              "bg-foreground/2 border-border/15 focus-visible:border-clover/60 focus-visible:ring-clover/40 mt-2 w-full rounded-lg border px-4 py-3 text-base outline-none transition-colors focus-visible:ring-2",
               error && "border-destructive/60 focus-visible:ring-destructive/40",
             )}
           />
@@ -112,7 +112,7 @@ export default function RoleStep({
         </div>
 
         <div className="col-span-12">
-          <p className="text-muted-foreground mb-3 text-xs uppercase tracking-wider">
+          <p className="text-muted-foreground mb-3 font-mono text-xs uppercase tracking-wider">
             Common picks
           </p>
           <div className="flex flex-wrap gap-2">
@@ -129,8 +129,8 @@ export default function RoleStep({
                   className={cn(
                     "rounded-full border px-4 py-2 text-sm transition-all",
                     isActive
-                      ? "border-luminous bg-luminous/10 text-luminous ring-2 ring-luminous/30"
-                      : "border-border/60 bg-card/40 text-foreground hover:border-luminous/60 hover:text-luminous",
+                      ? "border-clover/40 bg-clover/12 text-clover-soft"
+                      : "border-border/15 bg-foreground/2 text-foreground hover:border-clover/60 hover:text-clover-soft",
                   )}
                 >
                   {role}

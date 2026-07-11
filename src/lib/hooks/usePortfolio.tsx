@@ -10,17 +10,13 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { getApiAdapter } from "@/lib/api";
+import { httpAdapter as api } from "@/lib/api/httpAdapter";
+import { useAuth } from "@/lib/context/AuthContext";
 import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
-import type { PortfolioSection } from "@/lib/portfolio/data";
 import type { ContextStatus } from "@/lib/types/contextStatus";
 
-// ── Types (unchanged from legacy contract) ──────────────────────
+// ── Types ───────────────────────────────────────────────────────
 
-export interface PortfolioItem {
-  content: string;
-  addedAt: string;
-}
 export interface Certificate {
   id: string;
   title: string;
@@ -55,10 +51,6 @@ export interface PortfolioData {
   projects: Project[];
   experiences: Experience[];
   bio: string;
-  legacySkills: PortfolioItem[];
-  legacyExperiences: PortfolioItem[];
-  aspirations: PortfolioItem[];
-  reflections: PortfolioItem[];
   lastUpdated: string | null;
   totalAdditions: number;
 }
@@ -72,10 +64,6 @@ const initialPortfolio: PortfolioData = {
   projects: [],
   experiences: [],
   bio: "",
-  legacySkills: [],
-  legacyExperiences: [],
-  aspirations: [],
-  reflections: [],
   lastUpdated: null,
   totalAdditions: 0,
 };
@@ -151,7 +139,6 @@ interface PortfolioContextValue {
   removeProject: (id: string) => void;
   addExperience: (e: Omit<Experience, "id">) => void;
   removeExperience: (id: string) => void;
-  addItem: (section: PortfolioSection, content: string) => void;
   resetPortfolio: () => void;
 }
 
@@ -165,12 +152,27 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Auth-keyed hydration: re-runs on login/logout so a fresh sign-in
+  // gets data without a manual reload (providers mount at the root).
+  const { user, status: authStatus } = useAuth();
+  const userId = user?.id ?? null;
+  const userRole = user?.role ?? null;
+
   // Debounce server patches so headline typing doesn't fire per-keystroke.
   const pendingRef = useRef<Partial<PortfolioData> | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
+    if (authStatus !== "ready") return;
+    if (!userId || userRole !== "candidate") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth-keyed reset
+      setPortfolio(initialPortfolio);
+      setStatus("idle");
+      setError(null);
+      setIsHydrated(true);
+      return;
+    }
+     
     setStatus("loading");
     try {
       const cached = localStorage.getItem(currentScopedKey(CACHE_BASE.portfolio));
@@ -185,7 +187,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const api = await getApiAdapter();
         const result = await api.getCandidateProfile();
         if (cancelled) return;
         if (!result.ok) {
@@ -212,14 +213,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authStatus, userId, userRole]);
 
   const flushPatch = useCallback(async () => {
     const patch = pendingRef.current;
     pendingRef.current = null;
     if (!patch || Object.keys(patch).length === 0) return;
     try {
-      const api = await getApiAdapter();
       const result = await api.patchPortfolio(patch);
       if (!result.ok) {
         // Surface the failure — the optimistic edit isn't persisted.
@@ -564,28 +564,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const addItem = useCallback(
-    (section: PortfolioSection, content: string) => {
-      setPortfolio((p) => {
-        const ts = new Date().toISOString();
-        const next = touch({ ...p });
-        if (section === "bio") return { ...next, bio: content };
-        const item: PortfolioItem = { content, addedAt: ts };
-        if (section === "skill")
-          return { ...next, legacySkills: [...p.legacySkills, item] };
-        if (section === "experience")
-          return {
-            ...next,
-            legacyExperiences: [...p.legacyExperiences, item],
-          };
-        if (section === "aspiration")
-          return { ...next, aspirations: [...p.aspirations, item] };
-        return { ...next, reflections: [...p.reflections, item] };
-      });
-    },
-    [],
-  );
-
   const resetPortfolio = useCallback(() => {
     setPortfolio(initialPortfolio);
     pendingRef.current = null;
@@ -615,7 +593,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       removeProject,
       addExperience,
       removeExperience,
-      addItem,
       resetPortfolio,
     }),
     [
@@ -635,7 +612,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       removeProject,
       addExperience,
       removeExperience,
-      addItem,
       resetPortfolio,
     ],
   );

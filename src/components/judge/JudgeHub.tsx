@@ -96,7 +96,7 @@ export function JudgeHub() {
       label: "Candidate view",
       mode: "Candidate mode",
       card: "border-luminous/40",
-      accent: "bg-luminous/15 text-luminous",
+      accent: "bg-luminous/15 text-luminous-soft",
       text: "text-luminous",
     },
     {
@@ -108,7 +108,7 @@ export function JudgeHub() {
       label: "Employer view",
       mode: "Employer mode",
       card: "border-clover/40",
-      accent: "bg-clover/15 text-clover",
+      accent: "bg-clover/15 text-clover-soft",
       text: "text-clover",
     },
     {
@@ -116,7 +116,7 @@ export function JudgeHub() {
       icon: Activity,
       title: "Mid-career Career Health",
       body: "A 35+ staff engineer with rich history — the fully-populated Career Health dashboard.",
-      action: () => demoLogin("mid-career", "candidate", "/candidate/dashboard", "midcareer"),
+      action: () => demoLogin("mid-career", "candidate", "/candidate/career-health", "midcareer"),
       label: "Open Career Health",
       mode: "Career Health",
       card: "border-foreground/30",
@@ -131,7 +131,7 @@ export function JudgeHub() {
         <ArrowLeft className="size-4" /> Back to home
       </Link>
 
-      <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+      <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
         Judge demo
       </p>
       <h1 className="mt-2 text-3xl font-semibold">Explore Career OS in a few clicks</h1>
@@ -168,7 +168,7 @@ export function JudgeHub() {
                 {s.title}
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                    "rounded-full px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider",
                     s.accent,
                   )}
                 >

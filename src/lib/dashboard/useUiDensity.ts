@@ -1,26 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { currentScopedKey } from "@/lib/storage/appCache";
 import { resolveUiDensity } from "./uiDensity";
 import type { CareerPhase, UiDensity } from "./types";
 
 /**
- * Resolved UI density for the dashboard: the user's saved override
- * (fetched from `/api/me/ui-density`, painted cache-first from the
- * user-scoped localStorage cache per the app-wide convention) falling
- * back to the phase default. The server value is the source of truth;
- * the cache only prevents a density flash on repeat visits.
+ * Resolved UI density: the user's saved override (from
+ * `/api/me/ui-density`) falling back to the phase default.
+ * ponytail: fetch-only — the phase default paints instantly, so the
+ * only "flash" hits users whose override differs from their default.
  */
 export function useUiDensity(phase: CareerPhase): UiDensity {
-  const [override, setOverride] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      return window.localStorage.getItem(currentScopedKey("ui-density")) ?? "";
-    } catch {
-      return "";
-    }
-  });
+  const [override, setOverride] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -30,14 +21,7 @@ export function useUiDensity(phase: CareerPhase): UiDensity {
         const body = (await res.json().catch(() => null)) as
           | { ok?: boolean; data?: { uiDensity?: string } }
           | null;
-        if (cancelled || !body?.ok) return;
-        const value = body.data?.uiDensity ?? "";
-        setOverride(value);
-        try {
-          window.localStorage.setItem(currentScopedKey("ui-density"), value);
-        } catch {
-          /* cache is best-effort */
-        }
+        if (!cancelled && body?.ok) setOverride(body.data?.uiDensity ?? "");
       } catch {
         /* offline/error — phase default still applies */
       }

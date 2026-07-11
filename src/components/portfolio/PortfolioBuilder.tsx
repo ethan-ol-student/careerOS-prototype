@@ -52,7 +52,7 @@ export function PortfolioBuilder({
       />
 
       <div className="relative mb-5">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Portfolio builder
         </p>
         <h2 className="mt-1 text-xl font-semibold tracking-tight">
@@ -78,10 +78,10 @@ export function PortfolioBuilder({
               onClick={() => onSectionChange(s.id)}
               aria-pressed={active}
               className={cn(
-                "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors",
+                "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-colors",
                 active
-                  ? "border-luminous bg-luminous/15 text-luminous"
-                  : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground",
+                  ? "border-luminous/40 bg-luminous/12 text-luminous-soft"
+                  : "border-border/15 bg-foreground/2 text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="size-3.5" />
@@ -109,7 +109,7 @@ export function PortfolioBuilder({
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="text-muted-foreground mb-1.5 block text-[11px] font-medium uppercase tracking-wider">
+    <label className="text-muted-foreground mb-1.5 block text-[11px] font-mono font-medium uppercase tracking-wider">
       {children}
     </label>
   );
@@ -121,7 +121,7 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
       type="text"
       {...props}
       className={cn(
-        "bg-background/60 border-border focus:border-luminous focus:ring-luminous/30 min-h-11 w-full rounded-md border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2",
+        "bg-foreground/2 border-border/15 focus:border-luminous/60 focus:ring-luminous/30 min-h-11 w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2",
         props.className,
       )}
     />
@@ -133,7 +133,7 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       {...props}
       className={cn(
-        "bg-background/60 border-border focus:border-luminous focus:ring-luminous/30 w-full rounded-md border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2",
+        "bg-foreground/2 border-border/15 focus:border-luminous/60 focus:ring-luminous/30 w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2",
         props.className,
       )}
     />
@@ -149,7 +149,7 @@ function ItemList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="text-muted-foreground border-border/40 rounded-md border border-dashed p-3 text-center text-xs">
+      <p className="text-muted-foreground border-border/15 rounded-lg border border-dashed p-3 text-center text-xs">
         {empty}
       </p>
     );
@@ -167,7 +167,7 @@ function Pill({
   ariaLabel?: string;
 }) {
   return (
-    <span className="bg-luminous/15 text-luminous border-luminous/40 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium">
+    <span className="bg-luminous/10 text-luminous-soft border-luminous/30 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium">
       {children}
       <button
         type="button"
@@ -239,10 +239,17 @@ function SkillsForm() {
           Add
         </Button>
       </form>
+      <p className="text-muted-foreground text-xs">
+        Skills added here start as self-claimed.{" "}
+        <a href="/candidate/skills" className="text-luminous hover:underline">
+          Validate them on the Skill Radar
+        </a>{" "}
+        — evidence and endorsements raise their weight.
+      </p>
       <div>
         <FieldLabel>{portfolio.skills.length} skills on your CV</FieldLabel>
         {portfolio.skills.length === 0 ? (
-          <p className="text-muted-foreground border-border/40 rounded-md border border-dashed p-3 text-center text-xs">
+          <p className="text-muted-foreground border-border/15 rounded-lg border border-dashed p-3 text-center text-xs">
             No skills yet — add your first one above.
           </p>
         ) : (
@@ -336,7 +343,7 @@ function ExperienceForm() {
           items={portfolio.experiences.map((e) => (
             <li
               key={e.id}
-              className="border-border/40 bg-card/40 flex items-start gap-3 rounded-md border p-3"
+              className="border-border/15 bg-foreground/2 flex items-start gap-3 rounded-lg border p-3"
             >
               <Briefcase className="text-luminous mt-0.5 size-3.5 shrink-0" />
               <div className="min-w-0 flex-1">
@@ -422,7 +429,7 @@ function ProjectsForm() {
           items={portfolio.projects.map((p) => (
             <li
               key={p.id}
-              className="border-border/40 bg-card/40 flex items-start gap-3 rounded-md border p-3"
+              className="border-border/15 bg-foreground/2 flex items-start gap-3 rounded-lg border p-3"
             >
               <FolderGit2 className="text-luminous mt-0.5 size-3.5 shrink-0" />
               <div className="min-w-0 flex-1">
@@ -512,7 +519,7 @@ function CertificatesForm() {
           items={portfolio.certificates.map((c) => (
             <li
               key={c.id}
-              className="border-border/40 bg-card/40 flex items-start gap-3 rounded-md border p-3"
+              className="border-border/15 bg-foreground/2 flex items-start gap-3 rounded-lg border p-3"
             >
               <GraduationCap className="text-luminous mt-0.5 size-3.5 shrink-0" />
               <div className="min-w-0 flex-1">
@@ -593,7 +600,7 @@ function AwardsForm() {
           items={portfolio.awards.map((a) => (
             <li
               key={a.id}
-              className="border-border/40 bg-card/40 flex items-start gap-3 rounded-md border p-3"
+              className="border-border/15 bg-foreground/2 flex items-start gap-3 rounded-lg border p-3"
             >
               <AwardIcon className="text-luminous mt-0.5 size-3.5 shrink-0" />
               <div className="min-w-0 flex-1">

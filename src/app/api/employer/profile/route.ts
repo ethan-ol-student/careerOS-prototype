@@ -15,6 +15,7 @@ export async function GET() {
     const profile = await getCurrentEmployerProfile();
     return ok({
       organizationName: profile.organizationName ?? "",
+      role: profile.role, // hiring focus, shown on the dashboard identity card
       hasCompletedOnboarding: profile.hasCompletedOnboarding,
     });
   } catch (err) {

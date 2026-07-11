@@ -19,7 +19,7 @@ export function SavedCandidateCard({
   return (
     <article className="glass-3 flex h-full flex-col gap-4 rounded-2xl p-5">
       <header className="flex items-start gap-3">
-        <div className="bg-luminous/15 ring-luminous/30 text-luminous flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
+        <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
           {candidate.name
             .split(" ")
             .map((p) => p[0])
@@ -39,7 +39,7 @@ export function SavedCandidateCard({
           type="button"
           aria-label="Remove from saved"
           onClick={onRemove}
-          className="text-muted-foreground hover:text-foreground shrink-0 rounded-md p-1.5 transition-colors"
+          className="text-muted-foreground hover:text-foreground shrink-0 rounded-lg p-1.5 transition-colors"
         >
           <BookmarkX className="size-4" />
         </button>

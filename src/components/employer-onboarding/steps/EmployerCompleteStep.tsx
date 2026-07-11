@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Sparkles } from "lucide-react";
-import StepShell from "@/components/intent-form/steps/StepShell";
+import StepShell from "@/components/onboarding/StepShell";
 import { Button } from "@/components/ui/Button";
 
 interface EmployerCompleteStepProps {
@@ -38,8 +38,8 @@ export default function EmployerCompleteStep({
       }
     >
       <div className="grid grid-cols-12 gap-4">
-        <div className="glass-4 ring-luminous/20 col-span-12 flex flex-col items-center gap-4 rounded-2xl p-8 text-center ring-1">
-          <div className="bg-clover/15 text-clover ring-2 ring-clover/40 flex size-14 items-center justify-center rounded-full">
+        <div className="glass-4 ring-clover/20 col-span-12 flex flex-col items-center gap-4 rounded-2xl p-8 text-center ring-1">
+          <div className="bg-clover/15 text-clover-soft ring-2 ring-clover/40 flex size-14 items-center justify-center rounded-full">
             <Sparkles className="size-7" />
           </div>
           <h3 className="text-xl font-semibold tracking-tight">

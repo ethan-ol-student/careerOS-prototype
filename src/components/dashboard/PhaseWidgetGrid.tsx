@@ -24,11 +24,6 @@ const ACCENT_BG: Record<PhaseAccent, string> = {
   luminous: "bg-luminous",
   clover: "bg-clover",
 };
-const ACCENT_SOFT_BG: Record<PhaseAccent, string> = {
-  luminous: "bg-luminous/15",
-  clover: "bg-clover/15",
-};
-
 /** Section wrapper: full-width band + 12-col grid (responsive by default). */
 export function PhaseWidgetGrid({
   children,
@@ -103,7 +98,7 @@ export function WidgetHeader({
         {eyebrow ? (
           <p
             className={cn(
-              "flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em]",
+              "flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-[0.18em]",
               ACCENT_TEXT[accent],
             )}
           >
@@ -119,50 +114,11 @@ export function WidgetHeader({
         ) : null}
       </div>
       {hint ? (
-        <span className="border-border/60 text-muted-foreground shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider">
+        <span className="border-border/20 text-muted-foreground shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-mono font-medium uppercase tracking-wider">
           {hint}
         </span>
       ) : null}
       {action}
-    </div>
-  );
-}
-
-/** Small metric tile (label + value + optional sub-caption). */
-export function StatTile({
-  label,
-  value,
-  sub,
-  accent,
-  className,
-}: {
-  label: string;
-  value: React.ReactNode;
-  sub?: React.ReactNode;
-  accent?: PhaseAccent;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "bg-card/40 border-border/30 rounded-lg border p-3",
-        className,
-      )}
-    >
-      <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-0.5 font-mono text-xl",
-          accent ? ACCENT_TEXT[accent] : "text-foreground",
-        )}
-      >
-        {value}
-      </p>
-      {sub ? (
-        <p className="text-muted-foreground mt-0.5 text-[11px]">{sub}</p>
-      ) : null}
     </div>
   );
 }
@@ -188,7 +144,7 @@ export function MeterRow({
         <span className="text-muted-foreground">{label}</span>
         <span className="text-foreground font-mono">{safe}%</span>
       </div>
-      <div className="bg-muted/40 h-2 w-full overflow-hidden rounded-full">
+      <div className="bg-foreground/8 h-2 w-full overflow-hidden rounded-full">
         <div
           className={cn("h-full rounded-full transition-all", ACCENT_BG[accent])}
           style={{ width: `${safe}%` }}
@@ -212,7 +168,7 @@ export function EmptyHint({
   return (
     <p
       className={cn(
-        "border-border/50 text-muted-foreground rounded-md border border-dashed px-3 py-4 text-center text-xs",
+        "border-border/15 text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs",
         className,
       )}
     >
@@ -236,38 +192,13 @@ export function MockBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-yellow-400",
+        "inline-flex items-center gap-1 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-2 py-0.5 text-[10px] font-mono font-medium uppercase tracking-wider text-yellow-400",
         className,
       )}
       title="Sample data — not yet backed by a live source"
     >
       <FlaskConical className="size-3" aria-hidden />
       {label}
-    </span>
-  );
-}
-
-/** Small icon chip used in card headers. */
-export function IconChip({
-  icon: Icon,
-  accent = "luminous",
-  className,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  accent?: PhaseAccent;
-  className?: string;
-}) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-xl",
-        ACCENT_SOFT_BG[accent],
-        ACCENT_TEXT[accent],
-        className,
-      )}
-    >
-      <Icon className="size-4" />
     </span>
   );
 }

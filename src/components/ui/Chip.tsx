@@ -6,11 +6,12 @@ export type ChipTone =
   | "clover"
   | "warning";
 
+/* Design-system pills: faint white-tint neutral, soft accent text on
+   a 10% accent wash for the toned variants. */
 const TONE_CLASSES: Record<ChipTone, string> = {
-  neutral:
-    "bg-card/60 border-border/60 text-foreground/90",
-  luminous: "bg-luminous/10 text-luminous border-luminous/30",
-  clover: "bg-clover/10 text-clover border-clover/30",
+  neutral: "bg-foreground/3 border-border/15 text-foreground/90",
+  luminous: "bg-luminous/10 text-luminous-soft border-luminous/30",
+  clover: "bg-clover/10 text-clover-soft border-clover/30",
   warning:
     "bg-yellow-400/15 text-yellow-400 border-yellow-400/40",
 };

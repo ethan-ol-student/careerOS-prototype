@@ -59,7 +59,7 @@ export function UpgradeModal({
       }
       size="md"
       footer={
-        <div className="border-border/40 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
+        <div className="border-border/15 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
           <Button variant="outline" onClick={onClose} disabled={busy}>
             Not now
           </Button>

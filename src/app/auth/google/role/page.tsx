@@ -79,7 +79,7 @@ export default function GoogleRolePage() {
               disabled={busy !== null}
               onClick={() => choose(o.role)}
               className={cn(
-                "glass-3 border-border/40 hover:border-luminous/50 rounded-2xl border p-6 text-left transition-colors disabled:opacity-60",
+                "glass-3 border-border/15 hover:border-luminous/50 rounded-2xl border p-6 text-left transition-colors disabled:opacity-60",
                 busy === o.role && "border-luminous/60",
               )}
             >

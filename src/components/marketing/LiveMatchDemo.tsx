@@ -57,7 +57,7 @@ export function LiveMatchDemo() {
 
   return (
     <div className="glass-3 rounded-3xl p-6">
-      <p className="text-luminous flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em]">
+      <p className="text-luminous flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-[0.18em]">
         <Wrench className="size-3.5" />
         Try the real engine
       </p>

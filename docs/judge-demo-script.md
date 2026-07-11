@@ -23,7 +23,9 @@ the other hub buttons re-sign you in as needed.
 
 ## 3. The candidate ↔ employer loop (3 minutes)
 
-1. From `/judge`, click **Candidate view** → the phase-based dashboard.
+1. From `/judge`, click **Candidate view** → the four-question cockpit
+   dashboard (What are you / Where are you / What's possible / How do I
+   get there), with a persistent left sidebar for every candidate surface.
    - Menu → **Jobs**: every job carries a personal, explainable match score.
    - Open any job → **Easy apply** → menu → **My Applications**: your
      application appears with a live status timeline.
@@ -39,9 +41,11 @@ the other hub buttons re-sign you in as needed.
 
 ## 4. The mid-career walkthrough — the centerpiece (4 minutes)
 
-From `/judge`, click **Open Career Health**. You're now "Jordan Reyes," a
-35+ staff engineer with 12 years of seeded history. This dashboard is the
-CareerOS 35+ thesis: *your second career does not start from zero.*
+From `/judge`, click **Open Career Health** (lands directly on
+`/candidate/career-health`; also reachable from the cockpit's "How do I
+get there?" card). You're now "Jordan Reyes," a 35+ staff engineer with 12
+years of seeded history. This view is the CareerOS 35+ thesis: *your
+second career does not start from zero.*
 
 Walk the cards top to bottom:
 

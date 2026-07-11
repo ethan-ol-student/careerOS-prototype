@@ -67,7 +67,7 @@ export default function EmployerMessagesPage() {
       <main className="px-4 pb-16 pt-8">
         <div className="max-w-container mx-auto flex flex-col gap-6">
           <header className="flex flex-col gap-2">
-            <p className="text-clover text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-clover text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Messages
             </p>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -104,7 +104,7 @@ export default function EmployerMessagesPage() {
             </div>
           ) : rows.length === 0 ? (
             <div className="glass-3 ring-clover/20 flex flex-col items-center gap-3 rounded-2xl p-10 text-center ring-1">
-              <div className="bg-clover/15 text-clover flex size-14 items-center justify-center rounded-2xl">
+              <div className="bg-clover/15 text-clover-soft flex size-14 items-center justify-center rounded-2xl">
                 <MessageSquare className="size-6" />
               </div>
               <h2 className="text-lg font-semibold tracking-tight">
@@ -125,7 +125,7 @@ export default function EmployerMessagesPage() {
                     href={`/employers/chat/${c.candidateId}`}
                     className="glass-3 hover:border-clover/50 flex items-center gap-4 rounded-xl p-4 transition-colors"
                   >
-                    <div className="bg-clover/15 ring-clover/30 text-clover flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
+                    <div className="bg-clover/15 ring-clover/30 text-clover-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
                       {c.candidateName
                         .split(" ")
                         .map((p) => p[0])

@@ -40,6 +40,30 @@ const OnboardingPatchSchema = z
 
     dashboardPersonalizationSummary: z.string().max(800).optional(),
     onboardingCompleted: z.boolean().optional(),
+
+    // Onboarding v2 — preferences
+    desiredLocations: z.array(z.string().max(120)).max(20).optional(),
+    openToRelocate: z.boolean().optional(),
+    workArrangement: z.array(z.enum(["remote", "hybrid", "onsite"])).optional(),
+    topValues: z.array(z.string().max(60)).max(3).optional(),
+    scheduleFlexibility: z.array(z.string().max(60)).max(10).optional(),
+    travelWillingness: z.enum(["", "none", "occasional", "frequent"]).optional(),
+    workEnvironment: z
+      .enum(["", "structured", "fast_moving", "independent", "collaborative"])
+      .optional(),
+    maxCommuteMinutes: z.number().int().min(0).max(300).nullable().optional(),
+    minSalaryAmount: z.number().int().min(0).nullable().optional(),
+    minSalaryPeriod: z.enum(["", "hourly", "monthly", "yearly"]).optional(),
+    links: z.array(z.string().max(300)).max(10).optional(),
+    languages: z.array(z.string().max(60)).max(15).optional(),
+    fieldOfStudy: z.string().max(120).optional(),
+    expectedGraduation: z.string().max(40).optional(),
+
+    // Onboarding v2 — profile-bound fields (routed to CandidateProfile)
+    fullName: z.string().max(120).optional(),
+    currentTitle: z.string().max(120).optional(),
+    phone: z.string().max(40).optional(),
+    location: z.string().max(120).optional(),
   })
   .strict();
 
@@ -63,7 +87,19 @@ export async function GET() {
       );
     }
     const row = await getOrCreateRow(user.id);
-    return ok(row);
+    // Include the profile-bound fields so onboarding can prefill them.
+    const profile = await prisma.candidateProfile.findUnique({
+      where: { userId: user.id },
+      select: { name: true, headline: true, phone: true, location: true },
+    });
+    return ok({
+      ...row,
+      fullName: profile?.name ?? user.name ?? "",
+      currentTitle: profile?.headline ?? "",
+      phone: profile?.phone ?? "",
+      location: profile?.location ?? "",
+      email: user.email,
+    });
   } catch (err) {
     if (err instanceof UnauthorizedError) {
       return failFromCode("unauthenticated", err.message, 401);
@@ -92,9 +128,23 @@ export async function PATCH(request: Request) {
       );
     }
     await getOrCreateRow(user.id);
+    // Profile-bound fields live on CandidateProfile, not CandidatesAI.
+    const { fullName, currentTitle, phone, location, ...aiData } = parsed.data;
+    const profilePatch = {
+      ...(fullName !== undefined ? { name: fullName } : {}),
+      ...(currentTitle !== undefined ? { headline: currentTitle } : {}),
+      ...(phone !== undefined ? { phone } : {}),
+      ...(location !== undefined ? { location } : {}),
+    };
+    if (Object.keys(profilePatch).length > 0) {
+      await prisma.candidateProfile.updateMany({
+        where: { userId: user.id },
+        data: profilePatch,
+      });
+    }
     const updated = await prisma.candidatesAI.update({
       where: { userId: user.id },
-      data: parsed.data,
+      data: aiData,
     });
     // Keep the marketplace mirror in sync with the latest answers
     // (no-op unless the candidate has opted into discovery).

@@ -79,7 +79,7 @@ export default function PersonalityPage() {
   return (
     <AppShell>
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-6">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Working-style profile
         </p>
         <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold sm:text-3xl">
@@ -99,7 +99,7 @@ export default function PersonalityPage() {
         ) : archetype ? (
           /* ── Result view ── */
           <section className="glass-3 mt-8 rounded-2xl p-6">
-            <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Your working style
             </p>
             <h2 className="mt-1 text-2xl font-semibold">{archetype.name}</h2>
@@ -115,7 +115,7 @@ export default function PersonalityPage() {
 
             {result && (
               <div className="mt-6">
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                <p className="text-muted-foreground text-xs font-mono font-semibold uppercase tracking-wider">
                   Score breakdown
                 </p>
                 <div className="mt-2 space-y-1.5">
@@ -167,7 +167,7 @@ export default function PersonalityPage() {
               className="glass-3 animate-appear mt-8 rounded-2xl p-6"
             >
               <div className="flex items-center justify-between">
-                <p className="text-luminous text-xs font-semibold uppercase tracking-wider">
+                <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-wider">
                   Question {step + 1} of {QUIZ_QUESTIONS.length}
                 </p>
                 <p className="text-muted-foreground text-xs">
@@ -185,7 +185,7 @@ export default function PersonalityPage() {
                         "min-h-11 w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                         answers[q.id] === o.id
                           ? "border-luminous/60 bg-luminous/10"
-                          : "border-border/40 bg-card/40 hover:border-luminous/40",
+                          : "border-border/15 bg-foreground/2 hover:border-luminous/40",
                       )}
                     >
                       {o.label}

@@ -123,7 +123,7 @@ export function TestModePanel() {
               ? "/candidate/dashboard"
               : "/candidate/onboarding"
             : s?.employer.onboardingCompleted
-              ? "/employers/marketplace"
+              ? "/employers/dashboard"
               : "/employers/onboarding";
         router.push(target);
       } catch (err) {
@@ -499,7 +499,7 @@ function Section({
 }) {
   return (
     <section className="glass-3 rounded-2xl border p-5">
-      <h2 className="text-luminous mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em]">
+      <h2 className="text-luminous mb-3 flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-[0.18em]">
         <Icon className="size-3.5" />
         {title}
       </h2>
@@ -511,7 +511,7 @@ function Section({
 function StateTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-border/40 bg-card/40 rounded-lg border p-2.5">
-      <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+      <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
         {label}
       </p>
       <p className="mt-0.5 truncate font-mono text-sm">{value}</p>

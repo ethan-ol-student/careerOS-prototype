@@ -131,7 +131,7 @@ const CONNECTION_TINT: Record<
 > = {
   luminous: {
     ring: "ring-luminous/30",
-    chip: "bg-luminous/15 text-luminous",
+    chip: "bg-luminous/15 text-luminous-soft",
     sideText: "text-luminous",
   },
   brand: {
@@ -141,7 +141,7 @@ const CONNECTION_TINT: Record<
   },
   clover: {
     ring: "ring-clover/30",
-    chip: "bg-clover/15 text-clover",
+    chip: "bg-clover/15 text-clover-soft",
     sideText: "text-clover",
   },
 };
@@ -321,7 +321,7 @@ export default function LandingPage() {
             <ul className="mt-8 flex flex-col gap-5">
               {MID_CAREER_VALUE.map(({ icon: Icon, title, body }) => (
                 <li key={title} className="flex items-start gap-4">
-                  <span className="bg-luminous/15 text-luminous flex size-10 shrink-0 items-center justify-center rounded-xl">
+                  <span className="bg-luminous/15 text-luminous-soft flex size-10 shrink-0 items-center justify-center rounded-xl">
                     <Icon className="size-5" />
                   </span>
                   <div>
@@ -388,7 +388,7 @@ export default function LandingPage() {
               >
                 Find talent
               </LinkButton>
-              <span className="text-muted-foreground text-xs uppercase tracking-wider">
+              <span className="text-muted-foreground font-mono text-xs uppercase tracking-wider">
                 Research preview
               </span>
             </div>
@@ -397,7 +397,7 @@ export default function LandingPage() {
           {/* Image slot - Employer */}
           <div className="md:order-2 md:col-span-5">
             <Parallax speed={-80}>
-              <div className="border-border/60 relative flex aspect-[4/5] w-full overflow-hidden rounded-3xl border">
+              <div className="border-border/20 relative flex aspect-[4/5] w-full overflow-hidden rounded-3xl border">
                 <Image
                   src="/employer_new.png"
                   alt="A hiring team reviewing candidates by their growth trajectory"
@@ -453,7 +453,7 @@ export default function LandingPage() {
                   </div>
                   <p
                     className={cn(
-                      "text-[11px] font-semibold uppercase tracking-[0.18em]",
+                      "text-[11px] font-mono font-semibold uppercase tracking-[0.18em]",
                       t.sideText,
                     )}
                   >
@@ -477,7 +477,7 @@ export default function LandingPage() {
         <div className="max-w-container mx-auto grid gap-6 sm:grid-cols-3">
           {TRUST_POINTS.map(({ icon: Icon, title, body }) => (
             <div key={title} className="flex items-start gap-3">
-              <span className="bg-luminous/15 text-luminous flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <span className="bg-luminous/15 text-luminous-soft flex size-9 shrink-0 items-center justify-center rounded-lg">
                 <Icon className="size-4" />
               </span>
               <div>
@@ -529,7 +529,7 @@ export default function LandingPage() {
               <span className="bg-brand/15 text-brand flex size-12 items-center justify-center rounded-2xl">
                 <Compass className="size-6" />
               </span>
-              <p className="text-sm font-semibold uppercase tracking-wider">
+              <p className="text-sm font-mono font-semibold uppercase tracking-wider">
                 Candidate
               </p>
               <LinkButton
@@ -545,7 +545,7 @@ export default function LandingPage() {
               <span className="bg-brand/15 text-brand flex size-12 items-center justify-center rounded-2xl">
                 <Briefcase className="size-6" />
               </span>
-              <p className="text-sm font-semibold uppercase tracking-wider">
+              <p className="text-sm font-mono font-semibold uppercase tracking-wider">
                 Employer
               </p>
               <LinkButton

@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { SessionTimeout } from "@/components/app/SessionTimeout";
 import { PwaProvider } from "@/components/app/PwaProvider";
+import { MotionProvider } from "@/components/app/MotionProvider";
 import { IntentProvider } from "@/lib/context/IntentContext";
 import { PortfolioProvider } from "@/lib/hooks/usePortfolio";
 import { ChaptersProvider } from "@/lib/context/ChaptersContext";
@@ -59,6 +60,7 @@ export default function RootLayout({
         <AuthProvider>
           <SessionTimeout />
           <PwaProvider />
+          <MotionProvider />
           <IntentProvider>
             <NotificationsProvider>
               <PortfolioProvider>

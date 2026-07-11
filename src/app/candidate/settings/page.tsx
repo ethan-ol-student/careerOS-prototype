@@ -15,6 +15,7 @@ import { AccountInfoForm } from "@/components/settings/AccountInfoForm";
 import { PrivacySection } from "@/components/settings/PrivacySection";
 import { DiscoverySection } from "@/components/settings/DiscoverySection";
 import { UiDensitySection } from "@/components/settings/UiDensitySection";
+import { PerformanceSection } from "@/components/settings/PerformanceSection";
 import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection";
 import { useIntent } from "@/lib/context/IntentContext";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
@@ -78,7 +79,7 @@ function CandidateSettingsContent() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wider">
+                    <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
                       Target roles
                     </p>
                     {targetRoles.length ? (
@@ -96,7 +97,7 @@ function CandidateSettingsContent() {
                     )}
                   </div>
                   <div>
-                    <p className="text-muted-foreground mb-2 text-[11px] font-medium uppercase tracking-wider">
+                    <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
                       Skills summary
                     </p>
                     {skills.length ? (
@@ -147,6 +148,14 @@ function CandidateSettingsContent() {
               description="Calm & editorial, or visual & gamified — your call, never locked to age."
             >
               <UiDensitySection />
+            </SettingsSection>
+
+            {/* Motion & performance (device-level, localStorage) */}
+            <SettingsSection
+              title="Motion & performance"
+              description="Animations are on by default. Turn them off here — saved on this device."
+            >
+              <PerformanceSection />
             </SettingsSection>
 
             {/* Marketplace discovery opt-in */}

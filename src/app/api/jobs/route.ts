@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { getCallerSkills, toTargetJob } from "@/lib/services/jobs.service";
+import {
+  getCallerSkills,
+  toTargetJob,
+  JobsService,
+} from "@/lib/services/jobs.service";
 import { scoreSkillBridge } from "@/lib/intelligence/skillBridgeEngine";
 import { ok, failFromUnknown } from "@/lib/api/respond";
 
@@ -18,9 +22,11 @@ export async function GET(request: Request) {
     const field = url.searchParams.get("field")?.trim() ?? "";
     const location = url.searchParams.get("location")?.trim() ?? "";
 
+    await JobsService.expireStale();
     const [rows, skills] = await Promise.all([
       prisma.job.findMany({
         where: {
+          status: "active", // expired/fulfilled posts leave the public feed
           ...(field ? { field } : {}),
           ...(location
             ? { location: { contains: location, mode: "insensitive" } }

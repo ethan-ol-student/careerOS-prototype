@@ -9,9 +9,7 @@ import { PHASE_CONFIG } from "./phaseConfig";
  * winning — the experience adapts to age but is never locked to it.
  */
 
-export const UI_DENSITIES = ["calm", "vibrant"] as const;
-
-export function isUiDensity(v: unknown): v is UiDensity {
+function isUiDensity(v: unknown): v is UiDensity {
   return v === "calm" || v === "vibrant";
 }
 

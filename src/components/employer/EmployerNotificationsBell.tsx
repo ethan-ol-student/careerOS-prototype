@@ -57,7 +57,7 @@ export function EmployerNotificationsBell() {
         aria-expanded={isOpen}
         onClick={() => setIsOpen((v) => !v)}
         className={cn(
-          "border-border/60 bg-card/40 text-foreground hover:border-clover/60 hover:text-clover focus-visible:ring-clover/40 relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border transition-colors focus:outline-none focus-visible:ring-2",
+          "border-border/15 bg-foreground/2 text-foreground hover:border-clover/60 hover:text-clover focus-visible:ring-clover/40 relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border transition-colors focus:outline-none focus-visible:ring-2",
           isOpen && "border-clover/60 text-clover",
         )}
       >
@@ -72,11 +72,11 @@ export function EmployerNotificationsBell() {
       {isOpen && (
         <div
           role="menu"
-          className="bg-popover text-popover-foreground border-border/60 absolute right-0 top-full z-50 mt-2 w-[min(380px,calc(100vw-2rem))] origin-top-right overflow-hidden rounded-xl border shadow-xl"
+          className="bg-popover text-popover-foreground border-border/20 absolute right-0 top-full z-50 mt-2 w-[min(380px,calc(100vw-2rem))] origin-top-right overflow-hidden rounded-xl border shadow-xl"
         >
-          <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border/15 px-4 py-3">
             <p className="text-sm font-semibold">Notifications</p>
-            <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
               {notifications.length} total
             </span>
           </div>
@@ -100,11 +100,11 @@ export function EmployerNotificationsBell() {
                     <span
                       aria-hidden
                       className={cn(
-                        "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md",
+                        "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
                         n.kind === "invite-accepted" &&
-                          "bg-clover/15 text-clover",
+                          "bg-clover/15 text-clover-soft",
                         n.kind === "invite-pending" &&
-                          "bg-clover/15 text-clover",
+                          "bg-clover/15 text-clover-soft",
                         n.kind === "system" &&
                           "bg-brand/15 text-brand",
                       )}

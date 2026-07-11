@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentEmployerProfile } from "@/lib/api/currentUser";
+import { JobsService } from "@/lib/services/jobs.service";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 const SendMessageSchema = z.object({
@@ -109,6 +110,18 @@ export async function POST(
         body: parsed.data.body,
       },
     });
+
+    // Message exchanged — fulfillment trigger 2 for this employer's job
+    // posts. If the candidate is a projected real user with an accepted
+    // ("offer") application on one of them, the post auto-fulfills.
+    const projection = await prisma.candidate.findUnique({
+      where: { id: candidateId },
+      select: { user: { select: { candidateProfile: { select: { id: true } } } } },
+    });
+    const candidateProfileId = projection?.user?.candidateProfile?.id;
+    if (candidateProfileId) {
+      await JobsService.maybeFulfillJobs(profile.id, candidateProfileId);
+    }
 
     return ok({ message });
   } catch (err) {

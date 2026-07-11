@@ -9,7 +9,8 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { getApiAdapter } from "@/lib/api";
+import { httpAdapter as api } from "@/lib/api/httpAdapter";
+import { useAuth } from "@/lib/context/AuthContext";
 import { currentScopedKey, CACHE_BASE } from "@/lib/storage/appCache";
 import type {
   ChatMessage,
@@ -66,8 +67,26 @@ export function SavedCandidatesProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContextStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Auth-keyed hydration: re-runs on login/logout so a fresh sign-in
+  // gets data without a manual reload (providers mount at the root).
+  const { user, status: authStatus } = useAuth();
+  const userId = user?.id ?? null;
+  const userRole = user?.role ?? null;
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time SSR-safe hydration; initial loading transition is intentional.
+    if (authStatus !== "ready") return;
+    if (!userId || userRole !== "employer") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth-keyed reset
+      setSavedIds([]);
+      setInvitedIds([]);
+      setNotifications([]);
+      setConversations({});
+      setStatus("idle");
+      setError(null);
+      setIsHydrated(true);
+      return;
+    }
+     
     setStatus("loading");
     try {
       const s = localStorage.getItem(currentScopedKey(CACHE_BASE.employerSaved));
@@ -85,7 +104,6 @@ export function SavedCandidatesProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const api = await getApiAdapter();
         const result = await api.getEmployerProfile();
         if (cancelled) return;
         if (!result.ok) {
@@ -124,7 +142,7 @@ export function SavedCandidatesProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authStatus, userId, userRole]);
 
   // Cache writes when state mutates post-hydration.
   useEffect(() => {

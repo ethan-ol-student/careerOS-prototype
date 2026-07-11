@@ -68,22 +68,6 @@ export function validateRoleTitle(raw: string): ValidationResult<string> {
   return ok(cleaned);
 }
 
-export function validateSkill(raw: string): ValidationResult<string> {
-  const cleaned = sanitizeText(raw);
-  if (!cleaned) return fail("Type a skill before adding it.");
-  if (cleaned.length < 2) return fail("Skill must be at least 2 characters.");
-  if (cleaned.length > 60)
-    return fail("Skill must be 60 characters or fewer.");
-  // Skills should be name-like: letters, digits, spaces, + # . / & -
-  if (!/^[\p{L}\p{N}+#./& -]+$/u.test(cleaned))
-    return fail(
-      "Skill can only contain letters, numbers, and . + # / & - spaces.",
-    );
-  if (containsUnsafeContent(cleaned))
-    return fail("That skill name contains characters we can't accept.");
-  return ok(cleaned);
-}
-
 export interface ContactDraft {
   subject: string;
   message: string;

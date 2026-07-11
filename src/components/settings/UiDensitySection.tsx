@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, Sparkles, BookOpenText, Wand2 } from "lucide-react";
-import { currentScopedKey } from "@/lib/storage/appCache";
 import { cn } from "@/lib/utils";
 
 type Choice = "" | "calm" | "vibrant";
@@ -81,12 +80,6 @@ export function UiDensitySection() {
         setError(body?.error?.message ?? "Couldn't save your preference.");
         return;
       }
-      // Keep the dashboard's paint cache in sync so the change is instant.
-      try {
-        window.localStorage.setItem(currentScopedKey("ui-density"), next);
-      } catch {
-        /* best-effort */
-      }
       setSaved(true);
     } catch (err) {
       setChoice(prev);
@@ -122,7 +115,7 @@ export function UiDensitySection() {
               "min-h-11 rounded-xl border p-3 text-left transition-colors",
               choice === o.value
                 ? "border-luminous/60 bg-luminous/10"
-                : "border-border/50 bg-card/40 hover:border-luminous/40",
+                : "border-border/15 bg-card/40 hover:border-luminous/40",
             )}
           >
             <p className="flex items-center gap-2 text-sm font-medium">

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { MeterRow } from "@/components/dashboard/PhaseWidgetGrid";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { PortfolioBuilder, type Section } from "@/components/portfolio/PortfolioBuilder";
+import { CareerTimeline } from "@/components/portfolio/CareerTimeline";
 import { CVPreview } from "@/components/portfolio/CVPreview";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
@@ -215,8 +216,10 @@ function PortfolioContent() {
               id="problems-editor"
               className="glass-3 mt-4 scroll-mt-24 rounded-2xl p-6"
             >
-              <h2 className="font-semibold">Problems solved</h2>
-              <p className="text-muted-foreground mt-1 text-xs">
+              <h2 className="text-luminous font-mono text-xs font-semibold uppercase tracking-[0.18em]">
+                Problems solved
+              </h2>
+              <p className="text-muted-foreground mt-2 text-xs">
                 Notable problems you solved and their impact — these lead your
                 PDF, before job titles.
               </p>
@@ -225,7 +228,7 @@ function PortfolioContent() {
                   {problemsSolved.map((p) => (
                     <li
                       key={p}
-                      className="border-border/40 bg-card/40 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
+                      className="border-border/15 bg-foreground/2 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
                     >
                       <span className="min-w-0 flex-1">{p}</span>
                       <button
@@ -258,7 +261,7 @@ function PortfolioContent() {
                   onChange={(e) => setNewProblem(e.target.value)}
                   maxLength={240}
                   placeholder="e.g. Cut deployment time from 2 days to 20 minutes"
-                  className="bg-background/60 border-border focus:border-luminous focus:ring-luminous/30 min-h-11 w-full rounded-md border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2"
+                  className="bg-foreground/2 border-border/15 focus:border-luminous/60 focus:ring-luminous/30 min-h-11 w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2"
                 />
                 <Button type="submit" size="sm" className="min-h-11 shrink-0">
                   <Plus className="size-3.5" />
@@ -269,16 +272,18 @@ function PortfolioContent() {
 
             {/* Saved versions (formerly on the Resume page). */}
             <section className="glass-3 mt-4 rounded-2xl p-6">
-              <h2 className="font-semibold">Saved versions</h2>
+              <h2 className="text-luminous font-mono text-xs font-semibold uppercase tracking-[0.18em]">
+                Saved versions
+              </h2>
               {versions.length ? (
                 <ul className="mt-3 space-y-2">
                   {versions.map((v) => (
                     <li
                       key={v.id}
-                      className="border-border/40 bg-card/40 flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                      className="border-border/15 bg-foreground/2 flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
                     >
                       <span className="truncate font-medium">{v.label}</span>
-                      <span className="text-muted-foreground ml-2 shrink-0 text-xs">
+                      <span className="text-muted-foreground ml-2 shrink-0 font-mono text-xs">
                         {new Date(v.createdAt).toLocaleDateString()}
                       </span>
                     </li>
@@ -296,7 +301,9 @@ function PortfolioContent() {
             {/* Interactive completeness checklist — every task deep-links
                 to the section where it gets done. */}
             <section className="glass-3 rounded-2xl p-6">
-              <h2 className="font-semibold">Completeness</h2>
+              <h2 className="text-luminous font-mono text-xs font-semibold uppercase tracking-[0.18em]">
+                Completeness
+              </h2>
               <MeterRow
                 label="Resume completeness"
                 value={completeness.pct}
@@ -310,7 +317,7 @@ function PortfolioContent() {
                       type="button"
                       onClick={() => goToTask(item.key)}
                       className={cn(
-                        "hover:bg-accent focus-visible:ring-luminous/40 group flex min-h-9 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors focus:outline-none focus-visible:ring-2",
+                        "hover:bg-accent focus-visible:ring-luminous/40 group flex min-h-9 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors focus:outline-none focus-visible:ring-2",
                       )}
                     >
                       {item.done ? (
@@ -347,6 +354,10 @@ function PortfolioContent() {
             </div>
           </Col>
         </Grid12>
+
+        {/* Timeline / Living Portfolio (Phase 2) — chronological milestones
+            derived from the sections above; fully scrollable, full width. */}
+        <CareerTimeline className="mt-4" />
       </section>
 
       <ConfirmDialog

@@ -50,12 +50,12 @@ const TINT_CLASSES: Record<
   luminous: {
     ring: "ring-luminous/30",
     halo: "from-luminous/25",
-    chip: "bg-luminous/15 text-luminous",
+    chip: "bg-luminous/15 text-luminous-soft",
   },
   clover: {
     ring: "ring-clover/30",
     halo: "from-clover/25",
-    chip: "bg-clover/15 text-clover",
+    chip: "bg-clover/15 text-clover-soft",
   },
 };
 
@@ -300,7 +300,7 @@ export function FeaturesCarousel() {
             onClick={goPrev}
             disabled={active === 0}
             aria-label="Previous feature"
-            className="border-border/60 bg-card/40 hover:border-brand/60 hover:text-brand text-muted-foreground flex size-10 items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            className="border-border/15 bg-foreground/2 hover:border-brand/60 hover:text-brand text-muted-foreground flex size-10 items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -309,7 +309,7 @@ export function FeaturesCarousel() {
             onClick={goNext}
             disabled={active === SLIDES.length - 1}
             aria-label="Next feature"
-            className="border-border/60 bg-card/40 hover:border-brand/60 hover:text-brand text-muted-foreground flex size-10 items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            className="border-border/15 bg-foreground/2 hover:border-brand/60 hover:text-brand text-muted-foreground flex size-10 items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronRight className="size-4" />
           </button>

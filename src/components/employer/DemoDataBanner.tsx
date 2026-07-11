@@ -12,12 +12,12 @@ import { Beaker } from "lucide-react";
  */
 export function DemoDataBanner() {
   return (
-    <div className="border-b border-border/40 bg-luminous/5 px-4 py-2">
+    <div className="border-b border-border/15 bg-luminous/5 px-4 py-2">
       <div className="max-w-container mx-auto flex flex-wrap items-center justify-center gap-2 text-center">
-        <span className="bg-luminous/15 text-luminous flex size-6 shrink-0 items-center justify-center rounded-md">
+        <span className="bg-luminous/15 text-luminous-soft flex size-6 shrink-0 items-center justify-center rounded-lg">
           <Beaker className="size-3.5" aria-hidden />
         </span>
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Demo data
         </p>
         <p className="text-muted-foreground text-xs">

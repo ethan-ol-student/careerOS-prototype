@@ -26,7 +26,7 @@ export function TestRouteSwitcher({
         if (routes.length === 0) return null;
         return (
           <div key={group}>
-            <p className="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wider">
+            <p className="text-muted-foreground mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider">
               {group}
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">

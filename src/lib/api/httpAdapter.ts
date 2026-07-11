@@ -1,5 +1,7 @@
 /**
- * HTTP-backed implementation of `ApiAdapter` — the only adapter.
+ * The single HTTP data adapter — every client data call goes through
+ * this object (imported directly; there is deliberately no interface
+ * or factory in front of it).
  *
  * Every call goes to the Next.js route handlers under `src/app/api/`.
  * Requests are same-origin by default; set `NEXT_PUBLIC_API_BASE_URL`
@@ -14,7 +16,6 @@
  *    splits the bundle on the GET `/api/me` response.
  */
 
-import type { ApiAdapter } from "./adapter";
 import type {
   ApiResult,
   CandidateProfileResponse,
@@ -246,10 +247,6 @@ function toPortfolio(profile: {
       period: e.period,
       detail: e.detail ?? undefined,
     })),
-    legacySkills: [],
-    legacyExperiences: [],
-    aspirations: [],
-    reflections: [],
     lastUpdated: profile.lastUpdated,
     totalAdditions: profile.totalAdditions,
   };
@@ -286,7 +283,7 @@ type RawEmployerBundle = {
   notifications: Parameters<typeof toEmployerNotification>[0][];
 };
 
-export const httpAdapter: ApiAdapter = {
+export const httpAdapter = {
   async getCandidateProfile(): Promise<ApiResult<CandidateProfileResponse>> {
     const result = await jsonFetch<RawProfileBundle>("/api/me");
     if (!result.ok) return result;

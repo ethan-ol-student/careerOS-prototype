@@ -252,7 +252,7 @@ export default function EmployerOnboardingPage() {
       return;
     }
     if (employerOnboardingCompleted && !editMode) {
-      router.replace("/employers/marketplace");
+      router.replace("/employers/dashboard");
     }
   }, [authStatus, user, employerOnboardingCompleted, editMode, editChecked, router]);
 
@@ -385,13 +385,13 @@ export default function EmployerOnboardingPage() {
         /* ignore */
       }
       // ⚠ Critical: refresh AuthContext so `employerOnboardingCompleted`
-      // flips to true BEFORE we navigate to /employers/marketplace.
+      // flips to true BEFORE we navigate to /employers/dashboard.
       // Without this the EmployerAppShell guard sees stale state and
       // bounces back here — the loop bug.
       await refresh();
       // Editing from Settings returns there; first-time completion opens
       // the marketplace.
-      router.replace(editMode ? "/employers/settings" : "/employers/marketplace");
+      router.replace(editMode ? "/employers/settings" : "/employers/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save onboarding.");
       setSubmitting(false);
@@ -401,7 +401,10 @@ export default function EmployerOnboardingPage() {
   const isLast = step === totalSteps - 1;
 
   return (
-    <main className="bg-background text-foreground relative min-h-screen w-full px-4 py-8">
+    <main
+      data-role-accent="employer"
+      className="bg-background text-foreground relative min-h-screen w-full px-4 py-8"
+    >
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
         <header className="flex items-center justify-between">
           <span className="text-clover inline-flex items-center gap-2 text-sm font-semibold">
@@ -413,7 +416,7 @@ export default function EmployerOnboardingPage() {
           </span>
         </header>
 
-        <div className="bg-muted/40 h-1 w-full overflow-hidden rounded-full">
+        <div className="bg-foreground/8 h-1 w-full overflow-hidden rounded-full">
           <div
             className="bg-clover h-full rounded-full transition-all"
             style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
@@ -436,7 +439,7 @@ export default function EmployerOnboardingPage() {
             </p>
           ) : null}
 
-          <div className="border-border/40 mt-6 flex items-center justify-between border-t pt-4">
+          <div className="border-border/15 mt-6 flex items-center justify-between border-t pt-4">
             <Button
               type="button"
               variant="ghost"
@@ -481,7 +484,7 @@ function StepHeader({
 }) {
   return (
     <div className="mb-4">
-      <p className="text-clover text-[11px] font-semibold uppercase tracking-[0.18em]">
+      <p className="text-clover text-[11px] font-mono font-semibold uppercase tracking-[0.18em]">
         Step {step}
       </p>
       <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
@@ -681,7 +684,7 @@ function MatchingStep({
 // ── Form atoms ──────────────────────────────────────────────────
 
 const inputClass =
-  "glass-3 focus-visible:border-clover focus-visible:ring-clover/40 w-full rounded-md border border-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2";
+  "bg-foreground/2 border-border/15 focus-visible:border-clover/60 focus-visible:ring-clover/40 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2";
 
 function Field({
   label,
@@ -692,7 +695,7 @@ function Field({
 }) {
   return (
     <label className="mt-3 flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-[11px] uppercase tracking-wider">
+      <span className="text-muted-foreground font-mono text-[11px] uppercase tracking-wider">
         {label}
       </span>
       {children}
@@ -722,8 +725,8 @@ function SingleSelect({
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs transition-colors",
               active
-                ? "border-clover bg-clover/10 text-clover ring-2 ring-clover/30"
-                : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground",
+                ? "border-clover/40 bg-clover/12 text-clover-soft"
+                : "border-border/15 bg-foreground/2 text-muted-foreground hover:text-foreground",
             )}
           >
             {active ? <Check className="mr-1 inline size-3" /> : null}
@@ -762,8 +765,8 @@ function MultiSelect({
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs transition-colors",
               active
-                ? "border-clover bg-clover/10 text-clover"
-                : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground",
+                ? "border-clover/40 bg-clover/12 text-clover-soft"
+                : "border-border/15 bg-foreground/2 text-muted-foreground hover:text-foreground",
             )}
           >
             {active ? <Check className="mr-1 inline size-3" /> : null}
@@ -818,7 +821,7 @@ function TagInput({
           type="button"
           onClick={() => commit(text)}
           disabled={!text.trim()}
-          className="bg-clover text-white hover:bg-clover/90 focus-visible:ring-clover/40 inline-flex shrink-0 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
+          className="bg-clover text-white hover:bg-clover/90 focus-visible:ring-clover/40 inline-flex shrink-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Add
         </button>
@@ -845,7 +848,7 @@ function TagInput({
               <button
                 type="button"
                 onClick={() => onChange(safeValues.filter((x) => x !== v))}
-                className="bg-clover/10 text-clover border-clover/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]"
+                className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]"
                 aria-label={`Remove ${v}`}
               >
                 {v}

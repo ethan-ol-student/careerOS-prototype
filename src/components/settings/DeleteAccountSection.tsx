@@ -24,7 +24,7 @@ export function DeleteAccountSection() {
   const [error, setError] = useState<string | null>(null);
 
   const dangerBtn =
-    "inline-flex h-9 items-center justify-center gap-2 rounded-md border border-destructive/50 px-4 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-destructive/40 disabled:pointer-events-none disabled:opacity-50";
+    "inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-destructive/50 px-4 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-destructive/40 disabled:pointer-events-none disabled:opacity-50";
 
   const onDelete = async () => {
     setStatus("deleting");
@@ -108,7 +108,7 @@ export function DeleteAccountSection() {
             onClick={onDelete}
             disabled={!password || status === "deleting"}
             className={cn(
-              "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-destructive/40 disabled:pointer-events-none disabled:opacity-50",
+              "inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-destructive px-4 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-destructive/40 disabled:pointer-events-none disabled:opacity-50",
             )}
           >
             {status === "deleting" ? (

@@ -132,7 +132,7 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
       </Link>
 
       <header className="glass-3 flex items-center gap-3 rounded-2xl p-4">
-        <div className="bg-luminous/15 ring-luminous/30 text-luminous flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
+        <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
           {candidate.name
             .split(" ")
             .map((p) => p[0])
@@ -148,7 +148,7 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
             {candidate.targetRole} · {candidate.location}
           </p>
         </div>
-        <span className="bg-clover/10 text-clover border-clover/30 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium">
+        <span className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium">
           <span className="bg-clover size-1.5 rounded-full" />
           Online
         </span>
@@ -181,7 +181,7 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
                     "rounded-2xl px-4 py-2 text-sm leading-relaxed",
                     mine
                       ? "bg-luminous text-white rounded-br-sm"
-                      : "bg-card border border-border/60 rounded-bl-sm",
+                      : "bg-card border border-border/20 rounded-bl-sm",
                   )}
                 >
                   {m.body}
@@ -201,7 +201,7 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
             aria-live="polite"
             aria-label={`${candidate.name.split(" ")[0]} is typing`}
           >
-            <div className="bg-card border-border/60 inline-flex items-center gap-1.5 rounded-2xl rounded-bl-sm border px-4 py-2 text-sm">
+            <div className="bg-card border-border/20 inline-flex items-center gap-1.5 rounded-2xl rounded-bl-sm border px-4 py-2 text-sm">
               <span
                 className="bg-muted-foreground size-1.5 animate-pulse rounded-full"
                 style={{ animationDelay: "0ms" }}

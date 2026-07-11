@@ -6,7 +6,7 @@ type MockupFrameSize = "small" | "large";
 
 const mockupVariants: Record<MockupType, string> = {
   mobile: "rounded-[48px] max-w-[350px]",
-  responsive: "rounded-md",
+  responsive: "rounded-lg",
 };
 
 export function Mockup({

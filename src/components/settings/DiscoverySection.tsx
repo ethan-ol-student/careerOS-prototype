@@ -82,14 +82,14 @@ export function DiscoverySection() {
         can turn it off anytime.
       </p>
 
-      <div className="border-border/50 bg-card/40 flex items-center justify-between gap-4 rounded-xl border p-4">
+      <div className="border-border/15 bg-card/40 flex items-center justify-between gap-4 rounded-xl border p-4">
         <div className="flex items-start gap-3">
           <span
             aria-hidden
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-lg",
               discoverable
-                ? "bg-clover/15 text-clover"
+                ? "bg-clover/15 text-clover-soft"
                 : "bg-muted/40 text-muted-foreground",
             )}
           >

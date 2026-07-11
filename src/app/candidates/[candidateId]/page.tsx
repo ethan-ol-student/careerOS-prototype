@@ -73,7 +73,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
             >
               <Compass className="size-5 text-clover" />
               Career OS
-              <span className="text-muted-foreground ml-1 text-[10px] font-medium uppercase tracking-wider">
+              <span className="text-muted-foreground ml-1 text-[10px] font-mono font-medium uppercase tracking-wider">
                 · Employer
               </span>
             </Link>
@@ -93,7 +93,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
           {/* Hero */}
           <section className="glass-4 ring-luminous/20 col-span-12 overflow-hidden rounded-2xl p-6 ring-1 sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
-              <div className="bg-luminous/15 ring-luminous/30 text-luminous flex size-20 shrink-0 items-center justify-center rounded-full text-2xl font-semibold ring-2">
+              <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-20 shrink-0 items-center justify-center rounded-full text-2xl font-semibold ring-2">
                 {candidate.name
                   .split(" ")
                   .map((p) => p[0])
@@ -153,7 +153,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
 
           {/* Career direction + scores */}
           <section className="glass-3 col-span-12 rounded-2xl p-6 lg:col-span-7">
-            <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Career direction
             </p>
             <h2 className="mt-1 text-xl font-semibold tracking-tight">
@@ -166,7 +166,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
 
           <section className="glass-3 col-span-12 rounded-2xl p-6 lg:col-span-5">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+              <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
                 Signal
               </p>
               <ScoringInfo />
@@ -206,7 +206,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
 
           {/* Skills */}
           <section className="glass-3 col-span-12 rounded-2xl p-6">
-            <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Top skills
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -224,7 +224,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
 
           {/* Portfolio */}
           <section className="glass-3 col-span-12 rounded-2xl p-6">
-            <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Portfolio projects
             </p>
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">

@@ -133,7 +133,7 @@ export function Modal({
         ref={panelRef}
         tabIndex={-1}
         className={cn(
-          "bg-background border-border/60 relative max-h-[90vh] w-full overflow-y-auto rounded-2xl border p-6 focus:outline-none sm:p-8",
+          "bg-background border-border/20 relative max-h-[90vh] w-full overflow-y-auto rounded-2xl border p-6 focus:outline-none sm:p-8",
           SIZE_CLASSES[size],
           className,
         )}
@@ -144,7 +144,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-muted-foreground hover:text-foreground focus-visible:ring-luminous/40 absolute right-4 top-4 rounded-md p-1 transition-colors focus:outline-none focus-visible:ring-2"
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-luminous/40 absolute right-4 top-4 rounded-lg p-1 transition-colors focus:outline-none focus-visible:ring-2"
           >
             <X className="size-4" />
           </button>

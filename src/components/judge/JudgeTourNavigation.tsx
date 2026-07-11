@@ -45,7 +45,7 @@ export function JudgeTourNavigation() {
   return (
     <aside className="glass-4 sticky top-20 z-30 rounded-2xl p-3">
       <div className="mb-3 px-2">
-        <p className="text-luminous text-[10px] font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
           Judge mode
         </p>
         <p className="text-muted-foreground mt-1 text-xs">
@@ -68,7 +68,7 @@ export function JudgeTourNavigation() {
               className={cn(
                 "flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
                 active
-                  ? "bg-luminous/15 text-luminous"
+                  ? "bg-luminous/15 text-luminous-soft"
                   : "text-muted-foreground hover:bg-card/40 hover:text-foreground",
               )}
             >

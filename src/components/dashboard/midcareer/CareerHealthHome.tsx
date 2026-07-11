@@ -69,7 +69,7 @@ function LockedTeaser({
   onUnlock: () => void;
 }) {
   return (
-    <div className="border-border/40 bg-card/40 rounded-xl border border-dashed p-4">
+    <div className="border-border/15 bg-foreground/2 rounded-xl border border-dashed p-4">
       <p className="text-muted-foreground flex items-start gap-2 text-sm">
         <Lock className="text-luminous mt-0.5 size-4 shrink-0" aria-hidden />
         {copy}
@@ -84,7 +84,7 @@ function LockedTeaser({
 /** "Why this recommendation?" expander — one contract for every card. */
 function WhyExpander({ result }: { result: ScoreResult }) {
   return (
-    <details className="border-border/40 mt-3 rounded-lg border">
+    <details className="border-border/15 mt-3 rounded-lg border">
       <summary className="text-luminous cursor-pointer px-3 py-2 text-xs font-semibold">
         Why this recommendation?
       </summary>
@@ -244,7 +244,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
             />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-clover mb-2 text-[11px] font-semibold uppercase tracking-wider">
+                <p className="text-clover mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider">
                   Maintained ({health.maintained.length})
                 </p>
                 {health.maintained.length ? (
@@ -260,7 +260,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
                 )}
               </div>
               <div>
-                <p className="mb-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-yellow-400">
+                <p className="mb-2 inline-flex items-center gap-1 text-[11px] font-mono font-semibold uppercase tracking-wider text-yellow-400">
                   <TriangleAlert className="size-3.5" />
                   Watch for decay ({health.atRisk.length})
                 </p>
@@ -311,7 +311,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
                     ? "border-clover/30 bg-clover/10"
                     : lifeImpact.verdict === "risky"
                       ? "border-yellow-400/30 bg-yellow-400/10"
-                      : "border-border/40 bg-card/40")
+                      : "border-border/15 bg-foreground/2")
                 }
               >
                 <span className="font-semibold uppercase">{lifeImpact.verdict}</span>
@@ -350,7 +350,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
                     ? `Current: ${extras.midCareer.salaryPrivate.toLocaleString("en-US")}`
                     : "Your salary (optional, private)"
                 }
-                className="border-border/60 bg-card/40 focus:border-luminous/60 min-h-9 w-full rounded-md border px-2 text-xs outline-none"
+                className="border-border/15 bg-foreground/2 focus:border-luminous/60 min-h-9 w-full rounded-lg border px-2 text-xs outline-none"
               />
               <Button
                 size="xs"
@@ -376,7 +376,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               title={bestJob ? bestJob.title : "Your chosen track"}
             />
             {data.desiredNextMove && (
-              <p className="border-border/40 bg-card/40 mb-3 rounded-lg border px-3 py-2 text-sm">
+              <p className="border-border/15 bg-foreground/2 mb-3 rounded-lg border px-3 py-2 text-sm">
                 {data.desiredNextMove}
               </p>
             )}
@@ -444,7 +444,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               title={`Pattern: ${story.pattern}`}
               description="Your history is proof of capability — not just titles."
             />
-            <ol className="border-border/40 space-y-3 border-l pl-4">
+            <ol className="border-border/15 space-y-3 border-l pl-4">
               {(extras?.experiences ?? []).map((e, i) => (
                 <li key={i} className="relative">
                   <span className="bg-luminous absolute -left-5.25 top-1.5 size-2 rounded-full" />
@@ -460,7 +460,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
             </ol>
             {story.hiddenStrengths.length > 0 && (
               <>
-                <p className="text-clover mt-4 text-[11px] font-semibold uppercase tracking-wider">
+                <p className="text-clover mt-4 text-[11px] font-mono font-semibold uppercase tracking-wider">
                   Hidden strengths
                 </p>
                 <ul className="mt-1.5 space-y-1.5">
@@ -522,7 +522,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               {pathways.map((p) => (
                 <div
                   key={p.id}
-                  className="border-border/40 bg-card/40 flex flex-col rounded-xl border p-4"
+                  className="border-border/15 bg-foreground/2 flex flex-col rounded-xl border p-4"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold">{p.label}</p>
@@ -588,7 +588,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
             ) : bestJob ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-clover mb-2 text-[11px] font-semibold uppercase tracking-wider">
+                  <p className="text-clover mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider">
                     Already in place ({bestJob.matched.length})
                   </p>
                   <ul className="flex flex-wrap gap-1.5">
@@ -600,7 +600,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
                   </ul>
                 </div>
                 <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-yellow-400">
+                  <p className="mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-yellow-400">
                     The bridge ({skillGaps.length})
                   </p>
                   {skillGaps.length ? (

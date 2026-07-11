@@ -10,10 +10,11 @@ export const JUDGE_ACCOUNT = {
   organizationName: "CareerOS Judge Demo",
 } as const;
 
-export const JUDGE_DEMO_USER_ID = "judge-demo-candidate";
+const JUDGE_DEMO_USER_ID = "judge-demo-candidate";
+// Consumed by prisma/seed.ts (outside src/), not by app code.
 export const JUDGE_DEMO_MARKETPLACE_SOURCE = "judge-demo";
 
-export const JUDGE_PHASE_DB_STAGE: Record<CareerPhase, string> = {
+const JUDGE_PHASE_DB_STAGE: Record<CareerPhase, string> = {
   student: "student",
   young_adult: "young-adult",
   early_career: "early-career",

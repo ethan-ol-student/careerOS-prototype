@@ -21,11 +21,6 @@ export async function resolveIsPro(userId: string): Promise<boolean> {
   return user.isJudgeAccount || user.subscription?.plan === "pro";
 }
 
-/** Non-throwing check for field-level redaction in mixed responses. */
-export async function checkEntitlement(userId: string): Promise<boolean> {
-  return resolveIsPro(userId);
-}
-
 /**
  * Throwing gate for fully-Pro routes (mirrors getCurrentCandidateProfile's
  * throw-based shape). 401 when unauthenticated, 402 when not entitled.

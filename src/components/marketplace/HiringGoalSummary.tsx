@@ -50,7 +50,7 @@ export function HiringGoalSummary() {
       />
       <div className="relative grid grid-cols-12 gap-6">
         <div className="col-span-12 md:col-span-7">
-          <p className="text-clover text-xs font-semibold uppercase tracking-[0.18em]">
+          <p className="text-clover text-xs font-mono font-semibold uppercase tracking-[0.18em]">
             Your hiring goal
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -81,14 +81,14 @@ export function HiringGoalSummary() {
         </div>
 
         <div className="col-span-12">
-          <p className="text-muted-foreground mb-2 text-xs uppercase tracking-wider">
+          <p className="text-muted-foreground mb-2 font-mono text-xs uppercase tracking-wider">
             Priority signals
           </p>
           <div className="flex flex-wrap gap-2">
             {priorities.map((p) => (
               <span
                 key={p}
-                className="bg-clover/10 text-clover border-clover/30 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
+                className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
               >
                 <Sparkles className="size-3" />
                 {p}
@@ -112,11 +112,11 @@ function Stat({
 }) {
   return (
     <div className="glass-3 flex items-start gap-3 rounded-xl p-3">
-      <span className="bg-clover/15 text-clover mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md">
+      <span className="bg-clover/15 text-clover-soft mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+        <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
           {label}
         </p>
         <p className="truncate text-sm font-medium">{value}</p>

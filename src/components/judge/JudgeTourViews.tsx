@@ -22,8 +22,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Modal } from "@/components/ui/Modal";
 import { ScoreBar } from "@/components/ui/ScoreBar";
-import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { PhaseDashboardRegistry } from "@/components/dashboard/PhaseDashboardRegistry";
+import { CockpitDashboard } from "@/components/dashboard/CockpitDashboard";
 import {
   JUDGE_CANDIDATE_MESSAGES,
   JUDGE_DEMO_CANDIDATES,
@@ -118,11 +117,9 @@ function JudgeCandidateDashboardView({ phase }: { phase: CareerPhase }) {
           <MiniSignal label="System learns" value={story.systemLearns} />
         </div>
       </div>
-      <DashboardShell data={data}>
-        <div data-judge-target="phase-widgets">
-          <PhaseDashboardRegistry data={data} />
-        </div>
-      </DashboardShell>
+      <div data-judge-target="phase-widgets">
+        <CockpitDashboard data={data} />
+      </div>
     </div>
   );
 }
@@ -131,7 +128,7 @@ function JudgePortfolioView() {
   return (
     <div className="mx-auto max-w-container px-4 py-8">
       <header data-judge-target="portfolio-overview" className="mb-6">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Living Portfolio
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">
@@ -171,7 +168,7 @@ function JudgePortfolioView() {
             {JUDGE_DEMO_PORTFOLIO.projects.map((project) => (
               <li
                 key={project.title}
-                className="border-border/40 rounded-xl border bg-card/30 p-3"
+                className="border-border/15 rounded-xl border bg-card/30 p-3"
               >
                 <p className="text-sm font-semibold">{project.title}</p>
                 <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
@@ -190,7 +187,7 @@ function JudgeChaptersView() {
   return (
     <div className="mx-auto max-w-container px-4 py-8">
       <header className="mb-6">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Life Chapter Designer
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">
@@ -208,7 +205,7 @@ function JudgeChaptersView() {
             {JUDGE_DEMO_CHAPTERS.map((chapter) => (
               <li
                 key={chapter.name}
-                className="flex items-start gap-3 rounded-xl border border-border/40 bg-card/30 p-3"
+                className="flex items-start gap-3 rounded-xl border border-border/15 bg-card/30 p-3"
               >
                 <span className="mt-1 size-2 rounded-full bg-luminous" />
                 <div>
@@ -229,7 +226,7 @@ function JudgeChaptersView() {
           </h2>
           <div className="mt-4 grid gap-3">
             {JUDGE_DEMO_CHAPTERS.map((chapter) => (
-              <div key={chapter.name} className="rounded-xl border border-border/40 bg-card/30 p-3">
+              <div key={chapter.name} className="rounded-xl border border-border/15 bg-card/30 p-3">
                 <p className="text-sm font-semibold">{chapter.name}</p>
                 <ul className="mt-2 grid gap-2">
                   {chapter.subtasks.map((task) => (
@@ -288,7 +285,7 @@ function JudgeEmployerMarketplaceView({ forceProfile }: { forceProfile: boolean 
       <section data-judge-target="employer-goal" className="glass-4 mb-6 rounded-2xl p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-clover text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-clover text-xs font-mono font-semibold uppercase tracking-[0.18em]">
               Employer goal
             </p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -310,7 +307,7 @@ function JudgeEmployerMarketplaceView({ forceProfile }: { forceProfile: boolean 
 
       <section data-judge-target="candidate-recommendations">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
             Recommended candidates
           </p>
           <Badge variant="outline">{JUDGE_DEMO_CANDIDATES.length} demo matches</Badge>
@@ -365,7 +362,7 @@ function DemoCandidateCard({
         <button
           type="button"
           onClick={onOpen}
-          className="bg-luminous/15 ring-luminous/30 text-luminous flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2"
+          className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2"
         >
           {initials(candidate.name)}
         </button>
@@ -430,7 +427,7 @@ function DemoCandidateModal({
       title={candidate.name}
       size="lg"
       footer={
-        <div className="flex flex-col-reverse gap-2 border-t border-border/40 pt-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 border-t border-border/15 pt-4 sm:flex-row sm:justify-end">
           <Button
             data-judge-target="save-candidate"
             type="button"
@@ -453,7 +450,7 @@ function DemoCandidateModal({
     >
       <div data-judge-target="candidate-profile-modal">
         <div className="mb-5 flex items-start gap-4">
-          <div className="bg-luminous/15 ring-luminous/30 text-luminous flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ring-2">
+          <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ring-2">
             {initials(candidate.name)}
           </div>
           <div>
@@ -468,7 +465,7 @@ function DemoCandidateModal({
           <ScoreBar label="Match" value={candidate.matchScore} accent="luminous" />
           <ScoreBar label="Readiness" value={candidate.readinessScore} accent="clover" />
           <div className="glass-3 rounded-lg p-3">
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+            <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
               Growth signal
             </p>
             <p className="text-clover mt-1 flex items-center gap-1 text-sm font-semibold">
@@ -478,13 +475,13 @@ function DemoCandidateModal({
           </div>
         </div>
         <section className="mt-5">
-          <p className="text-luminous text-[10px] font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
             Why recommended
           </p>
           <p className="mt-2 text-sm leading-relaxed">{candidate.whyRecommended}</p>
         </section>
         <section className="mt-5">
-          <p className="text-luminous text-[10px] font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
             Portfolio evidence
           </p>
           <ul className="mt-2 grid gap-2">
@@ -585,7 +582,7 @@ function MessageDemo({
       <section data-judge-target={target} className="glass-4 rounded-2xl p-5">
         <p
           className={cn(
-            "text-xs font-semibold uppercase tracking-[0.18em]",
+            "text-xs font-mono font-semibold uppercase tracking-[0.18em]",
             accent === "luminous" ? "text-luminous" : "text-clover",
           )}
         >
@@ -639,7 +636,7 @@ function InfoPanel({
   return (
     <section data-judge-target={target} className="glass-3 rounded-2xl p-5">
       <Icon className="mb-3 size-6 text-luminous" />
-      <p className="text-luminous text-[10px] font-semibold uppercase tracking-[0.18em]">
+      <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
         {eyebrow}
       </p>
       <h2 className="mt-1 text-lg font-semibold">{title}</h2>
@@ -652,8 +649,8 @@ function InfoPanel({
 
 function MiniSignal({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border/40 bg-card/30 p-3">
-      <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+    <div className="rounded-xl border border-border/15 bg-card/30 p-3">
+      <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
         {label}
       </p>
       <p className="mt-1 text-xs leading-relaxed">{value}</p>

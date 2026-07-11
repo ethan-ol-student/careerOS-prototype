@@ -39,7 +39,6 @@ CareerOS connects career growth with hiring discovery:
 - 🏆 University employability leaderboard (curated, cited): `/leaderboard`
 - 🧾 Living Portfolio: `/candidate/portfolio`
 - 🗺️ Life Chapter Designer: `/candidate/chapters`
-- 🌱 Career Second Act Lab (senior phases): `/candidate/second-act`
 - 💬 Candidate messages: `/candidate/messages`
 - ⚙️ Settings: account, privacy, discovery, and **Dashboard style** (age-adaptive UI override)
 

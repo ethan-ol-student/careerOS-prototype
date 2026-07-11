@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 /** Pulsing placeholder block. */
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("animate-pulse rounded-md bg-white/5", className)} aria-hidden />
+    <div className={cn("animate-pulse rounded-lg bg-white/5", className)} aria-hidden />
   );
 }
 

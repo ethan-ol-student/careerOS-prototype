@@ -49,7 +49,7 @@ export default function PricingPage() {
           <ArrowLeft className="size-4" /> Back to home
         </Link>
 
-        <p className="text-luminous mt-8 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous mt-8 flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           <Compass className="size-4" /> Pricing
         </p>
         <h1 className="mt-2 text-3xl font-semibold">
@@ -68,7 +68,7 @@ export default function PricingPage() {
                 key={id}
                 className={cn(
                   "glass-3 rounded-2xl border p-6",
-                  pro ? "border-luminous/50" : "border-border/40",
+                  pro ? "border-luminous/50" : "border-border/15",
                 )}
               >
                 <div className="flex items-center justify-between">

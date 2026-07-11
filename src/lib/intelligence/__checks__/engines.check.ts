@@ -21,6 +21,7 @@ import { scoreQuiz, QUIZ_QUESTIONS } from "../personalityEngine";
 import { ARCHETYPES } from "../scoringConfig";
 import { candidateInsight } from "../employerCandidateInsightEngine";
 import { simulateNextMoves } from "../nextMoveSimulator";
+import { scoreSkillTruth } from "../skillTruthEngine";
 
 function assertScoreResult(name: string, r: ScoreResult) {
   assert.ok(Number.isInteger(r.score), `${name}: score must be an integer`);
@@ -174,7 +175,50 @@ function main() {
   );
   assert.equal(scoreLifeImpact(null, benchmarks[0], []).verdict, "unknown", "no salary → honest unknown");
 
-  // 12) Determinism — identical inputs → identical outputs
+  // 12) Skills truth — the mentor's done-criterion as an assert: an endorsed
+  // expert VISIBLY outranks an identical self-claimed expert, everywhere.
+  const truthJob: TargetJob = {
+    id: "truth-check",
+    title: "Data Analyst",
+    company: "Checkline",
+    location: "Remote",
+    duration: "Full-time",
+    field: "Data",
+    requiredSkills: ["python", "sql", "communication"],
+    baseMatch: 50,
+  };
+  const selfClaimed = scoreSkillTruth(
+    [{ name: "Python", level: 5, tier: 1 }],
+    truthJob,
+  );
+  const endorsed = scoreSkillTruth(
+    [{ name: "Python", level: 5, tier: 3 }],
+    truthJob,
+  );
+  assertScoreResult("skillTruth", endorsed);
+  assert.ok(
+    endorsed.score > selfClaimed.score,
+    "endorsed expert outranks self-claimed expert",
+  );
+  assert.equal(endorsed.axes[0].you, 100, "tier-3 expert = full weight");
+  assert.equal(selfClaimed.axes[0].you, 50, "tier-1 expert = half weight");
+  assert.equal(
+    scoreSkillTruth([{ name: "Python", level: 5, tier: 2 }], truthJob).axes[0]
+      .you,
+    80,
+    "tier-2 expert = 80% weight",
+  );
+  assert.deepEqual(
+    selfClaimed.gaps,
+    ["communication", "sql", "python"],
+    "gaps weakest-first",
+  );
+  assert.ok(
+    selfClaimed.nextStep.includes("sql") || selfClaimed.nextStep.includes("communication"),
+    "next step targets a missing required skill",
+  );
+
+  // 13) Determinism — identical inputs → identical outputs
   assert.deepEqual(
     scoreCareerHealth({
       currentSkills: ai.currentSkills,
@@ -186,7 +230,7 @@ function main() {
     "careerHealth is deterministic",
   );
 
-  console.log("OK — intelligence engine checks passed (11 engines, deterministic).");
+  console.log("OK — intelligence engine checks passed (12 engines, deterministic).");
 }
 
 main();

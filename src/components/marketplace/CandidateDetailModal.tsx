@@ -46,7 +46,7 @@ export function CandidateDetailModal({
       size="lg"
       hideVisibleTitle
       footer={
-        <div className="border-border/40 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
+        <div className="border-border/15 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
           <Button
             type="button"
             variant={isSaved ? "secondary" : "outline"}
@@ -81,7 +81,7 @@ export function CandidateDetailModal({
     >
       {/* Header */}
       <header className="mb-6 flex items-start gap-4">
-        <div className="bg-luminous/15 ring-luminous/30 text-luminous flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ring-2">
+        <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ring-2">
           {candidate.name
             .split(" ")
             .map((p) => p[0])
@@ -120,7 +120,7 @@ export function CandidateDetailModal({
             accent="clover"
           />
           <div className="glass-3 flex flex-col gap-1 rounded-lg p-3">
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+            <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
               Growth signal
             </p>
             <span className="text-clover inline-flex items-center gap-1.5 text-sm font-semibold">
@@ -140,7 +140,7 @@ export function CandidateDetailModal({
           {readiness.factors.map((f) => (
             <li
               key={f.label}
-              className="border-border/40 bg-card/40 flex items-start justify-between gap-3 rounded-lg border p-2.5"
+              className="border-border/15 bg-foreground/2 flex items-start justify-between gap-3 rounded-lg border p-2.5"
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium">{f.label}</p>
@@ -163,7 +163,7 @@ export function CandidateDetailModal({
       {/* Working style — descriptive context only (bias-checked) */}
       {candidate.archetype && ARCHETYPES[candidate.archetype] && (
         <Section label="Working style (context)">
-          <div className="border-border/40 bg-card/40 rounded-lg border p-3">
+          <div className="border-border/15 bg-foreground/2 rounded-lg border p-3">
             <p className="text-sm font-medium">
               {ARCHETYPES[candidate.archetype].name} ·{" "}
               <span className="text-muted-foreground font-normal">
@@ -197,7 +197,7 @@ export function CandidateDetailModal({
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <p className="text-clover mb-1.5 text-[10px] font-semibold uppercase tracking-wider">
+            <p className="text-clover mb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider">
               Strengths
             </p>
             <ul className="space-y-1 text-xs leading-snug">
@@ -207,7 +207,7 @@ export function CandidateDetailModal({
             </ul>
           </div>
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-yellow-400">
+            <p className="mb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-yellow-400">
               Risks to probe
             </p>
             <ul className="space-y-1 text-xs leading-snug">
@@ -221,14 +221,14 @@ export function CandidateDetailModal({
             </ul>
           </div>
         </div>
-        <p className="text-luminous mt-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider">
+        <p className="text-luminous mt-3 mb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider">
           Interview kit
         </p>
         <ol className="space-y-1.5 text-xs leading-snug">
           {insight.interviewKit.map((q, i) => (
             <li
               key={q}
-              className="border-border/40 bg-card/40 rounded-lg border p-2"
+              className="border-border/15 bg-foreground/2 rounded-lg border p-2"
             >
               {i + 1}. {q}
             </li>
@@ -289,7 +289,7 @@ function Section({
   return (
     <section className="mb-5 last:mb-0">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-luminous text-[10px] font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
           {label}
         </p>
         {trailing}

@@ -56,10 +56,12 @@ export default function JobsPage() {
   return (
     <AppShell>
       <main className="max-w-container mx-auto px-4 pb-16 pt-6">
-        <p className="text-luminous text-xs font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
           Opportunities
         </p>
-        <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Jobs</h1>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+          Jobs
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {personalized
             ? "Match scores are personal — based on your skills vs. each job's requirements."
@@ -68,7 +70,7 @@ export default function JobsPage() {
 
         {/* Search + field filter */}
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="border-border/60 bg-card/40 focus-within:border-luminous/60 flex min-h-11 flex-1 items-center gap-2 rounded-lg border px-3">
+          <label className="border-border/15 bg-foreground/2 focus-within:border-luminous/60 flex min-h-11 flex-1 items-center gap-2 rounded-lg border px-3">
             <Search className="text-muted-foreground size-4 shrink-0" />
             <input
               value={q}
@@ -101,11 +103,13 @@ export default function JobsPage() {
               <Col key={job.id} span={12} md={6} lg={4}>
                 <Link
                   href={`/jobs/${job.id}`}
-                  className="glass-3 hover:border-luminous/40 border-border/40 flex h-full flex-col rounded-2xl border p-6 transition-colors"
+                  className="glass-3 hover:border-luminous/40 border-border/15 flex h-full flex-col rounded-2xl border p-6 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="truncate font-semibold">{job.title}</h2>
+                      <h2 className="truncate font-semibold tracking-tight">
+                        {job.title}
+                      </h2>
                       <p className="text-muted-foreground mt-0.5 flex items-center gap-1 truncate text-sm">
                         <Briefcase className="size-3.5 shrink-0" />
                         {job.company}
@@ -126,12 +130,15 @@ export default function JobsPage() {
                       <Chip key={skill}>{skill}</Chip>
                     ))}
                   </div>
+                  {/* Reference §07: boxed match panel at the card foot */}
                   <div className="mt-auto pt-4">
-                    <ScoreBar
-                      label={job.personalized ? "Your match" : "Base match"}
-                      value={job.match}
-                      size="sm"
-                    />
+                    <div className="border-border/15 bg-linear-to-b from-foreground/5 to-foreground/2 rounded-lg border px-3 py-2.5">
+                      <ScoreBar
+                        label={job.personalized ? "Your match" : "Base match"}
+                        value={job.match}
+                        size="sm"
+                      />
+                    </div>
                   </div>
                 </Link>
               </Col>
