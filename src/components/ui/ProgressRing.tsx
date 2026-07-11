@@ -20,6 +20,8 @@ export interface ProgressRingProps {
   accent?: "luminous" | "clover";
   /** Outer diameter in px. Defaults to 112. */
   size?: number;
+  /** Mini variant for inline bars: tiny % number, label kept for a11y only. */
+  compact?: boolean;
   className?: string;
 }
 
@@ -33,6 +35,7 @@ export function ProgressRing({
   label,
   accent = "luminous",
   size = 112,
+  compact = false,
   className,
 }: ProgressRingProps) {
   const safe = Math.max(0, Math.min(100, Math.round(value)));
@@ -75,12 +78,20 @@ export function ProgressRing({
         />
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={cn("text-2xl font-bold leading-none", TEXT[accent])}>
+        <span
+          className={cn(
+            "font-bold leading-none",
+            compact ? "text-[11px]" : "text-2xl",
+            TEXT[accent],
+          )}
+        >
           {safe}%
         </span>
-        <span className="text-muted-foreground mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em]">
-          {label}
-        </span>
+        {!compact && (
+          <span className="text-muted-foreground mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em]">
+            {label}
+          </span>
+        )}
       </span>
     </div>
   );

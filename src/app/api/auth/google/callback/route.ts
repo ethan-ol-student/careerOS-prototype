@@ -141,13 +141,14 @@ async function signInAndRedirect(request: Request, userId: string) {
     userId: user.id,
     role,
     isJudge: user.isJudgeAccount,
+    sessionVersion: user.sessionVersion,
   });
   await setSessionCookie(token);
 
   const dest =
     role === "employer"
       ? user.employerProfile?.hasCompletedOnboarding
-        ? "/employers/marketplace"
+        ? "/employers/dashboard"
         : "/employers/onboarding"
       : user.candidatesAI?.onboardingCompleted
         ? "/candidate/dashboard"

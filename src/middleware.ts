@@ -1,18 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * CSRF / cross-origin protection for mutating API requests.
+ * Edge middleware — two concerns:
  *
- * Cookie-authenticated state changes are the CSRF attack surface, so
- * every mutating (`POST/PUT/PATCH/DELETE`) request to `/api/*` must
- * originate from the same site. We validate the `Origin` header (sent
- * by browsers on non-GET requests), falling back to `Referer`. A
- * present-but-mismatched value is rejected with 403; legitimate
- * same-origin app requests pass untouched. Safe methods (GET/HEAD) and
- * non-API routes are never affected.
+ * 1. CSRF for mutating `/api/*` requests. Cookie-authenticated state
+ *    changes are the CSRF attack surface, so every mutating
+ *    (`POST/PUT/PATCH/DELETE`) `/api/*` request must originate from the
+ *    same site (validated via `Origin`, falling back to `Referer`).
+ * 2. Defense-in-depth page gate for `/candidate/*` and `/employers/*`:
+ *    an anonymous navigation (no session cookie) is redirected to
+ *    `/auth` before the protected shell ever ships. This only checks
+ *    cookie *presence* — the API routes still fully verify the session
+ *    (signature + revocation) and remain the real authorization gate;
+ *    the client shells still enforce role + onboarding.
  */
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+// httpOnly session cookie (see src/lib/auth/session.ts COOKIE_NAME).
+const SESSION_COOKIE = "career-os-session";
+const PROTECTED_PREFIXES = ["/candidate", "/employers"];
 
 function forbidden(message: string) {
   return NextResponse.json(
@@ -22,7 +28,23 @@ function forbidden(message: string) {
 }
 
 export function middleware(req: NextRequest) {
-  // Only guard mutating API requests.
+  const { pathname } = req.nextUrl;
+
+  // ── Page gate (non-API routes) ────────────────────────────────
+  if (!pathname.startsWith("/api")) {
+    const isProtected = PROTECTED_PREFIXES.some(
+      (p) => pathname === p || pathname.startsWith(`${p}/`),
+    );
+    if (isProtected && !req.cookies.get(SESSION_COOKIE)) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/auth";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  // ── CSRF (mutating API requests only) ─────────────────────────
   if (!MUTATING_METHODS.has(req.method)) return NextResponse.next();
 
   const host = req.headers.get("host");
@@ -60,5 +82,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: ["/api/:path*", "/candidate/:path*", "/employers/:path*"],
 };

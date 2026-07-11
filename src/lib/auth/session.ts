@@ -53,11 +53,25 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     userId: payload.userId,
     role: payload.role,
     isJudge: payload.isJudge === true,
+    sv: payload.sessionVersion ?? 0,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(getSecret());
+}
+
+/**
+ * A token is still valid only if the version it was signed with matches
+ * the user's current `sessionVersion`. Bumping the user's counter (on
+ * logout) instantly invalidates every previously-issued token. Missing
+ * `sv` (pre-revocation tokens) is treated as 0. Pure — unit-checkable.
+ */
+export function sessionMatchesVersion(
+  tokenVersion: number | undefined,
+  userVersion: number,
+): boolean {
+  return (tokenVersion ?? 0) === userVersion;
 }
 
 export async function verifySession(
@@ -75,6 +89,7 @@ export async function verifySession(
       userId: payload.userId,
       role: payload.role as AuthRole,
       isJudge: payload.isJudge === true,
+      sessionVersion: typeof payload.sv === "number" ? payload.sv : 0,
     };
   } catch {
     return null;

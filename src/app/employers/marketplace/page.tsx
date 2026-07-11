@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Bookmark,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FilePlus2,
   Loader2,
   Send,
+  Sparkles,
   TrendingUp,
   TriangleAlert,
   FlaskConical,
@@ -52,6 +54,25 @@ export default function EmployerMarketplacePage() {
   const [error, setError] = useState<string | null>(null);
   const [usingDemo, setUsingDemo] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Wireframe top row: the role being hired for + the expandable
+  // "Ideal candidate" snapshot (the personalization summary, as an
+  // overlay so it never pushes the results panel around).
+  const [hiringRole, setHiringRole] = useState("");
+  const [idealOpen, setIdealOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch("/api/employer/profile", { cache: "no-store" })
+        .then((r) => r.json())
+        .catch(() => null);
+      if (!cancelled && res?.ok) setHiringRole(res.data.role ?? "");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -128,8 +149,8 @@ export default function EmployerMarketplacePage() {
 
   return (
     <EmployerAppShell>
-      <main className="px-4 pb-16 pt-8">
-        <div className="max-w-container mx-auto flex flex-col gap-8">
+      <main className="px-4 pb-16 pt-5">
+        <div className="max-w-container mx-auto flex flex-col gap-5">
           {usingDemo ? (
             <div className="flex items-center gap-2 rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-2.5 text-xs text-yellow-200">
               <FlaskConical className="size-4 shrink-0 text-yellow-400" />
@@ -138,11 +159,55 @@ export default function EmployerMarketplacePage() {
             </div>
           ) : null}
 
-          <EmployerPersonalizationSummary pool={pool} />
+          {/* Wireframe top row: the role you're hiring for + the
+              expandable "Ideal candidate" snapshot. */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="border-border/15 bg-foreground/2 flex min-w-0 items-center gap-2 rounded-full border py-1.5 pl-4 pr-1.5">
+              <span className="text-clover shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                Looking for:
+              </span>
+              <span
+                className="bg-clover/10 text-clover-soft truncate rounded-full px-3 py-1 text-sm font-semibold"
+                title={hiringRole || undefined}
+              >
+                {hiringRole || "Set your target role in Settings"}
+              </span>
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIdealOpen((v) => !v)}
+                aria-expanded={idealOpen}
+                className="border-clover/30 bg-clover/10 text-clover-soft hover:bg-clover/16 flex items-center gap-2 rounded-xl border px-4 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors"
+              >
+                <Sparkles className="size-3.5" aria-hidden />
+                Ideal candidate
+                <ChevronDown
+                  className={cn("size-3.5 transition-transform", idealOpen && "rotate-180")}
+                  aria-hidden
+                />
+              </button>
+              {idealOpen && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Close ideal candidate panel"
+                    onClick={() => setIdealOpen(false)}
+                    className="fixed inset-0 z-30 cursor-default"
+                  />
+                  <div className="border-border/20 bg-background/95 absolute right-0 top-full z-40 mt-2 w-[min(92vw,680px)] rounded-2xl border p-2 shadow-2xl backdrop-blur-xl">
+                    <EmployerPersonalizationSummary pool={pool} />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
 
-          {/* Sticky search + Quick Post: pins to the top of the shell's
-              scroll region so filtering never needs a scroll back up. */}
-          <div className="bg-background/85 sticky top-0 z-40 -mx-2 rounded-2xl px-2 py-2 backdrop-blur-lg">
+          {/* One panel: search + filters + results + pagination. */}
+          <section
+            aria-label="Candidate results"
+            className="glass-3 rounded-2xl p-4 sm:p-5"
+          >
             <MarketplaceFilters
               query={query}
               onQueryChange={(v) => {
@@ -164,10 +229,8 @@ export default function EmployerMarketplacePage() {
                 </Button>
               }
             />
-          </div>
 
-          <section aria-label="Candidate results">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-3 mt-5 flex flex-wrap items-center justify-between gap-3">
               <p className="text-clover font-mono text-xs font-semibold uppercase tracking-[0.18em]">
                 {category === "Recommended"
                   ? "Recommended candidates"

@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Briefcase, MapPin, Loader2 } from "lucide-react";
+import { Search, Briefcase, MapPin, Loader2, Sparkles, Target } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
+import { PageHeader } from "@/components/app/PageHeader";
 import { Grid12, Col } from "@/components/app/Grid";
 import { Badge } from "@/components/ui/Badge";
 import { Chip } from "@/components/ui/Chip";
@@ -52,21 +53,45 @@ export default function JobsPage() {
   }, [q, field]);
 
   const personalized = useMemo(() => jobs.some((j) => j.personalized), [jobs]);
+  const topMatch = useMemo(
+    () => jobs.reduce((m, j) => Math.max(m, j.match), 0),
+    [jobs],
+  );
 
   return (
     <AppShell>
-      <main className="max-w-container mx-auto px-4 pb-16 pt-6">
-        <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
-          Opportunities
-        </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          Jobs
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {personalized
-            ? "Match scores are personal — based on your skills vs. each job's requirements."
-            : "Curated baseline scores — add skills to your profile for personal matches."}
-        </p>
+      <PageHeader
+        eyebrow="Opportunities"
+        title={
+          <>
+            Open <span className="text-luminous">roles</span>
+          </>
+        }
+      />
+
+      <section className="max-w-container mx-auto px-4 pb-16 pt-8">
+        {/* Summary stat strip — cockpit language */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { cap: "Open roles", val: jobs.length || "–", icon: Briefcase },
+            {
+              cap: "Match basis",
+              val: personalized ? "Personal" : "Baseline",
+              icon: Sparkles,
+            },
+            { cap: "Top match", val: topMatch ? `${topMatch}%` : "–", icon: Target },
+          ].map((s) => (
+            <div key={s.cap} className="glass-4 rounded-xl p-3 sm:p-4">
+              <p className="text-muted-foreground flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider">
+                <s.icon className="text-luminous size-3" aria-hidden />
+                {s.cap}
+              </p>
+              <p className="text-luminous mt-1 text-xl font-bold tracking-tight sm:text-2xl">
+                {s.val}
+              </p>
+            </div>
+          ))}
+        </div>
 
         {/* Search + field filter */}
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -145,7 +170,7 @@ export default function JobsPage() {
             ))}
           </Grid12>
         )}
-      </main>
+      </section>
     </AppShell>
   );
 }

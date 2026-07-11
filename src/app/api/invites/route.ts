@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentEmployerProfile } from "@/lib/api/currentUser";
+import { rateLimit, clientIp } from "@/lib/auth/rateLimit";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 const SendInviteSchema = z.object({
@@ -22,6 +23,19 @@ const SendInviteSchema = z.object({
  */
 export async function POST(request: Request) {
   try {
+    // Throttle invite/message blasts from one origin.
+    const rl = rateLimit(`invite:${clientIp(request)}`, {
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return failFromCode(
+        "rate_limited",
+        "Too many invites too fast. Please slow down.",
+        429,
+      );
+    }
+
     const json = await request.json();
     const parsed = SendInviteSchema.safeParse(json);
     if (!parsed.success) {

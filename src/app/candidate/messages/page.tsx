@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2, MessageSquare, Send, TriangleAlert } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
-import { PageHeader } from "@/components/app/PageHeader";
-import { Grid12, Col } from "@/components/app/Grid";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Button } from "@/components/ui/Button";
 import { formatTimeAgo } from "@/lib/context/NotificationsContext";
@@ -29,10 +27,13 @@ interface ThreadMessage {
 /**
  * Candidate Messages — the real, server-backed inbox.
  *
+ * Wireframe layout: two persistent panes — conversation list left, open
+ * thread right (chat bubbles + composer). Zero-scroll frame on desktop;
+ * on mobile the panes swap (list ⇄ thread) like a native chat app.
+ *
  * Employer chats are stored against the candidate's marketplace mirror
- * (`Candidate.id = real-<userId>`), so this reads them via
- * `/api/me/conversations` and lets the candidate reply through
- * `/api/me/conversations/[id]`. Completely separate from notifications.
+ * (`Candidate.id = real-<userId>`), read via `/api/me/conversations`,
+ * replies via `/api/me/conversations/[id]`. Separate from notifications.
  */
 export default function CandidateMessagesPage() {
   return (
@@ -80,64 +81,75 @@ function CandidateMessagesContent() {
   }, [reloadKey]);
 
   return (
-    <>
-      <PageHeader
-        eyebrow="Messages"
-        title="Your conversations"
-        description="Messages from employers who reached out about your Living Portfolio. This is separate from your notifications."
-      />
+    <div className="max-w-container mx-auto flex w-full flex-col px-4 pb-4 pt-2 lg:h-full lg:min-h-0">
+      <div className="shrink-0">
+        <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+          Messages
+        </p>
+        <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+          Your <span className="text-luminous">conversations</span>
+        </h1>
+      </div>
 
-      <section className="px-4 py-8 sm:py-12">
-        <Grid12>
-          <Col span={12} lg={8} startLg={3}>
-            {active ? (
-              <ThreadView
-                conversation={active}
-                onBack={() => {
-                  setActive(null);
-                  setReloadKey((k) => k + 1);
-                }}
-              />
-            ) : status === "loading" ? (
-              <div className="glass-3 flex items-center justify-center gap-2 rounded-2xl p-10 text-sm">
-                <Loader2 className="text-luminous size-4 animate-spin" />
-                <span className="text-muted-foreground">Loading conversations…</span>
+      <div className="mt-3 flex flex-1 gap-4 lg:min-h-0">
+        {/* ── Conversation list pane ── */}
+        <aside
+          className={cn(
+            "glass-3 w-full flex-col rounded-2xl p-2 md:flex md:w-72 md:shrink-0 lg:min-h-0 lg:w-80",
+            active ? "hidden" : "flex",
+          )}
+        >
+          {status === "loading" ? (
+            <div className="text-muted-foreground m-auto flex items-center gap-2 p-8 text-sm">
+              <Loader2 className="text-luminous size-4 animate-spin" />
+              Loading…
+            </div>
+          ) : status === "error" ? (
+            <div className="m-auto p-6 text-center">
+              <TriangleAlert className="text-destructive mx-auto size-6" />
+              <p className="mt-3 text-sm font-medium">Couldn&apos;t load messages</p>
+              <p className="text-muted-foreground mt-1 text-xs">{error ?? "Please try again."}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => setReloadKey((k) => k + 1)}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="m-auto flex flex-col items-center gap-3 p-6 text-center">
+              <div className="bg-luminous/15 text-luminous-soft flex size-12 items-center justify-center rounded-2xl">
+                <MessageSquare className="size-5" />
               </div>
-            ) : status === "error" ? (
-              <div className="glass-3 rounded-2xl p-10 text-center">
-                <TriangleAlert className="text-destructive mx-auto size-6" />
-                <p className="text-foreground mt-3 text-sm font-medium">
-                  Couldn&apos;t load messages
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">{error ?? "Please try again."}</p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={() => setReloadKey((k) => k + 1)}>
-                  Retry
-                </Button>
-              </div>
-            ) : rows.length === 0 ? (
-              <div className="glass-3 ring-luminous/20 flex flex-col items-center gap-4 rounded-2xl p-10 text-center ring-1">
-                <div className="bg-luminous/15 text-luminous-soft flex size-14 items-center justify-center rounded-2xl">
-                  <MessageSquare className="size-6" />
-                </div>
-                <h2 className="text-lg font-semibold tracking-tight">No employer messages yet.</h2>
-                <p className="text-muted-foreground max-w-md text-sm">
-                  When an employer starts a conversation about your profile it will appear here. Turn on
-                  discovery in Settings so employers can find and reach you.
-                </p>
-                <LinkButton href="/candidate/settings" size="default" variant="outline">
-                  Open settings
-                </LinkButton>
-              </div>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {rows.map((c) => (
+              <p className="text-sm font-semibold tracking-tight">
+                No employer messages yet.
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Turn on discovery so employers can find and reach you.
+              </p>
+              <LinkButton href="/candidate/settings" size="sm" variant="outline">
+                Open settings
+              </LinkButton>
+            </div>
+          ) : (
+            <ul className="max-lg:max-h-[70vh] flex-1 space-y-1 overflow-y-auto pr-1 lg:min-h-0">
+              {rows.map((c) => {
+                const selected = active?.conversationId === c.conversationId;
+                return (
                   <li key={c.conversationId}>
                     <button
                       type="button"
                       onClick={() => setActive(c)}
-                      className="glass-3 hover:border-luminous/50 flex w-full items-center gap-4 rounded-xl p-4 text-left transition-colors"
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-colors",
+                        selected
+                          ? "border-luminous/25 bg-luminous/12"
+                          : "border-transparent hover:bg-foreground/4",
+                      )}
                     >
-                      <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
+                      <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ring-2">
                         {c.employerName.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -150,7 +162,9 @@ function CandidateMessagesContent() {
                         <p
                           className={cn(
                             "mt-0.5 truncate text-xs",
-                            c.lastMessage ? "text-muted-foreground" : "text-muted-foreground/60 italic",
+                            c.lastMessage
+                              ? "text-muted-foreground"
+                              : "text-muted-foreground/60 italic",
                           )}
                         >
                           {c.lastMessage
@@ -160,13 +174,37 @@ function CandidateMessagesContent() {
                       </div>
                     </button>
                   </li>
-                ))}
-              </ul>
-            )}
-          </Col>
-        </Grid12>
-      </section>
-    </>
+                );
+              })}
+            </ul>
+          )}
+        </aside>
+
+        {/* ── Thread pane ── */}
+        <section
+          className={cn(
+            "glass-3 min-h-0 flex-1 flex-col overflow-hidden rounded-2xl md:flex",
+            active ? "flex" : "hidden",
+          )}
+        >
+          {active ? (
+            <ThreadView
+              key={active.conversationId}
+              conversation={active}
+              onBack={() => {
+                setActive(null);
+                setReloadKey((k) => k + 1);
+              }}
+            />
+          ) : (
+            <div className="text-muted-foreground m-auto flex flex-col items-center gap-3 p-8 text-center">
+              <MessageSquare className="size-6 opacity-60" aria-hidden />
+              <p className="text-sm">Select a conversation to read and reply.</p>
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
   );
 }
 
@@ -247,31 +285,34 @@ function ThreadView({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs transition-colors"
-      >
-        <ArrowLeft className="size-3.5" />
-        Back to conversations
-      </button>
-
-      <header className="glass-3 flex items-center gap-3 rounded-2xl p-4">
-        <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ring-2">
+    <>
+      {/* Thread header */}
+      <header className="line-b flex shrink-0 items-center gap-3 px-4 py-3">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back to conversations"
+          className="text-muted-foreground hover:text-foreground md:hidden"
+        >
+          <ArrowLeft className="size-4" />
+        </button>
+        <div className="bg-luminous/15 ring-luminous/30 text-luminous-soft flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ring-2">
           {conversation.employerName.slice(0, 2).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-semibold tracking-tight">
+          <p className="truncate text-sm font-semibold tracking-tight">
             {conversation.employerName}
           </p>
-          <p className="text-muted-foreground truncate text-xs">Employer</p>
+          <p className="text-muted-foreground font-mono text-[9px] font-semibold uppercase tracking-[0.14em]">
+            Employer
+          </p>
         </div>
       </header>
 
+      {/* Messages */}
       <div
         ref={listRef}
-        className="glass-3 flex h-[440px] flex-col gap-3 overflow-y-auto rounded-2xl p-4"
+        className="max-lg:h-110 flex flex-col gap-3 overflow-y-auto p-4 lg:min-h-0 lg:flex-1"
         role="log"
         aria-live="polite"
       >
@@ -280,7 +321,9 @@ function ThreadView({
             <Loader2 className="size-4 animate-spin" /> Loading…
           </p>
         ) : messages.length === 0 ? (
-          <p className="text-muted-foreground m-auto text-sm">No messages yet — say hello!</p>
+          <p className="text-muted-foreground m-auto text-sm">
+            No messages yet — say hello!
+          </p>
         ) : (
           messages.map((m) => {
             const mine = m.sender === "candidate";
@@ -311,8 +354,9 @@ function ThreadView({
         )}
       </div>
 
+      {/* Composer */}
       <form
-        className="glass-3 flex items-center gap-2 rounded-2xl p-2"
+        className="line-t flex shrink-0 items-center gap-2 p-3"
         onSubmit={(e) => {
           e.preventDefault();
           void send();
@@ -328,13 +372,18 @@ function ThreadView({
           onChange={(e) => setDraft(e.target.value)}
           disabled={sending}
           placeholder="Write a reply…"
-          className="placeholder:text-muted-foreground flex-1 bg-transparent px-3 py-2 text-sm outline-none disabled:opacity-60"
+          className="bg-foreground/2 border-border/15 focus-visible:border-luminous/60 placeholder:text-muted-foreground min-h-11 flex-1 rounded-full border px-4 text-sm outline-none transition-colors disabled:opacity-60"
         />
-        <Button type="submit" disabled={!draft.trim() || sending} aria-busy={sending}>
+        <Button
+          type="submit"
+          disabled={!draft.trim() || sending}
+          aria-busy={sending}
+          aria-label={sending ? "Sending…" : "Send message"}
+          className="size-11 shrink-0 rounded-full p-0"
+        >
           <Send className="size-4" />
-          {sending ? "Sending…" : "Send"}
         </Button>
       </form>
-    </div>
+    </>
   );
 }

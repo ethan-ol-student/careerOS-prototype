@@ -33,11 +33,8 @@ function ChaptersContent() {
   return (
     <>
       <PageHeader
-        backHref="/candidate/dashboard"
-        backLabel="Back to dashboard"
         eyebrow="Life Chapter Designer"
         title="Your timetable — fluid by design"
-        description="Toggle Design Mode to add events. Switch between Weekly, Monthly, and Yearly to zoom in and out of your life."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -63,7 +60,48 @@ function ChaptersContent() {
         }
       />
 
-      <section className="px-4 py-8 sm:py-12">
+      <section className="max-w-container mx-auto px-4 py-8 sm:py-12">
+        {/* At-a-glance strip — cockpit language */}
+        {(() => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const weekEnd = new Date(today);
+          weekEnd.setDate(weekEnd.getDate() + 7);
+          const upcoming = events
+            .filter((e) => new Date(`${e.date}T00:00`) >= today)
+            .sort((a, b) => a.date.localeCompare(b.date));
+          const thisWeek = upcoming.filter(
+            (e) => new Date(`${e.date}T00:00`) < weekEnd,
+          ).length;
+          const next = upcoming[0];
+          const stats = [
+            { cap: "Total events", val: String(events.length) },
+            { cap: "Next 7 days", val: String(thisWeek) },
+            {
+              cap: "Up next",
+              val: next
+                ? new Date(`${next.date}T00:00`).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "—",
+            },
+          ];
+          return (
+            <div className="mb-6 grid grid-cols-3 gap-3">
+              {stats.map((s) => (
+                <div key={s.cap} className="glass-4 rounded-xl p-3 sm:p-4">
+                  <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-wider">
+                    {s.cap}
+                  </p>
+                  <p className="text-luminous mt-1 text-xl font-bold tracking-tight sm:text-2xl">
+                    {s.val}
+                  </p>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         <Grid12>
           {designMode && (
             <Col span={12} lg={4}>

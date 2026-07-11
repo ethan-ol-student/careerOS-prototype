@@ -34,9 +34,18 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Pure, deterministic engine assertions — no DB, no secrets.
-      - name: Intelligence engine checks
-        run: npm run check:intelligence
+      # Pure, deterministic assertion suites — no DB, no secrets. Covers the
+      # intelligence engines, auth session/revocation, skills, market, and the
+      # CV parser. The DB-backed e2e checks (check:applications, :job-lifecycle,
+      # :week2) need a live database + secrets, so they stay out of this
+      # secret-free gate and are run locally / against a seeded DB.
+      - name: Deterministic checks
+        run: |
+          npm run check:intelligence
+          npm run check:auth
+          npm run check:skills
+          npm run check:market
+          npm run check:cv
 
       # `next build` also runs the TS typecheck. The env vars are dummies:
       # the build never connects to a real database.

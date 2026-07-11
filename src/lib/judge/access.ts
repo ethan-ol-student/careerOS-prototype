@@ -9,7 +9,7 @@ function dashboardForUser(user: {
 }) {
   if (user.role === "EMPLOYER") {
     return user.employerProfile?.hasCompletedOnboarding
-      ? "/employers/marketplace"
+      ? "/employers/dashboard"
       : "/employers/onboarding";
   }
 

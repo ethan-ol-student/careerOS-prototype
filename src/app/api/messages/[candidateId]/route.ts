@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentEmployerProfile } from "@/lib/api/currentUser";
 import { JobsService } from "@/lib/services/jobs.service";
+import { rateLimit, clientIp } from "@/lib/auth/rateLimit";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 const SendMessageSchema = z.object({
@@ -47,6 +48,13 @@ export async function POST(
   { params }: { params: Promise<{ candidateId: string }> },
 ) {
   try {
+    const rl = rateLimit(`msg:${clientIp(request)}`, {
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return failFromCode("rate_limited", "Too many messages. Please slow down.", 429);
+    }
     const { candidateId } = await params;
     const json = await request.json();
     const parsed = SendMessageSchema.safeParse(json);

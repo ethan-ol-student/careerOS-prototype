@@ -8,7 +8,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { readSession } from "@/lib/auth/session";
+import { readSession, sessionMatchesVersion } from "@/lib/auth/session";
 import { ForbiddenError, UnauthorizedError } from "./errors";
 
 // Re-exported so existing importers (`@/lib/api/currentUser`) keep working.
@@ -20,6 +20,11 @@ export async function getAuthUser() {
   if (!session) throw new UnauthorizedError();
   const user = await prisma.user.findUnique({ where: { id: session.userId } });
   if (!user) throw new UnauthorizedError("User not found.");
+  // Revoked session: the token was signed with an older version (e.g. the
+  // user logged out on another device). Fail closed — force re-auth.
+  if (!sessionMatchesVersion(session.sessionVersion, user.sessionVersion)) {
+    throw new UnauthorizedError("Your session has expired. Please sign in again.");
+  }
   return user;
 }
 

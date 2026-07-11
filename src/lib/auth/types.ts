@@ -18,4 +18,7 @@ export interface SessionPayload {
   userId: string;
   role: AuthRole;
   isJudge?: boolean;
+  /** Session-revocation counter captured at sign time (see session.ts).
+   *  Absent on tokens issued before revocation existed → treated as 0. */
+  sessionVersion?: number;
 }

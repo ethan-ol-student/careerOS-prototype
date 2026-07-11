@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Circle,
   Download,
+  History,
   Lock,
   Plus,
   RotateCcw,
@@ -13,9 +16,9 @@ import {
   X,
 } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
-import { Grid12, Col } from "@/components/app/Grid";
-import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/Button";
+import { ProgressRing } from "@/components/ui/ProgressRing";
+import { Modal } from "@/components/ui/Modal";
 import { MeterRow } from "@/components/dashboard/PhaseWidgetGrid";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { PortfolioBuilder, type Section } from "@/components/portfolio/PortfolioBuilder";
@@ -34,9 +37,11 @@ interface VersionRow {
 
 /**
  * Living Portfolio — the ONE place a candidate builds their profile and
- * exports it. The former standalone Resume page lives here now: the
- * completeness checklist (clickable, deep-links into the builder), the
- * problems-solved editor, saved versions, and the gated PDF download.
+ * exports it. Wireframe layout: zero-scroll frame (like the cockpit) —
+ * input on the left (builder + problems solved, internally scrolling),
+ * live CV preview on the right. Auxiliary data (completeness checklist,
+ * saved versions, career timeline) collapses into expand-in-place
+ * overlays so it never pushes the main layout around.
  */
 export default function PortfolioPage() {
   return (
@@ -46,12 +51,46 @@ export default function PortfolioPage() {
   );
 }
 
+/** Backdrop + anchored panel for expand-in-place overlays. */
+function ExpandOverlay({
+  open,
+  onClose,
+  side,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** Which way the panel opens relative to its anchor bar. */
+  side: "up" | "down";
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Close panel"
+        onClick={onClose}
+        className="fixed inset-0 z-30 cursor-default"
+      />
+      <div
+        className={cn(
+          "border-border/20 bg-background/95 absolute left-0 right-0 z-40 rounded-2xl border p-5 shadow-2xl backdrop-blur-xl",
+          side === "down" ? "top-full mt-2" : "bottom-full mb-2",
+        )}
+      >
+        {children}
+      </div>
+    </>
+  );
+}
+
 function PortfolioContent() {
   const { portfolio, resetPortfolio } = usePortfolio();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [section, setSection] = useState<Section>("identity");
 
-  // Resume tooling state (formerly /candidate/resume).
+  // Resume tooling state (versions, problems solved, PDF gate).
   const [versions, setVersions] = useState<VersionRow[]>([]);
   const [problemsSolved, setProblemsSolved] = useState<string[]>([]);
   const [newProblem, setNewProblem] = useState("");
@@ -59,6 +98,11 @@ function PortfolioContent() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+
+  // Expand-in-place panels (overlay — never push the layout).
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [r1, r2, r3] = await Promise.all([
@@ -79,8 +123,7 @@ function PortfolioContent() {
     void load();
   }, [load]);
 
-  // Live meter: same pure function the server/PDF gate uses, fed by the
-  // portfolio state — ticks update as the candidate fills sections in.
+  // Live meter: same pure function the server/PDF gate uses.
   const completeness = useMemo(
     () =>
       resumeCompleteness({
@@ -99,6 +142,7 @@ function PortfolioContent() {
 
   /** Checklist click → jump to the exact spot that completes the task. */
   function goToTask(key: Section | "problems") {
+    setChecklistOpen(false);
     if (key === "problems") {
       document
         .getElementById("problems-editor")
@@ -150,20 +194,23 @@ function PortfolioContent() {
 
   return (
     <>
-      <PageHeader
-        backHref="/candidate/dashboard"
-        backLabel="Back to dashboard"
-        eyebrow="Living Portfolio"
-        title="Build your CV — in real time"
-        description="Edit any section on the left and watch your CV update on the right. Complete the checklist to unlock your PDF resume export."
-        actions={
+      <div className="max-w-container mx-auto flex w-full flex-col px-4 pb-4 pt-2 lg:h-full lg:min-h-0">
+        {/* ── Header row: title left, actions right ── */}
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+              Living Portfolio
+            </p>
+            <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+              Your Living <span className="text-luminous">Portfolio</span>
+            </h1>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
-            {complete && (
-              <span className="text-clover inline-flex items-center gap-1 text-xs font-medium">
-                <CheckCircle2 className="size-4" />
-                Ready to export
-              </span>
-            )}
+            {note && <p className="text-clover max-w-56 truncate text-xs">{note}</p>}
+            <Button variant="ghost" size="sm" onClick={() => setTimelineOpen(true)}>
+              <History className="size-3.5" />
+              Timeline
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -171,14 +218,18 @@ function PortfolioContent() {
               disabled={!hasContent}
             >
               <RotateCcw className="size-3.5" />
-              Reset portfolio
+              Reset
             </Button>
-            <Button variant="outline" size="sm" onClick={saveVersion} disabled={busy !== null}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={saveVersion}
+              disabled={busy !== null}
+            >
               <Save className="size-3.5" />
               {busy === "version" ? "Saving…" : "Save version"}
             </Button>
             {!complete ? (
-              /* Locked until every checklist item is done. */
               <Button
                 size="sm"
                 disabled
@@ -195,170 +246,219 @@ function PortfolioContent() {
                 </Button>
               </a>
             ) : (
-              /* Career Report is Pro-gated (server enforces too). */
-              <Button size="sm" disabled={busy !== null} onClick={() => setUpgradeOpen(true)}>
+              <Button
+                size="sm"
+                disabled={busy !== null}
+                onClick={() => setUpgradeOpen(true)}
+              >
                 <Download className="size-3.5" />
                 Download PDF — Pro
               </Button>
             )}
           </div>
-        }
-      />
+        </div>
 
-      <section className="px-4 py-8 sm:py-12">
-        {note && <p className="text-clover mb-4 text-sm">{note}</p>}
-        <Grid12>
-          <Col span={12} lg={6}>
-            <PortfolioBuilder section={section} onSectionChange={setSection} />
+        {/* ── Body: input left, completeness + preview right ── */}
+        <div className="mt-3 grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-12">
+          {/* Left: builder + problems solved (internally scrolling) */}
+          <div className="flex min-h-0 flex-col gap-3 lg:col-span-7">
+            <div className="min-h-0 flex-1 space-y-4 lg:overflow-y-auto lg:pr-1">
+              <PortfolioBuilder section={section} onSectionChange={setSection} />
 
-            {/* Problems solved — proof of capability, leads the PDF. */}
-            <section
-              id="problems-editor"
-              className="glass-3 mt-4 scroll-mt-24 rounded-2xl p-6"
-            >
-              <h2 className="text-luminous font-mono text-xs font-semibold uppercase tracking-[0.18em]">
-                Problems solved
-              </h2>
-              <p className="text-muted-foreground mt-2 text-xs">
-                Notable problems you solved and their impact — these lead your
-                PDF, before job titles.
-              </p>
-              {problemsSolved.length > 0 && (
-                <ul className="mt-3 space-y-2">
-                  {problemsSolved.map((p) => (
-                    <li
-                      key={p}
-                      className="border-border/15 bg-foreground/2 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
-                    >
-                      <span className="min-w-0 flex-1">{p}</span>
+              {/* Problems solved — proof of capability, leads the PDF. */}
+              <section
+                id="problems-editor"
+                className="glass-3 scroll-mt-4 rounded-2xl p-6"
+              >
+                <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+                  Problems solved
+                </p>
+                <p className="text-muted-foreground mt-2 text-xs">
+                  Notable problems you solved and their impact — these lead your
+                  PDF, before job titles.
+                </p>
+                {problemsSolved.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {problemsSolved.map((p) => (
+                      <li
+                        key={p}
+                        className="border-border/15 bg-foreground/2 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
+                      >
+                        <span className="min-w-0 flex-1">{p}</span>
+                        <button
+                          type="button"
+                          aria-label={`Remove "${p}"`}
+                          onClick={() =>
+                            void saveProblems(problemsSolved.filter((x) => x !== p))
+                          }
+                          className="text-muted-foreground hover:text-destructive shrink-0"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <form
+                  className="mt-3 flex gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const v = newProblem.trim();
+                    if (!v || problemsSolved.includes(v)) return;
+                    void saveProblems([...problemsSolved, v]);
+                    setNewProblem("");
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={newProblem}
+                    onChange={(e) => setNewProblem(e.target.value)}
+                    maxLength={240}
+                    placeholder="e.g. Cut deployment time from 2 days to 20 minutes"
+                    className="bg-foreground/2 border-border/15 focus:border-luminous/60 focus:ring-luminous/30 min-h-11 w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2"
+                  />
+                  <Button type="submit" size="sm" className="min-h-11 shrink-0">
+                    <Plus className="size-3.5" />
+                    Add
+                  </Button>
+                </form>
+              </section>
+            </div>
+
+            {/* Saved versions — collapsed bar, expands upward as an overlay */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setVersionsOpen((v) => !v)}
+                aria-expanded={versionsOpen}
+                className="glass-3 hover:border-luminous/40 border-border/15 flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 transition-colors"
+              >
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                  Your saved versions
+                </span>
+                <span className="text-muted-foreground flex items-center gap-1.5 text-xs tabular-nums">
+                  {versions.length} saved
+                  <ChevronUp
+                    className={cn(
+                      "size-3.5 transition-transform",
+                      versionsOpen && "rotate-180",
+                    )}
+                    aria-hidden
+                  />
+                </span>
+              </button>
+              <ExpandOverlay
+                open={versionsOpen}
+                onClose={() => setVersionsOpen(false)}
+                side="up"
+              >
+                <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                  Saved versions
+                </p>
+                {versions.length ? (
+                  <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+                    {versions.map((v) => (
+                      <li
+                        key={v.id}
+                        className="border-border/15 bg-foreground/2 flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                      >
+                        <span className="truncate font-medium">{v.label}</span>
+                        <span className="text-muted-foreground ml-2 shrink-0 font-mono text-xs">
+                          {new Date(v.createdAt).toLocaleDateString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    No versions yet — save one before big edits.
+                  </p>
+                )}
+              </ExpandOverlay>
+            </div>
+          </div>
+
+          {/* Right: completeness (expand-down overlay) + CV preview */}
+          <div className="flex min-h-0 flex-col gap-3 lg:col-span-5">
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setChecklistOpen((v) => !v)}
+                aria-expanded={checklistOpen}
+                className="glass-3 hover:border-clover/40 border-border/15 flex w-full items-center gap-3 rounded-xl border px-3 py-2 transition-colors"
+              >
+                <ProgressRing
+                  value={completeness.pct}
+                  label="Resume completeness"
+                  accent="clover"
+                  size={40}
+                  compact
+                />
+                <span className="min-w-0 flex-1 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                  Resume completeness
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "text-muted-foreground size-4 shrink-0 transition-transform",
+                    checklistOpen && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+              </button>
+              <ExpandOverlay
+                open={checklistOpen}
+                onClose={() => setChecklistOpen(false)}
+                side="down"
+              >
+                <MeterRow
+                  label="Resume completeness"
+                  value={completeness.pct}
+                  accent="clover"
+                />
+                <ul className="mt-3 max-h-72 space-y-1 overflow-y-auto pr-1">
+                  {completeness.items.map((item) => (
+                    <li key={item.label}>
                       <button
                         type="button"
-                        aria-label={`Remove "${p}"`}
-                        onClick={() =>
-                          void saveProblems(problemsSolved.filter((x) => x !== p))
-                        }
-                        className="text-muted-foreground hover:text-destructive shrink-0"
+                        onClick={() => goToTask(item.key)}
+                        className="hover:bg-accent focus-visible:ring-luminous/40 group flex min-h-9 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors focus:outline-none focus-visible:ring-2"
                       >
-                        <X className="size-4" />
+                        {item.done ? (
+                          <CheckCircle2 className="text-clover size-4 shrink-0" />
+                        ) : (
+                          <Circle className="text-muted-foreground size-4 shrink-0" />
+                        )}
+                        <span
+                          className={cn(
+                            "min-w-0 flex-1",
+                            !item.done && "text-muted-foreground",
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                        <ChevronRight
+                          aria-hidden
+                          className="text-muted-foreground group-hover:text-foreground size-3.5 shrink-0 transition-colors"
+                        />
                       </button>
                     </li>
                   ))}
                 </ul>
-              )}
-              <form
-                className="mt-3 flex gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const v = newProblem.trim();
-                  if (!v || problemsSolved.includes(v)) return;
-                  void saveProblems([...problemsSolved, v]);
-                  setNewProblem("");
-                }}
-              >
-                <input
-                  type="text"
-                  value={newProblem}
-                  onChange={(e) => setNewProblem(e.target.value)}
-                  maxLength={240}
-                  placeholder="e.g. Cut deployment time from 2 days to 20 minutes"
-                  className="bg-foreground/2 border-border/15 focus:border-luminous/60 focus:ring-luminous/30 min-h-11 w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2"
-                />
-                <Button type="submit" size="sm" className="min-h-11 shrink-0">
-                  <Plus className="size-3.5" />
-                  Add
-                </Button>
-              </form>
-            </section>
+                {!complete && (
+                  <p className="text-muted-foreground mt-3 text-xs">
+                    Click any item to jump to where it gets done. Finish all of
+                    them to unlock the PDF export.
+                  </p>
+                )}
+              </ExpandOverlay>
+            </div>
 
-            {/* Saved versions (formerly on the Resume page). */}
-            <section className="glass-3 mt-4 rounded-2xl p-6">
-              <h2 className="text-luminous font-mono text-xs font-semibold uppercase tracking-[0.18em]">
-                Saved versions
-              </h2>
-              {versions.length ? (
-                <ul className="mt-3 space-y-2">
-                  {versions.map((v) => (
-                    <li
-                      key={v.id}
-                      className="border-border/15 bg-foreground/2 flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
-                    >
-                      <span className="truncate font-medium">{v.label}</span>
-                      <span className="text-muted-foreground ml-2 shrink-0 font-mono text-xs">
-                        {new Date(v.createdAt).toLocaleDateString()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground mt-2 text-sm">
-                  No versions yet — save one before big edits.
-                </p>
-              )}
-            </section>
-          </Col>
-
-          <Col span={12} lg={6}>
-            {/* Interactive completeness checklist — every task deep-links
-                to the section where it gets done. */}
-            <section className="glass-3 rounded-2xl p-6">
-              <h2 className="text-luminous font-mono text-xs font-semibold uppercase tracking-[0.18em]">
-                Completeness
-              </h2>
-              <MeterRow
-                label="Resume completeness"
-                value={completeness.pct}
-                accent="clover"
-                className="mt-3"
-              />
-              <ul className="mt-4 space-y-1">
-                {completeness.items.map((item) => (
-                  <li key={item.label}>
-                    <button
-                      type="button"
-                      onClick={() => goToTask(item.key)}
-                      className={cn(
-                        "hover:bg-accent focus-visible:ring-luminous/40 group flex min-h-9 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors focus:outline-none focus-visible:ring-2",
-                      )}
-                    >
-                      {item.done ? (
-                        <CheckCircle2 className="text-clover size-4 shrink-0" />
-                      ) : (
-                        <Circle className="text-muted-foreground size-4 shrink-0" />
-                      )}
-                      <span
-                        className={cn(
-                          "min-w-0 flex-1",
-                          !item.done && "text-muted-foreground",
-                        )}
-                      >
-                        {item.label}
-                      </span>
-                      <ChevronRight
-                        aria-hidden
-                        className="text-muted-foreground group-hover:text-foreground size-3.5 shrink-0 transition-colors"
-                      />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              {!complete && (
-                <p className="text-muted-foreground mt-3 text-xs">
-                  Click any item to jump to where it gets done. Finish all of
-                  them to unlock the PDF export.
-                </p>
-              )}
-            </section>
-
-            <div className="mt-4 lg:sticky lg:top-24">
+            <div className="min-h-0 flex-1 lg:overflow-y-auto">
               <CVPreview />
             </div>
-          </Col>
-        </Grid12>
-
-        {/* Timeline / Living Portfolio (Phase 2) — chronological milestones
-            derived from the sections above; fully scrollable, full width. */}
-        <CareerTimeline className="mt-4" />
-      </section>
+          </div>
+        </div>
+      </div>
 
       <ConfirmDialog
         isOpen={showResetConfirm}
@@ -381,6 +481,16 @@ function PortfolioContent() {
         onUpgraded={load}
         feature="Career Report (PDF export)"
       />
+
+      {/* Career timeline — expand & focus, never part of the fixed frame */}
+      <Modal
+        isOpen={timelineOpen}
+        onClose={() => setTimelineOpen(false)}
+        title="Career timeline"
+        size="lg"
+      >
+        <CareerTimeline />
+      </Modal>
     </>
   );
 }

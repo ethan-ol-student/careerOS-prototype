@@ -58,6 +58,7 @@ export async function POST(request: Request) {
       userId: user.id,
       role,
       isJudge: user.isJudgeAccount,
+      sessionVersion: user.sessionVersion,
     });
     await setSessionCookie(token);
 

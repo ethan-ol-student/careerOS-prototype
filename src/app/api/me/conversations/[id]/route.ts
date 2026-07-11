@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, UnauthorizedError } from "@/lib/api/currentUser";
 import { mirrorIdForUser } from "@/lib/candidates/projection";
+import { rateLimit, clientIp } from "@/lib/auth/rateLimit";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 /**
@@ -61,6 +62,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const rl = rateLimit(`msg:${clientIp(request)}`, {
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return failFromCode("rate_limited", "Too many messages. Please slow down.", 429);
+    }
     const { id } = await params;
     const user = await getAuthUser();
     if (user.role !== "CANDIDATE") {

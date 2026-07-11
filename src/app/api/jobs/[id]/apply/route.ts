@@ -1,14 +1,29 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentCandidateProfile } from "@/lib/api/currentUser";
 import { ApplicationsService } from "@/lib/services/applications.service";
+import { rateLimit, clientIp } from "@/lib/auth/rateLimit";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 /** POST /api/jobs/[id]/apply — current candidate applies to a job. */
 export async function POST(
-  _req: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    // Throttle apply spam (the unique constraint blocks re-applies to the
+    // same job, but not fan-out across many jobs).
+    const rl = rateLimit(`apply:${clientIp(request)}`, {
+      limit: 20,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return failFromCode(
+        "rate_limited",
+        "Too many applications too fast. Please slow down.",
+        429,
+      );
+    }
+
     const { id: jobId } = await params;
     const profile = await getCurrentCandidateProfile();
 
@@ -22,22 +37,31 @@ export async function POST(
     // ConflictError (already applied) is mapped to a friendly 409 by failFromUnknown.
     const application = await ApplicationsService.apply(profile.id, jobId);
 
-    // Notify the employer(s) whose org matches the job's company. Jobs have
-    // no owner in the prototype schema, so org-name match is the honest
-    // bridge; no match → no notification, never a wrong one.
-    const employers = await prisma.employerProfile.findMany({
-      where: { organizationName: job.company.name },
-      select: { id: true },
-    });
-    if (employers.length > 0) {
-      await prisma.employerNotification.createMany({
-        data: employers.map((e) => ({
-          employerId: e.id,
-          kind: "system",
-          title: "New applicant",
-          body: `${profile.name || "A candidate"} applied to ${job.title}.`,
-        })),
-      });
+    // Notify the hiring employer. Prefer the post's actual owner
+    // (`Job.employerId`) — exact, no ambiguity. Only fall back to the
+    // org-name bridge for ownerless catalogue jobs. Best-effort: a
+    // notification failure must never fail an application that succeeded.
+    try {
+      const employerIds = job.employerId
+        ? [job.employerId]
+        : (
+            await prisma.employerProfile.findMany({
+              where: { organizationName: job.company.name },
+              select: { id: true },
+            })
+          ).map((e) => e.id);
+      if (employerIds.length > 0) {
+        await prisma.employerNotification.createMany({
+          data: employerIds.map((employerId) => ({
+            employerId,
+            kind: "system",
+            title: "New applicant",
+            body: `${profile.name || "A candidate"} applied to ${job.title}.`,
+          })),
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[apply] employer notification failed (non-fatal)", notifyErr);
     }
 
     return ok(application);

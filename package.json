@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:intelligence": "tsx src/lib/intelligence/__checks__/engines.check.ts",
+    "check:auth": "tsx src/lib/auth/__checks__/session.check.ts",
     "check:demo": "tsx src/lib/intelligence/__checks__/demoSnapshot.check.ts",
     "check:cv": "tsx src/lib/cv-parser/__checks__/cvParser.check.ts",
     "check:skills": "tsx src/lib/skills/__checks__/skillValidation.check.ts",

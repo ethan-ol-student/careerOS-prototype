@@ -104,7 +104,7 @@ export function JudgeHub() {
       icon: Briefcase,
       title: "Switch to the employer view",
       body: "Same account, employer mode — marketplace, saved talent, messages.",
-      action: () => demoLogin("judge", "employer", "/employers/marketplace", "employer"),
+      action: () => demoLogin("judge", "employer", "/employers/dashboard", "employer"),
       label: "Employer view",
       mode: "Employer mode",
       card: "border-clover/40",

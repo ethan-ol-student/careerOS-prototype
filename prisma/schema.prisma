@@ -37,6 +37,10 @@ model User {
   name         String?
   role         UserRole
   isJudgeAccount Boolean @default(false)
+  // Session revocation: bumped on logout (invalidates every issued token
+  // for this user). The signed JWT carries the version at sign time;
+  // getAuthUser rejects a token whose version is stale. See auth/session.ts.
+  sessionVersion Int    @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

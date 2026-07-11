@@ -476,71 +476,85 @@ function RecommendedActions({
   }
 
   return (
-    /* Scrolls past 3 rows so any number of steps fits the card. */
-    <ul className="mt-1.5 max-h-30 space-y-1.5 overflow-y-auto pr-1">
-        {actions.map((a) => (
-          <li key={a.label} className="border-border/15 bg-foreground/2 rounded-lg border">
-            <div className="flex items-center gap-2.5 px-3 py-1.5">
-              <span className="bg-luminous/15 text-luminous-soft flex size-7 shrink-0 items-center justify-center rounded-lg">
-                <a.icon className="size-3.5" aria-hidden />
-              </span>
+    /* Wireframe: one recessed strip, actions as a horizontal tile row. */
+    <div className="border-border/15 bg-background/50 mt-1.5 rounded-xl border p-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {actions.slice(0, 4).map((a) => {
+          const open = expanded === a.label;
+          return (
+            <div
+              key={a.label}
+              className={cn(
+                "group relative rounded-lg border transition-colors",
+                open
+                  ? "border-luminous/50 bg-luminous/8"
+                  : "border-border/15 bg-foreground/2 hover:border-luminous/40",
+              )}
+            >
               <Link
                 href={a.href}
                 title={a.label}
-                className="hover:text-luminous min-w-0 flex-1 truncate text-sm transition-colors"
+                className="flex h-full flex-col items-center gap-1.5 px-2 pb-2 pt-3 text-center"
               >
-                {a.label}
+                <span className="bg-luminous/15 text-luminous-soft flex size-8 shrink-0 items-center justify-center rounded-lg">
+                  <a.icon className="size-4" aria-hidden />
+                </span>
+                <span className="line-clamp-2 text-[11px] leading-tight">
+                  {a.label}
+                </span>
               </Link>
               <button
                 type="button"
                 aria-label={`Add "${a.label}" to your calendar`}
-                aria-expanded={expanded === a.label}
+                aria-expanded={open}
                 onClick={() => {
-                  setExpanded(expanded === a.label ? null : a.label);
+                  setExpanded(open ? null : a.label);
                   setError(null);
                 }}
                 className={cn(
-                  "shrink-0 transition-colors",
-                  expanded === a.label
+                  "absolute right-1 top-1 rounded-md p-1 transition-colors",
+                  open
                     ? "text-luminous"
                     : "text-muted-foreground hover:text-luminous",
                 )}
               >
-                <CalendarPlus className="size-4" aria-hidden />
+                <CalendarPlus className="size-3.5" aria-hidden />
               </button>
             </div>
-            {expanded === a.label && (
-              <form
-                className="border-border/15 flex items-center gap-2 border-t px-3 py-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void addToCalendar(a.label);
-                }}
-              >
-                <label
-                  htmlFor="action-date"
-                  className="text-muted-foreground text-[11px]"
-                >
-                  Schedule for
-                </label>
-                <input
-                  id="action-date"
-                  type="date"
-                  required
-                  value={draftDate}
-                  onChange={(e) => setDraftDate(e.target.value)}
-                  className="bg-foreground/2 border-border/15 rounded-lg border px-2 py-1 text-xs outline-none [color-scheme:dark]"
-                />
-                <Button type="submit" size="xs" disabled={busy}>
-                  <CalendarPlus className="size-3" />
-                  Add to calendar
-                </Button>
-                {error && <p className="text-destructive text-[11px]">{error}</p>}
-              </form>
-            )}
-          </li>
-        ))}
-      </ul>
+          );
+        })}
+      </div>
+      {expanded && (
+        <form
+          className="border-border/15 mt-2 flex flex-wrap items-center gap-2 border-t px-1 pt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void addToCalendar(expanded);
+          }}
+        >
+          <label
+            htmlFor="action-date"
+            className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]"
+            title={expanded}
+          >
+            Schedule “{expanded}”
+          </label>
+          <input
+            id="action-date"
+            type="date"
+            required
+            value={draftDate}
+            onChange={(e) => setDraftDate(e.target.value)}
+            className="bg-foreground/2 border-border/15 rounded-lg border px-2 py-1 text-xs outline-none [color-scheme:dark]"
+          />
+          <Button type="submit" size="xs" disabled={busy}>
+            <CalendarPlus className="size-3" />
+            Add
+          </Button>
+          {error && <p className="text-destructive w-full text-[11px]">{error}</p>}
+        </form>
+      )}
+    </div>
   );
 }
 

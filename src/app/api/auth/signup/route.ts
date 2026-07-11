@@ -103,6 +103,7 @@ export async function POST(request: Request) {
       userId: user.id,
       role: role as AuthRole,
       isJudge: false,
+      sessionVersion: user.sessionVersion,
     });
     await setSessionCookie(token);
 

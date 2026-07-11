@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { readSession } from "@/lib/auth/session";
-import { PaymentRequiredError, UnauthorizedError } from "@/lib/api/errors";
+import { getAuthUser } from "@/lib/api/currentUser";
+import { PaymentRequiredError } from "@/lib/api/errors";
 
 /**
  * Server-side entitlement checks (Feature 15). Plan-grained, not
@@ -26,9 +26,10 @@ export async function resolveIsPro(userId: string): Promise<boolean> {
  * throw-based shape). 401 when unauthenticated, 402 when not entitled.
  */
 export async function requireEntitlement(): Promise<void> {
-  const session = await readSession();
-  if (!session) throw new UnauthorizedError();
-  if (!(await resolveIsPro(session.userId))) {
+  // getAuthUser both authenticates (401 if unauthenticated / revoked
+  // session) and confirms the user still exists before the Pro check.
+  const user = await getAuthUser();
+  if (!(await resolveIsPro(user.id))) {
     throw new PaymentRequiredError();
   }
 }

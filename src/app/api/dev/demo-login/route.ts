@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     const redirect =
       role === "employer"
-        ? "/employers/marketplace"
+        ? "/employers/dashboard"
         : account === "judge"
           ? "/judge/tour"
           : "/candidate/dashboard";

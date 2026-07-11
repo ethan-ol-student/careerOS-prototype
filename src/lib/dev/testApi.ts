@@ -160,18 +160,29 @@ export async function setDemoSession(
     where: { id: user.id },
     data: { role: role === "candidate" ? "CANDIDATE" : "EMPLOYER" },
   });
-  const token = await signSession({ userId: user.id, role });
+  // Carry the account's current sessionVersion so the token passes the
+  // revocation check in getAuthUser (a prior logout may have bumped it).
+  const token = await signSession({
+    userId: user.id,
+    role,
+    sessionVersion: user.sessionVersion,
+  });
   await setSessionCookie(token);
 }
 
 /** Set the test account's role and (re)issue its session cookie. */
 export async function setTestRoleAndSession(role: DevUserMode): Promise<void> {
   const ctx = await loadTestContext();
-  await prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: ctx.user.id },
     data: { role: role === "candidate" ? "CANDIDATE" : "EMPLOYER" },
   });
-  const token = await signSession({ userId: ctx.user.id, role });
+  // Sign with the current sessionVersion (see setDemoSession).
+  const token = await signSession({
+    userId: ctx.user.id,
+    role,
+    sessionVersion: updated.sessionVersion,
+  });
   await setSessionCookie(token);
 }
 

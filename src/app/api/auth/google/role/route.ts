@@ -77,7 +77,12 @@ export async function POST(request: Request) {
       },
     });
 
-    const token = await signSession({ userId: user.id, role, isJudge: false });
+    const token = await signSession({
+      userId: user.id,
+      role,
+      isJudge: false,
+      sessionVersion: user.sessionVersion,
+    });
     await setSessionCookie(token);
     store.delete(GOOGLE_PENDING_COOKIE);
 
