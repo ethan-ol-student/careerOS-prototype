@@ -10,6 +10,7 @@ import {
   Menu as MenuIcon,
   User,
   BookOpen,
+  NotebookPen,
   LogOut,
   ChevronRight,
   MessageSquare,
@@ -155,6 +156,18 @@ export function TopMenu({ userName, userField, onSignOut }: TopMenuProps) {
                 icon={<BookOpen className="size-4 text-luminous" aria-hidden />}
                 label="Life Chapter Designer"
                 hint="Design and compare next-chapter scenarios"
+              />
+              <MenuLink
+                href="/candidate/chapters/journal"
+                icon={<NotebookPen className="size-4 text-luminous" aria-hidden />}
+                label="Timeline Journal"
+                hint="Reflections that reveal your career themes"
+              />
+              <MenuLink
+                href="/candidate/insights"
+                icon={<Sparkles className="size-4 text-luminous" aria-hidden />}
+                label="Career Intelligence"
+                hint="Cross-module insights: hidden strengths & gaps"
               />
               <MenuLink
                 href="/leaderboard"

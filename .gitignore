@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Local datasets — ingested into Neon / re-downloadable from source (O*NET, JobStreet)
+data/

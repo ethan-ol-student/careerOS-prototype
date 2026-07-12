@@ -142,6 +142,7 @@ model CandidateProfile {
   projects      Project[]
   experiences   Experience[]
   chapters       ChapterEvent[]
+  journalEntries TimelineJournalEntry[]
   notifications  CandidateNotification[]
   applications   Application[]
   midCareer      MidCareerProfile?
@@ -235,6 +236,24 @@ model ChapterEvent {
   createdAt DateTime         @default(now())
 
   @@index([profileId])
+}
+
+// Timeline Journal (Life Chapter Designer sub-page) — the narrative source
+// for narrativeThemeEngine. Free-text reflections the timetable can't hold;
+// mood/skillsTouched/pivot are the structured signal the engine reads.
+model TimelineJournalEntry {
+  id            String           @id @default(cuid())
+  profileId     String
+  profile       CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  date          String // YYYY-MM-DD (matches ChapterEvent convention)
+  title         String
+  reflection    String           @default("")
+  mood          String           @default("") // "" | energized | steady | drained | proud | uncertain
+  skillsTouched String[]         @default([])
+  pivot         Boolean          @default(false) // marks a turning point
+  createdAt     DateTime         @default(now())
+
+  @@index([profileId, date])
 }
 
 model CandidateNotification {
@@ -748,4 +767,103 @@ model ResumeVersion {
   createdAt DateTime @default(now())
 
   @@index([candidateProfileId])
+}
+
+// ── Market corpus (Career Intelligence, slice 2) ────────────────────
+// Ingested aggregate market signal — NOT applyable jobs (the curated `Job`
+// feed stays clean). `MarketPosting` = raw JobStreet rows (real Malaysian
+// demand + salary); `MarketFieldDemand` + `SkillDemand` are precomputed
+// aggregates the intelligence engines read. Populated by prisma/ingest/*
+// (never seeded in prod). Field vocabulary matches `Job.field`.
+
+model MarketPosting {
+  id              String  @id @default(cuid())
+  rawTitle        String
+  normalizedTitle String
+  field           String  @default("") // mapped from JobStreet classification domain
+  classification  String  @default("")
+  salaryMinYr     Int? // annualized (RM); null when the posting had no salary
+  salaryMaxYr     Int?
+  location        String  @default("")
+  industry        String  @default("")
+  source          String  @default("jobstreet")
+  socCode         String? // fuzzy-matched O*NET occupation (null when no match)
+
+  createdAt DateTime @default(now())
+
+  @@index([field])
+  @@index([normalizedTitle])
+  @@index([socCode])
+}
+
+// ── O*NET occupations (Career Intelligence, slice 3) ────────────────
+// Standardized occupations + their distinctive work styles, for the
+// candidate-facing Job-Style Compass. NEVER an employer match input (the
+// archetype/style is descriptive only — see jobStyleFitEngine + Bias Check).
+
+model Occupation {
+  socCode     String @id // O*NET-SOC code, e.g. "15-1252.00"
+  title       String
+  description String @default("")
+
+  workStyles OccupationWorkStyle[]
+  aliases    OccupationTitleAlias[]
+}
+
+model OccupationWorkStyle {
+  id          String     @id @default(cuid())
+  socCode     String
+  occupation  Occupation @relation(fields: [socCode], references: [socCode], onDelete: Cascade)
+  elementName String // "Achievement Orientation","Innovation",…
+  score       Int // 0–100, per-occupation min–max normalized WI weight
+
+  @@unique([socCode, elementName])
+  @@index([socCode])
+}
+
+model OccupationTitleAlias {
+  id         String     @id @default(cuid())
+  socCode    String
+  occupation Occupation @relation(fields: [socCode], references: [socCode], onDelete: Cascade)
+  normalized String // lowercased, de-parenthesized title
+  source     String // "reported" | "occupation"
+
+  @@index([normalized])
+  @@index([socCode])
+}
+
+// Per-field work-style profile — aggregated from matched postings'
+// occupations. The Job-Style Compass compares the candidate's archetype
+// against this "typical role in your field" profile.
+model FieldWorkStyle {
+  id          String @id @default(cuid())
+  field       String
+  elementName String
+  score       Int // 0–100 average across the field's matched occupations
+  occupations Int    @default(0) // how many occupations backed this average
+
+  @@unique([field, elementName])
+  @@index([field])
+}
+
+model MarketFieldDemand {
+  field          String   @id // "" reserved for a cross-field row
+  postingCount   Int      @default(0)
+  salaryMinYr    Int?
+  salaryMaxYr    Int?
+  salaryMedianYr Int?
+  currency       String   @default("RM")
+  updatedAt      DateTime @updatedAt
+}
+
+model SkillDemand {
+  id           String   @id @default(cuid())
+  skill        String // app-canonical (lower-case)
+  field        String   @default("") // "" = global aggregate across fields
+  postingCount Int      @default(0) // market postings behind this skill's demand
+  demandScore  Int      @default(0) // 0–100 normalized within its scope
+  updatedAt    DateTime @updatedAt
+
+  @@unique([skill, field])
+  @@index([field])
 }

@@ -101,6 +101,67 @@ export const ARCHETYPES: Record<string, Archetype> = {
   },
 };
 
+// ── Archetype ↔ O*NET work-style crosswalk (Job-Style Compass) ──────
+// The 8 compass axes (a legible subset of O*NET's 21 work styles) and how
+// strongly each working-style archetype leans on each. CANDIDATE-FACING
+// context only — never an employer match input or filter (Bias Check).
+
+export const COMPASS_STYLES = [
+  "Achievement Orientation",
+  "Innovation",
+  "Intellectual Curiosity",
+  "Adaptability",
+  "Cooperation",
+  "Leadership Orientation",
+  "Attention to Detail",
+  "Initiative",
+] as const;
+
+export type CompassStyle = (typeof COMPASS_STYLES)[number];
+
+export const ARCHETYPE_WORKSTYLE: Record<string, Record<CompassStyle, number>> = {
+  builder: {
+    "Achievement Orientation": 90,
+    Innovation: 55,
+    "Intellectual Curiosity": 45,
+    Adaptability: 45,
+    Cooperation: 40,
+    "Leadership Orientation": 40,
+    "Attention to Detail": 85,
+    Initiative: 80,
+  },
+  strategist: {
+    "Achievement Orientation": 60,
+    Innovation: 80,
+    "Intellectual Curiosity": 90,
+    Adaptability: 45,
+    Cooperation: 40,
+    "Leadership Orientation": 60,
+    "Attention to Detail": 65,
+    Initiative: 55,
+  },
+  connector: {
+    "Achievement Orientation": 45,
+    Innovation: 45,
+    "Intellectual Curiosity": 45,
+    Adaptability: 60,
+    Cooperation: 90,
+    "Leadership Orientation": 85,
+    "Attention to Detail": 40,
+    Initiative: 60,
+  },
+  explorer: {
+    "Achievement Orientation": 50,
+    Innovation: 85,
+    "Intellectual Curiosity": 85,
+    Adaptability: 90,
+    Cooperation: 45,
+    "Leadership Orientation": 45,
+    "Attention to Detail": 35,
+    Initiative: 75,
+  },
+};
+
 export function clampScore(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
