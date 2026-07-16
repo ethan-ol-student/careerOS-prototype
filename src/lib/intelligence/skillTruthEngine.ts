@@ -47,8 +47,9 @@ export interface SkillTruth extends ScoreResult {
   nextStep: string;
 }
 
-/** Trust-weighted strength of a single claim, 0–100. */
-function claimStrength(c: SkillClaimInput): number {
+/** Trust-weighted strength of a single claim, 0–100. Exported so category
+ *  radars can derive axes page-side without duplicating the tier math. */
+export function claimStrength(c: SkillClaimInput): number {
   const level = Math.min(5, Math.max(1, Math.round(c.level)));
   return clampScore(Math.round((level / 5) * TIER_WEIGHT[c.tier] * 100));
 }

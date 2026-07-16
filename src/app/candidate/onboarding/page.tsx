@@ -15,7 +15,7 @@ import {
   Rocket,
   Shuffle,
   Sparkles,
-  TriangleAlert,
+  TrendingUp,
   User,
   Users,
   X,
@@ -24,6 +24,8 @@ import {
 import StepShell from "@/components/onboarding/StepShell";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { Modal } from "@/components/ui/Modal";
+import { FeedbackModal } from "@/components/ui/FeedbackModal";
 import { UploadZone } from "@/components/onboarding/UploadZone";
 import {
   ChipGroup,
@@ -50,13 +52,25 @@ import { cn } from "@/lib/utils";
 // ── Option lists ────────────────────────────────────────────────
 
 const STAGES = [
-  { id: "student", label: "Student", hint: "13–17 · discover paths & first skills", icon: GraduationCap },
-  { id: "young-adult", label: "Young Adult", hint: "18–22 · portfolio, internships, first roles", icon: Rocket },
-  { id: "early-career", label: "Early Career", hint: "23–34 · right job, market value, growth", icon: Briefcase },
-  { id: "mid-career", label: "Mid-Career", hint: "35–44 · next moves, close gaps early", icon: Shuffle },
-  { id: "senior-career", label: "Senior Career", hint: "45–54 · leadership, advisory, mentoring", icon: Users },
-  { id: "executive", label: "Executive & Beyond", hint: "55+ · boards, consulting, legacy", icon: Building2 },
+  { id: "student", label: "Student", hint: "Still discovering paths & developing first skills", icon: GraduationCap },
+  { id: "young-adult", label: "Young Adult", hint: "Building a portfolio, finding internships & first roles", icon: Rocket },
+  { id: "early-career", label: "Early Career", hint: "Landing the right job, building market value & growth", icon: Briefcase },
+  { id: "mid-career", label: "Mid-Career", hint: "Deciding the next step, closing skill gaps early", icon: Shuffle },
+  { id: "senior-career", label: "Senior Career", hint: "Leadership, mentorship & advisory roles", icon: Users },
+  { id: "executive", label: "Executive & Beyond", hint: "Boards, consulting & legacy decisions", icon: Building2 },
 ] as const;
+
+const FAMILY_STATUS = ["Single", "Married"];
+const GENDER = ["Male", "Female", "Prefer not to say"];
+const FOCUS = [
+  { id: "improve", label: "Improve", hint: "Get better at specific skills, grow my portfolio", icon: TrendingUp },
+  { id: "discovering", label: "Discovering", hint: "Find which jobs or industries fit me best", icon: Compass },
+];
+// Optional self-ID (shown only after the review). Malaysia-oriented seed
+// lists with a free-text "Other" — never shared with employers, never a
+// match/score input.
+const RELIGION = ["Buddhism", "Christianity", "Hinduism", "Islam", "None"];
+const RACE = ["Malay", "Chinese", "Indian", "Bumiputera"];
 
 const GOAL_CHIPS = [
   "Land my first real job",
@@ -109,12 +123,17 @@ interface DraftEducation {
 interface Draft {
   // Section 1
   fullName: string;
+  nickname: string; // dashboard greeting
   email: string;
   phone: string;
   location: string;
   currentTitle: string;
+  familyStatus: string; // optional, private
+  gender: string; // optional, private
   careerStage: string;
   careerStageMeaning: string;
+  focus: string; // "" | "improve" | "discovering"
+  industries: string[]; // → interestedIndustries
   fieldOfStudy: string;
   expectedGraduation: string;
   goal: string; // → desiredNextMove
@@ -142,6 +161,11 @@ interface Draft {
   scheduleFlexibility: string[];
   maxCommuteMinutes: number;
   travelWillingness: string;
+  // Optional self-ID — collected only after the review, never shared with
+  // employers, never a match/score input.
+  religion: string[];
+  race: string[];
+  age: string; // string in the draft; parsed to Int on save
   // CV-autofill markers (never persisted)
   autoFilled: Record<string, boolean>;
   cvSummary: string;
@@ -150,9 +174,10 @@ interface Draft {
 const DRAFT_KEY = "career-os-candidate-onboarding-draft";
 
 const emptyDraft: Draft = {
-  fullName: "", email: "", phone: "", location: "", currentTitle: "",
-  careerStage: "", careerStageMeaning: "", fieldOfStudy: "",
-  expectedGraduation: "", goal: "",
+  fullName: "", nickname: "", email: "", phone: "", location: "", currentTitle: "",
+  familyStatus: "", gender: "",
+  careerStage: "", careerStageMeaning: "", focus: "", industries: [],
+  fieldOfStudy: "", expectedGraduation: "", goal: "",
   resumeFileName: "", experiences: [], education: [], skills: [],
   certifications: [], languages: [], links: [],
   targetRoles: [], desiredLocations: [], openToRelocate: false,
@@ -160,7 +185,8 @@ const emptyDraft: Draft = {
   minSalaryPeriod: "yearly", availability: "",
   visibility: "hidden_from_current", workEnvironment: "", topValues: [],
   learningHoursPerWeek: 4, scheduleFlexibility: [], maxCommuteMinutes: 45,
-  travelWillingness: "", autoFilled: {}, cvSummary: "",
+  travelWillingness: "", religion: [], race: [], age: "",
+  autoFilled: {}, cvSummary: "",
 };
 
 /** Tolerant hydration: accepts the new shape, the old 5-step draft, or the
@@ -193,9 +219,12 @@ function normalizeDraft(input: unknown): Draft {
     : [];
   return {
     ...emptyDraft,
-    fullName: s(i.fullName), email: s(i.email), phone: s(i.phone),
+    fullName: s(i.fullName), nickname: s(i.nickname), email: s(i.email), phone: s(i.phone),
     location: s(i.location), currentTitle: s(i.currentTitle),
+    familyStatus: s(i.familyStatus), gender: s(i.gender),
     careerStage: s(i.careerStage), careerStageMeaning: s(i.careerStageMeaning),
+    focus: s(i.focus),
+    industries: a(i.industries).length ? a(i.industries) : a(i.interestedIndustries),
     fieldOfStudy: s(i.fieldOfStudy), expectedGraduation: s(i.expectedGraduation),
     goal: s(i.goal, s(i.desiredNextMove)),
     resumeFileName: s(i.resumeFileName),
@@ -215,6 +244,8 @@ function normalizeDraft(input: unknown): Draft {
     scheduleFlexibility: a(i.scheduleFlexibility),
     maxCommuteMinutes: n(i.maxCommuteMinutes, 45),
     travelWillingness: s(i.travelWillingness),
+    religion: a(i.religion), race: a(i.race),
+    age: typeof i.age === "number" ? String(i.age) : s(i.age),
     autoFilled:
       i.autoFilled && typeof i.autoFilled === "object"
         ? (i.autoFilled as Record<string, boolean>)
@@ -254,13 +285,22 @@ function hoursLabel(h: number): string {
 
 function toOnboardingPayload(draft: Draft, completed: boolean) {
   const salary = Number(draft.minSalaryAmount);
+  const ageNum = Number(draft.age);
   return {
     fullName: draft.fullName.trim(),
+    nickname: draft.nickname.trim(),
     currentTitle: draft.currentTitle.trim(),
     phone: draft.phone.trim(),
     location: draft.location.trim(),
+    familyStatus: draft.familyStatus,
+    gender: draft.gender,
     careerStage: draft.careerStage,
     careerStageMeaning: draft.careerStageMeaning,
+    focus: draft.focus as "" | "improve" | "discovering",
+    interestedIndustries: draft.industries,
+    religion: draft.religion,
+    race: draft.race,
+    age: draft.age && Number.isFinite(ageNum) ? Math.round(ageNum) : null,
     fieldOfStudy: draft.fieldOfStudy.trim(),
     expectedGraduation: draft.expectedGraduation.trim(),
     desiredNextMove: draft.goal.trim(),
@@ -317,10 +357,11 @@ const SECTIONS = ["Personal details", "Work experience", "Preferences"];
 export default function CandidateOnboardingPage() {
   const router = useRouter();
   const { user, candidateOnboardingCompleted, status: authStatus, refresh } = useAuth();
-  const [section, setSection] = useState(0);
-  // Preferences is a one-question-at-a-time questionnaire; prefStep === the
-  // question index, or PREF_QUESTIONS.length for the final review screen.
-  const [prefStep, setPrefStep] = useState(0);
+  // Conversational wizard (mentor wireframe): ONE question at a time across
+  // all three sections; `step === questions.length` is the final review.
+  const [step, setStep] = useState(0);
+  const [cvOpen, setCvOpen] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -475,21 +516,13 @@ export default function CandidateOnboardingPage() {
       : "We read your CV but couldn't confidently extract fields — add details manually below.";
   }, []);
 
-  /** Jump to a section + focus a field (cross-section, spec Step 5). For a
-   *  preferences field, also open its question in the questionnaire. */
-  const jumpTo = useCallback((field: string) => {
-    const target = REQUIRED.find((r) => r.field === field);
-    if (target) setSection(target.section);
-    const prefIdx = PREF_QUESTIONS.findIndex((q) => q.id === field);
-    if (prefIdx >= 0) setPrefStep(prefIdx);
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        const el = document.getElementById(`f-${field}`);
-        el?.scrollIntoView({ behavior: "smooth", block: "center" });
-        (el as HTMLElement | null)?.focus?.();
-      }),
-    );
-  }, []);
+  /** Jump straight to the question that owns a field (used by the missing-
+   *  fields banner and per-row Edit on the review). */
+  const jumpToField = useCallback((field: string) => {
+    const list = WIZARD_QUESTIONS.filter((q) => !q.showIf || q.showIf(draft));
+    const idx = list.findIndex((q) => q.id === field);
+    if (idx >= 0) setStep(idx);
+  }, [draft]);
 
   async function persistPartial() {
     try {
@@ -507,8 +540,7 @@ export default function CandidateOnboardingPage() {
     const errs = validate(draft);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
-      bannerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      jumpTo(REQUIRED.find((r) => errs[r.field])!.field);
+      jumpToField(REQUIRED.find((r) => errs[r.field])!.field);
       return;
     }
     setSubmitting(true);
@@ -586,83 +618,84 @@ export default function CandidateOnboardingPage() {
         /* ignore */
       }
       await refresh();
-      router.replace(editMode ? "/candidate/settings" : "/candidate/dashboard");
+      setSubmitting(false);
+      setCelebrate(true); // redirect happens when they dismiss the celebration
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to save onboarding.");
       setSubmitting(false);
     }
   }
 
-  const missing = useMemo(() => REQUIRED.filter((r) => errors[r.field]), [errors]);
+  // Active question list (student-only questions filter out for others).
+  const questions = useMemo(
+    () => WIZARD_QUESTIONS.filter((q) => !q.showIf || q.showIf(draft)),
+    [draft],
+  );
+  const nQ = questions.length;
+  const clampedStep = Math.min(step, nQ);
+  const atReview = clampedStep >= nQ;
+  const current = atReview ? null : questions[clampedStep];
+  const blocked = !!current?.required && !current.answered(draft);
+  const activeSection = current?.section ?? 2;
+  const answeredCount = questions.filter((q) => q.answered(draft)).length;
 
-  // Preferences questionnaire position.
-  const nPref = PREF_QUESTIONS.length;
-  const atReview = section === 2 && prefStep >= nPref;
-  const currentPref = section === 2 && !atReview ? PREF_QUESTIONS[prefStep] : null;
-  const prefBlocked = !!currentPref?.required && !currentPref.answered(draft);
-  const advancePref = () => setPrefStep((s) => Math.min(nPref, s + 1));
-
+  const advance = () => setStep(() => Math.min(nQ, clampedStep + 1));
   const goNext = async () => {
-    await persistPartial();
-    setSection((s) => Math.min(2, s + 1));
-    setPrefStep(0); // entering Preferences starts at question 1
+    // Persist when we cross into a new section (cheap partial save).
+    const next = questions[clampedStep + 1];
+    if (!next || next.section !== activeSection) await persistPartial();
+    advance();
     window.scrollTo({ top: 0 });
   };
-
-  const handleBack = () => {
-    if (section === 2 && prefStep > 0) setPrefStep((s) => s - 1);
-    else setSection((s) => Math.max(0, s - 1));
+  const goBack = () => setStep(() => Math.max(0, clampedStep - 1));
+  const jumpToSection = (s: number) => {
+    const idx = questions.findIndex((q) => q.section === s);
+    if (idx >= 0) setStep(idx);
   };
 
   return (
     <StepShell
-      stepNumber={section + 1}
-      totalSteps={3}
+      stepNumber={clampedStep + 1}
+      totalSteps={nQ + 1}
       eyebrow="Candidate setup"
-      title={SECTIONS[section]}
+      title={atReview ? "Review your details" : SECTIONS[activeSection]}
       subtitle={
-        section === 0
-          ? "The basics — most of this can come straight from your CV."
-          : section === 1
-            ? "Everything counts: part-time, freelance, internships, volunteering, side hustles, family business, competitions, personal projects."
-            : "Tap what fits. Every answer is optional except one desired role."
+        atReview
+          ? "Check everything at a glance. Tap Edit on any line to fix it, then Finish."
+          : "One question at a time — your answers autosave as you go."
       }
       footer={
         <div className="flex items-center justify-between gap-3">
           <Button
             type="button"
             variant="ghost"
-            onClick={handleBack}
-            disabled={(section === 0 && prefStep === 0) || submitting}
+            onClick={goBack}
+            disabled={clampedStep === 0 || submitting}
           >
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <p className="text-muted-foreground hidden text-[11px] sm:block">
-            You can change all of this later in Settings.
-          </p>
           <div className="flex items-center gap-2">
-            {section < 2 && (
-              <>
-                <Button type="button" variant="ghost" onClick={goNext} disabled={submitting || parsing}>
-                  Skip for now
-                </Button>
-                <Button type="button" onClick={goNext} disabled={submitting || parsing}>
-                  Continue
-                  <ArrowRight className="size-4" />
-                </Button>
-              </>
-            )}
-            {section === 2 && !atReview && (
-              <Button type="button" onClick={advancePref} disabled={prefBlocked || submitting}>
-                {prefStep === nPref - 1 ? "Review answers" : "Next"}
-                <ArrowRight className="size-4" />
+            {!atReview && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setCvOpen(true)}
+                disabled={submitting || parsing}
+              >
+                <Sparkles className="size-4" />
+                Quick upload CV
               </Button>
             )}
-            {section === 2 && atReview && (
+            {!atReview ? (
+              <Button type="button" onClick={goNext} disabled={blocked || submitting || parsing}>
+                {clampedStep === nQ - 1 ? "Review" : "Next"}
+                <ArrowRight className="size-4" />
+              </Button>
+            ) : (
               <Button type="button" onClick={handleFinish} disabled={submitting || parsing}>
                 <Sparkles className="size-4" />
-                {submitting ? "Saving…" : "Finish & open dashboard"}
+                {submitting ? "Saving…" : "Finish"}
               </Button>
             )}
           </div>
@@ -670,26 +703,26 @@ export default function CandidateOnboardingPage() {
       }
     >
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
-        {/* Section dots (reference layout) — clickable, cross-section. */}
+        {/* Phase rail (wireframe): Personal details · Work experience · Preferences */}
         <nav aria-label="Onboarding sections" className="flex items-center justify-between gap-2">
           {SECTIONS.map((label, i) => (
             <button
               key={label}
               type="button"
-              onClick={() => setSection(i)}
-              aria-current={section === i ? "step" : undefined}
+              onClick={() => jumpToSection(i)}
+              aria-current={activeSection === i && !atReview ? "step" : undefined}
               className="group flex flex-1 flex-col items-center gap-1.5"
             >
               <span
                 className={cn(
                   "size-3 rounded-full transition-colors",
-                  i <= section ? "bg-clover" : "bg-border group-hover:bg-luminous/50",
+                  i <= activeSection || atReview ? "bg-clover" : "bg-border group-hover:bg-luminous/50",
                 )}
               />
               <span
                 className={cn(
                   "text-[10px] font-mono font-semibold uppercase tracking-wider",
-                  section === i ? "text-foreground" : "text-muted-foreground",
+                  activeSection === i && !atReview ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 {label}
@@ -698,73 +731,88 @@ export default function CandidateOnboardingPage() {
           ))}
         </nav>
 
-        {/* Missing-fields banner (spec Step 5) */}
-        {missing.length > 0 && (
-          <div
-            ref={bannerRef}
-            role="alert"
-            className="border-destructive/40 bg-destructive/10 rounded-xl border px-4 py-3"
-          >
-            <p className="flex items-center gap-1.5 text-sm font-medium">
-              <TriangleAlert className="text-destructive size-4 shrink-0" />
-              A few things still need you
-            </p>
-            <ul className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
-              {missing.map((m) => (
-                <li key={m.field}>
-                  <button
-                    type="button"
-                    onClick={() => jumpTo(m.field)}
-                    className="text-destructive text-xs underline underline-offset-2"
-                  >
-                    {m.label} → Section {m.section + 1}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
         {submitError && (
-          <p role="alert" className="text-destructive text-sm">
+          <p role="alert" ref={bannerRef} className="text-destructive text-sm">
             {submitError}
           </p>
         )}
 
         <section className="glass-4 ring-luminous/20 flex flex-col gap-5 rounded-2xl p-6 ring-1 sm:p-8">
-          {section === 0 && (
-            <PersonalSection
-              draft={draft}
-              update={update}
-              errors={errors}
-              applyParsed={applyParsed}
-              setParsing={setParsing}
-            />
-          )}
-          {section === 1 && (
-            <ExperienceSection
-              draft={draft}
-              update={update}
-              applyParsed={applyParsed}
-              setParsing={setParsing}
-            />
-          )}
-          {section === 2 && (
-            <PreferencesSection
-              draft={draft}
-              update={update}
-              prefStep={prefStep}
-              atReview={atReview}
-              advancePref={advancePref}
-              onEditQuestion={setPrefStep}
-            />
-          )}
+          {atReview ? (
+            <WizardReview draft={draft} update={update} onEditField={jumpToField} />
+          ) : current ? (
+            <div className="flex flex-col gap-4">
+              {/* Progress — "Q i / N" + a bar (wireframe counter). */}
+              <div>
+                <div className="text-muted-foreground flex items-center justify-between font-mono text-[11px] font-medium uppercase tracking-wider">
+                  <span>
+                    {clampedStep + 1} / {nQ}
+                  </span>
+                  <span>{answeredCount} answered</span>
+                </div>
+                <div className="bg-foreground/8 mt-1.5 h-1 w-full overflow-hidden rounded-full">
+                  <div
+                    className="bg-clover h-full rounded-full transition-all"
+                    style={{ width: `${((clampedStep + 1) / nQ) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              <div key={current.id} className="animate-appear flex flex-col gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold tracking-tight">{current.title}</h2>
+                  {current.subtitle && (
+                    <p className="text-muted-foreground mt-0.5 text-sm">{current.subtitle}</p>
+                  )}
+                </div>
+                {current.render(draft, update, advance)}
+                {errors[current.id] && (
+                  <p className="text-destructive text-xs">{errors[current.id]}</p>
+                )}
+              </div>
+
+              <p className="text-muted-foreground text-[11px]">
+                {current.required
+                  ? "This one's needed so we can match you."
+                  : "Optional — press Next to skip."}
+              </p>
+            </div>
+          ) : null}
         </section>
 
         <p className="text-muted-foreground text-center text-[11px]">
-          Autosaved as you type — refresh anytime, nothing is lost. We never ask
-          about family status, age, gender, race, or religion.
+          Autosaved as you go — refresh anytime, nothing is lost. Personal
+          details are optional, kept private, and never used to match you.
         </p>
       </div>
+
+      {/* Quick upload CV — opens the parser in a modal (wireframe footer button) */}
+      <Modal
+        isOpen={cvOpen}
+        onClose={() => setCvOpen(false)}
+        title="Quick upload your CV"
+        description="We'll fill in what we can — you review the rest one question at a time."
+        size="md"
+      >
+        <UploadZone
+          onParsed={(cv, fileName) => {
+            const msg = applyParsed(cv, fileName);
+            setCvOpen(false);
+            return msg;
+          }}
+          onBusyChange={setParsing}
+          summary={draft.cvSummary || null}
+        />
+      </Modal>
+
+      <FeedbackModal
+        isOpen={celebrate}
+        onClose={() => router.replace(editMode ? "/candidate/settings" : "/candidate/dashboard")}
+        variant="celebrate"
+        title="You're all set! 🎉"
+        description="Your profile is ready — let's open your dashboard."
+        okLabel="Done"
+      />
     </StepShell>
   );
 }
@@ -779,250 +827,6 @@ function stripDefaults(d: Draft): Partial<Draft> {
   return out as Partial<Draft>;
 }
 
-// ── Section 1 — Personal details ────────────────────────────────
-
-function PersonalSection({
-  draft,
-  update,
-  errors,
-  applyParsed,
-  setParsing,
-}: {
-  draft: Draft;
-  update: <K extends keyof Draft>(k: K, v: Draft[K]) => void;
-  errors: Record<string, string>;
-  applyParsed: (cv: ParsedCv, fileName: string) => string;
-  setParsing: (b: boolean) => void;
-}) {
-  const isStudent = draft.careerStage === "student";
-  return (
-    <>
-      <UploadZone onParsed={applyParsed} onBusyChange={setParsing} summary={draft.cvSummary || null} />
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField
-          id="f-fullName"
-          label="Full name"
-          value={draft.fullName}
-          onChange={(v) => update("fullName", v)}
-          placeholder="Your name"
-          autoFilled={draft.autoFilled.fullName}
-          error={errors.fullName}
-        />
-        <TextField
-          id="f-phone"
-          label="Phone"
-          type="tel"
-          optional
-          value={draft.phone}
-          onChange={(v) => update("phone", v)}
-          placeholder="+60 12 345 6789"
-          autoFilled={draft.autoFilled.phone}
-        />
-        <TextField
-          id="f-email"
-          label="Email"
-          type="email"
-          value={draft.email}
-          onChange={(v) => update("email", v)}
-          placeholder="you@example.com"
-          autoFilled={draft.autoFilled.email}
-          error={errors.email}
-        />
-        <TextField
-          id="f-currentTitle"
-          label="Current title"
-          optional
-          value={draft.currentTitle}
-          onChange={(v) => update("currentTitle", v)}
-          placeholder="e.g. Line cook · Junior developer"
-        />
-        <TextField
-          id="f-location"
-          label="Location"
-          value={draft.location}
-          onChange={(v) => update("location", v)}
-          placeholder="City, Country"
-          autoFilled={draft.autoFilled.location}
-          error={errors.location}
-        />
-      </div>
-
-      <FieldShell id="f-careerStage" label="Where are you right now?" error={errors.careerStage}>
-        <div id="f-careerStage" tabIndex={-1} className="outline-none">
-          <SelectCard
-            options={STAGES.map((s) => ({ id: s.id, label: s.label, hint: s.hint, icon: s.icon }))}
-            value={draft.careerStage}
-            onChange={(id) => {
-              update("careerStage", id);
-              update("careerStageMeaning", STAGES.find((s) => s.id === id)?.hint ?? "");
-            }}
-            error={!!errors.careerStage}
-          />
-        </div>
-      </FieldShell>
-
-      {isStudent && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
-            id="f-fieldOfStudy"
-            label="Field of study"
-            optional
-            value={draft.fieldOfStudy}
-            onChange={(v) => update("fieldOfStudy", v)}
-            placeholder="e.g. Computer Science · Culinary arts"
-          />
-          <TextField
-            id="f-expectedGraduation"
-            label="Expected finish"
-            optional
-            value={draft.expectedGraduation}
-            onChange={(v) => update("expectedGraduation", v)}
-            placeholder="e.g. 2027"
-          />
-        </div>
-      )}
-
-      <FieldShell id="f-goal" label="What's the goal?" optional>
-        <ChipGroup
-          options={GOAL_CHIPS}
-          values={draft.goal && GOAL_CHIPS.includes(draft.goal) ? [draft.goal] : []}
-          onChange={(v) => update("goal", v[0] ?? "")}
-          single
-        />
-        <input
-          id="f-goal"
-          type="text"
-          value={GOAL_CHIPS.includes(draft.goal) ? "" : draft.goal}
-          onChange={(e) => update("goal", e.target.value)}
-          placeholder="…or say it in your own words"
-          className="bg-foreground/2 border-border/15 focus-visible:border-luminous/60 focus-visible:ring-luminous/40 mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2"
-        />
-      </FieldShell>
-    </>
-  );
-}
-
-// ── Section 2 — Work experience ─────────────────────────────────
-
-function ExperienceSection({
-  draft,
-  update,
-  applyParsed,
-  setParsing,
-}: {
-  draft: Draft;
-  update: <K extends keyof Draft>(k: K, v: Draft[K]) => void;
-  applyParsed: (cv: ParsedCv, fileName: string) => string;
-  setParsing: (b: boolean) => void;
-}) {
-  const [adding, setAdding] = useState(false);
-  return (
-    <>
-      <UploadZone onParsed={applyParsed} onBusyChange={setParsing} summary={draft.cvSummary || null} />
-
-      {/* Experiences */}
-      <div id="experience-list" className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">
-          Experience ({draft.experiences.length})
-        </h2>
-        {draft.experiences.map((e) => (
-          <div key={e.id} className="border-border/15 bg-foreground/2 rounded-xl border p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-sm font-medium">
-                  {e.title}
-                  {e.company && <span className="text-muted-foreground"> · {e.company}</span>}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {periodString(e)}
-                </p>
-              </div>
-              <button
-                type="button"
-                aria-label={`Remove ${e.title}`}
-                onClick={() => update("experiences", draft.experiences.filter((x) => x.id !== e.id))}
-                className="text-muted-foreground hover:text-destructive shrink-0"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            {e.description && (
-              <p className="text-muted-foreground mt-1.5 line-clamp-2 whitespace-pre-line text-xs">{e.description}</p>
-            )}
-          </div>
-        ))}
-        {adding ? (
-          <ExperienceForm
-            onCancel={() => setAdding(false)}
-            onSave={(exp) => {
-              update("experiences", [...draft.experiences, exp]);
-              setAdding(false);
-            }}
-          />
-        ) : (
-          <Button type="button" variant="outline" size="sm" onClick={() => setAdding(true)}>
-            <Plus className="size-3.5" />
-            {draft.experiences.length ? "Add another" : "No CV? Add manually"}
-          </Button>
-        )}
-      </div>
-
-      {/* Education */}
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">Education ({draft.education.length})</h2>
-        {draft.education.map((ed) => (
-          <div key={ed.id} className="border-border/15 bg-foreground/2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2">
-            <p className="min-w-0 truncate text-sm">
-              {ed.degree || "Studied"}
-              <span className="text-muted-foreground"> · {ed.school}{ed.endYear ? ` · ${ed.endYear}` : ""}</span>
-            </p>
-            <button
-              type="button"
-              aria-label={`Remove ${ed.school}`}
-              onClick={() => update("education", draft.education.filter((x) => x.id !== ed.id))}
-              className="text-muted-foreground hover:text-destructive shrink-0"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        ))}
-        <EducationForm
-          onSave={(ed) => update("education", [...draft.education, ed])}
-        />
-      </div>
-
-      {/* Skills + extras */}
-      <FieldShell id="f-skills" label="Skills" autoFilled={draft.autoFilled.skills}>
-        <TagInput
-          id="f-skills"
-          values={draft.skills}
-          onChange={(v) => update("skills", v)}
-          placeholder="Any skill counts — welding, React, beatboxing…"
-          autoFilled={draft.autoFilled.skills}
-        />
-      </FieldShell>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FieldShell id="f-certifications" label="Certifications" optional>
-          <TagInput
-            id="f-certifications"
-            values={draft.certifications}
-            onChange={(v) => update("certifications", v)}
-            placeholder="e.g. Food Handler License"
-          />
-        </FieldShell>
-        <FieldShell id="f-languages" label="Languages" optional>
-          <TagInput
-            id="f-languages"
-            values={draft.languages}
-            onChange={(v) => update("languages", v)}
-            placeholder="e.g. English, Malay"
-          />
-        </FieldShell>
-      </div>
-    </>
-  );
-}
 
 function ExperienceForm({
   onSave,
@@ -1131,15 +935,21 @@ function EducationForm({ onSave }: { onSave: (e: DraftEducation) => void }) {
 
 type UpdateFn = <K extends keyof Draft>(k: K, v: Draft[K]) => void;
 
-interface PrefQuestion {
+interface WizardQuestion {
   id: string;
+  /** 0 Personal · 1 Work · 2 Preferences — drives the phase rail. */
+  section: 0 | 1 | 2;
   title: string;
   subtitle?: string;
   required?: boolean;
+  /** Only show when this predicate holds (e.g. student-only questions). */
+  showIf?: (d: Draft) => boolean;
   /** Has this question been answered? (drives the "N answered" count.) */
   answered: (d: Draft) => boolean;
   render: (d: Draft, update: UpdateFn, advance: () => void) => ReactNode;
 }
+/** The preferences questions are authored without a section, then tagged 2. */
+type PrefQuestion = Omit<WizardQuestion, "section">;
 
 // ponytail: `advance` auto-progresses after a single-select — same 250ms
 // beat as the personality quiz so the highlight registers before the slide.
@@ -1356,77 +1166,263 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   },
 ];
 
-function PreferencesSection({
-  draft,
-  update,
-  prefStep,
-  atReview,
-  advancePref,
-  onEditQuestion,
-}: {
-  draft: Draft;
-  update: UpdateFn;
-  prefStep: number;
-  atReview: boolean;
-  advancePref: () => void;
-  onEditQuestion: (i: number) => void;
-}) {
-  const n = PREF_QUESTIONS.length;
+// ── Personal details questions (section 0) ─────────────────────
+const PERSONAL_QUESTIONS: WizardQuestion[] = [
+  {
+    id: "fullName", section: 0, title: "What's your full name?",
+    subtitle: "Employers see this on your profile.", required: true,
+    answered: (d) => d.fullName.trim().length > 0,
+    render: (d, u) => (
+      <TextField id="f-fullName" label="Full name" value={d.fullName} onChange={(v) => u("fullName", v)} placeholder="Your name" autoFilled={d.autoFilled.fullName} />
+    ),
+  },
+  {
+    id: "nickname", section: 0, title: "What should we call you?",
+    subtitle: "Your dashboard greeting — optional.",
+    answered: (d) => d.nickname.trim().length > 0,
+    render: (d, u) => (
+      <TextField id="f-nickname" label="Nickname" optional value={d.nickname} onChange={(v) => u("nickname", v)} placeholder="e.g. Alex" />
+    ),
+  },
+  {
+    id: "email", section: 0, title: "What's your email?",
+    subtitle: "So employers can reach you.", required: true,
+    answered: (d) => /\S+@\S+\.\S+/.test(d.email),
+    render: (d, u) => (
+      <TextField id="f-email" label="Email" type="email" value={d.email} onChange={(v) => u("email", v)} placeholder="you@example.com" autoFilled={d.autoFilled.email} />
+    ),
+  },
+  {
+    id: "phone", section: 0, title: "A phone number?", subtitle: "Optional.",
+    answered: (d) => d.phone.trim().length > 0,
+    render: (d, u) => (
+      <TextField id="f-phone" label="Phone" type="tel" optional value={d.phone} onChange={(v) => u("phone", v)} placeholder="+60 12 345 6789" autoFilled={d.autoFilled.phone} />
+    ),
+  },
+  {
+    id: "location", section: 0, title: "Where are you based?",
+    subtitle: "For nearby and remote matches.", required: true,
+    answered: (d) => d.location.trim().length > 0,
+    render: (d, u) => (
+      <TextField id="f-location" label="Location" value={d.location} onChange={(v) => u("location", v)} placeholder="City, Country" autoFilled={d.autoFilled.location} />
+    ),
+  },
+  {
+    id: "currentTitle", section: 0, title: "Your current title?", subtitle: "Optional.",
+    answered: (d) => d.currentTitle.trim().length > 0,
+    render: (d, u) => (
+      <TextField id="f-currentTitle" label="Current title" optional value={d.currentTitle} onChange={(v) => u("currentTitle", v)} placeholder="e.g. Line cook · Junior developer" />
+    ),
+  },
+  {
+    id: "careerStage", section: 0, title: "Where are you right now?",
+    subtitle: "It shapes everything we suggest.", required: true,
+    answered: (d) => d.careerStage.length > 0,
+    render: (d, u, adv) => (
+      <SelectCard
+        options={STAGES.map((s) => ({ id: s.id, label: s.label, hint: s.hint, icon: s.icon }))}
+        value={d.careerStage}
+        onChange={(id) => {
+          u("careerStage", id);
+          u("careerStageMeaning", STAGES.find((s) => s.id === id)?.hint ?? "");
+          if (id) auto(adv);
+        }}
+      />
+    ),
+  },
+  {
+    id: "fieldOfStudy", section: 0, title: "What are you studying?", subtitle: "Optional.",
+    showIf: (d) => d.careerStage === "student",
+    answered: (d) => d.fieldOfStudy.trim().length > 0,
+    render: (d, u) => (
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField id="f-fieldOfStudy" label="Field of study" optional value={d.fieldOfStudy} onChange={(v) => u("fieldOfStudy", v)} placeholder="e.g. Computer Science" />
+        <TextField id="f-expectedGraduation" label="Expected finish" optional value={d.expectedGraduation} onChange={(v) => u("expectedGraduation", v)} placeholder="e.g. 2027" />
+      </div>
+    ),
+  },
+  {
+    id: "focus", section: 0, title: "What's your current focus?", subtitle: "Optional.",
+    answered: (d) => !!d.focus,
+    render: (d, u, adv) => (
+      <SelectCard options={FOCUS} value={d.focus} onChange={(id) => { u("focus", id); if (id) auto(adv); }} />
+    ),
+  },
+  {
+    id: "industries", section: 0, title: "Which industries interest you?", subtitle: "Optional.",
+    answered: (d) => d.industries.length > 0,
+    render: (d, u) => (
+      <TagInput id="f-industries" values={d.industries} onChange={(v) => u("industries", v)} placeholder="e.g. Technology · Healthcare · Finance" />
+    ),
+  },
+  {
+    id: "familyStatus", section: 0, title: "Family status?",
+    subtitle: "Optional & private — never used to match you.",
+    answered: (d) => !!d.familyStatus,
+    render: (d, u, adv) => (
+      <ChipGroup options={FAMILY_STATUS} single allowOther values={d.familyStatus ? [d.familyStatus] : []} onChange={(v) => { u("familyStatus", v[0] ?? ""); if (v[0]) auto(adv); }} />
+    ),
+  },
+  {
+    id: "gender", section: 0, title: "Gender?",
+    subtitle: "Optional & private — never used to match you.",
+    answered: (d) => !!d.gender,
+    render: (d, u, adv) => (
+      <ChipGroup options={GENDER} single values={d.gender ? [d.gender] : []} onChange={(v) => { u("gender", v[0] ?? ""); if (v[0]) auto(adv); }} />
+    ),
+  },
+  {
+    id: "goal", section: 0, title: "What's the goal?", subtitle: "Optional.",
+    answered: (d) => d.goal.trim().length > 0,
+    render: (d, u) => (
+      <>
+        <ChipGroup options={GOAL_CHIPS} values={d.goal && GOAL_CHIPS.includes(d.goal) ? [d.goal] : []} onChange={(v) => u("goal", v[0] ?? "")} single />
+        <input
+          id="f-goal"
+          type="text"
+          value={GOAL_CHIPS.includes(d.goal) ? "" : d.goal}
+          onChange={(e) => u("goal", e.target.value)}
+          placeholder="…or say it in your own words"
+          className="bg-foreground/2 border-border/15 focus-visible:border-luminous/60 focus-visible:ring-luminous/40 mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2"
+        />
+      </>
+    ),
+  },
+];
 
-  if (atReview) return <PrefReview draft={draft} onEditQuestion={onEditQuestion} />;
+// ── Work experience questions (section 1) — repeaters are one question ──
+const WORK_QUESTIONS: WizardQuestion[] = [
+  {
+    id: "experiences", section: 1, title: "Any experience to add?",
+    subtitle: "Part-time, freelance, internships, volunteering, side hustles, projects — everything counts.",
+    answered: (d) => d.experiences.length > 0,
+    render: (d, u) => <ExperienceRepeater draft={d} update={u} />,
+  },
+  {
+    id: "education", section: 1, title: "Your education?", subtitle: "Optional.",
+    answered: (d) => d.education.length > 0,
+    render: (d, u) => <EducationRepeater draft={d} update={u} />,
+  },
+  {
+    id: "skills", section: 1, title: "What skills do you have?",
+    subtitle: "Any skill counts — welding, React, beatboxing.",
+    answered: (d) => d.skills.length > 0,
+    render: (d, u) => (
+      <TagInput id="f-skills" values={d.skills} onChange={(v) => u("skills", v)} placeholder="Add a skill and press Enter" autoFilled={d.autoFilled.skills} />
+    ),
+  },
+  {
+    id: "certifications", section: 1, title: "Any certifications?", subtitle: "Optional.",
+    answered: (d) => d.certifications.length > 0,
+    render: (d, u) => (
+      <TagInput id="f-certifications" values={d.certifications} onChange={(v) => u("certifications", v)} placeholder="e.g. Food Handler License" />
+    ),
+  },
+  {
+    id: "languages", section: 1, title: "Languages you speak?", subtitle: "Optional.",
+    answered: (d) => d.languages.length > 0,
+    render: (d, u) => (
+      <TagInput id="f-languages" values={d.languages} onChange={(v) => u("languages", v)} placeholder="e.g. English, Malay" />
+    ),
+  },
+];
 
-  const q = PREF_QUESTIONS[prefStep];
-  const answeredCount = PREF_QUESTIONS.filter((x) => x.answered(draft)).length;
+/** The whole onboarding as one ordered question list (mentor wireframe). */
+const WIZARD_QUESTIONS: WizardQuestion[] = [
+  ...PERSONAL_QUESTIONS,
+  ...WORK_QUESTIONS,
+  ...PREF_QUESTIONS.map((q): WizardQuestion => ({ ...q, section: 2 })),
+];
 
+/** Repeater question bodies — reuse the existing add-forms. */
+function ExperienceRepeater({ draft, update }: { draft: Draft; update: UpdateFn }) {
+  const [adding, setAdding] = useState(false);
   return (
-    <div className="flex flex-col gap-4">
-      {/* Progress — how many questions, how far through. */}
-      <div>
-        <div className="text-muted-foreground flex items-center justify-between text-[11px] font-mono font-medium uppercase tracking-wider">
-          <span>Question {prefStep + 1} of {n}</span>
-          <span>{answeredCount}/{n} answered</span>
+    <div className="flex flex-col gap-3">
+      {draft.experiences.map((e) => (
+        <div key={e.id} className="border-border/15 bg-foreground/2 rounded-xl border p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">
+                {e.title}
+                {e.company && <span className="text-muted-foreground"> · {e.company}</span>}
+              </p>
+              <p className="text-muted-foreground text-xs">{periodString(e)}</p>
+            </div>
+            <button
+              type="button"
+              aria-label={`Remove ${e.title}`}
+              onClick={() => update("experiences", draft.experiences.filter((x) => x.id !== e.id))}
+              className="text-muted-foreground hover:text-destructive shrink-0"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+          {e.description && (
+            <p className="text-muted-foreground mt-1.5 line-clamp-2 whitespace-pre-line text-xs">{e.description}</p>
+          )}
         </div>
-        <div className="bg-foreground/8 mt-1.5 h-1 w-full overflow-hidden rounded-full">
-          <div
-            className="bg-clover h-full rounded-full transition-all"
-            style={{ width: `${((prefStep + 1) / n) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Current question */}
-      <div key={q.id} className="animate-appear flex flex-col gap-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">{q.title}</h2>
-          {q.subtitle && <p className="text-muted-foreground mt-0.5 text-sm">{q.subtitle}</p>}
-        </div>
-        {q.render(draft, update, advancePref)}
-      </div>
-
-      <p className="text-muted-foreground text-[11px]">
-        {q.required
-          ? "This one's needed so we can match you."
-          : "Optional — press Next to skip."}
-      </p>
+      ))}
+      {adding ? (
+        <ExperienceForm
+          onCancel={() => setAdding(false)}
+          onSave={(exp) => {
+            update("experiences", [...draft.experiences, exp]);
+            setAdding(false);
+          }}
+        />
+      ) : (
+        <Button type="button" variant="outline" size="sm" onClick={() => setAdding(true)}>
+          <Plus className="size-3.5" />
+          {draft.experiences.length ? "Add another" : "Add experience"}
+        </Button>
+      )}
     </div>
   );
 }
 
-/** The "everything you filled in" review before Finish. Preference rows jump
- *  back to their question; Personal/Work are edited via the section dots. */
-function PrefReview({
+function EducationRepeater({ draft, update }: { draft: Draft; update: UpdateFn }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {draft.education.map((ed) => (
+        <div key={ed.id} className="border-border/15 bg-foreground/2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2">
+          <p className="min-w-0 truncate text-sm">
+            {ed.degree || "Studied"}
+            <span className="text-muted-foreground"> · {ed.school}{ed.endYear ? ` · ${ed.endYear}` : ""}</span>
+          </p>
+          <button
+            type="button"
+            aria-label={`Remove ${ed.school}`}
+            onClick={() => update("education", draft.education.filter((x) => x.id !== ed.id))}
+            className="text-muted-foreground hover:text-destructive shrink-0"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      ))}
+      <EducationForm onSave={(ed) => update("education", [...draft.education, ed])} />
+    </div>
+  );
+}
+
+/** Final review (mentor wireframe): every answer in a neat table with an
+ *  Edit next to each line that jumps back to that exact question. */
+function WizardReview({
   draft,
-  onEditQuestion,
+  update,
+  onEditField,
 }: {
   draft: Draft;
-  onEditQuestion: (i: number) => void;
+  update: UpdateFn;
+  onEditField: (id: string) => void;
 }) {
   const d = draft;
   const stageLabel = STAGES.find((s) => s.id === d.careerStage)?.label ?? "—";
+  const focusLabel = FOCUS.find((f) => f.id === d.focus)?.label;
   const envLabel = ENVIRONMENTS.find((e) => e.id === d.workEnvironment)?.label;
   const salary =
     d.minSalaryAmount && `${d.minSalaryAmount} / ${d.minSalaryPeriod || "yearly"}`;
-  const qi = (id: string) => PREF_QUESTIONS.findIndex((x) => x.id === id);
+  const edit = (id: string) => () => onEditField(id);
 
   return (
     <div className="flex flex-col gap-5">
@@ -1435,51 +1431,121 @@ function PrefReview({
         <div>
           <h2 className="text-lg font-semibold tracking-tight">That&apos;s everything — here&apos;s your profile</h2>
           <p className="text-muted-foreground text-sm">
-            Review below, then finish. Tap any preference to change it.
+            Check it over. Tap Edit on any line to fix it, then Finish.
           </p>
         </div>
       </div>
 
       <ReviewGroup title="Personal details">
-        <ReviewRow label="Name" value={d.fullName} />
-        <ReviewRow label="Email" value={d.email} />
-        <ReviewRow label="Phone" value={d.phone} />
-        <ReviewRow label="Location" value={d.location} />
-        <ReviewRow label="Current title" value={d.currentTitle} />
-        <ReviewRow label="Stage" value={stageLabel} />
-        {d.careerStage === "student" && <ReviewRow label="Field of study" value={d.fieldOfStudy} />}
-        <ReviewRow label="Goal" value={d.goal} />
+        <ReviewRow label="Name" value={d.fullName} onEdit={edit("fullName")} />
+        <ReviewRow label="Nickname" value={d.nickname} onEdit={edit("nickname")} />
+        <ReviewRow label="Email" value={d.email} onEdit={edit("email")} />
+        <ReviewRow label="Phone" value={d.phone} onEdit={edit("phone")} />
+        <ReviewRow label="Location" value={d.location} onEdit={edit("location")} />
+        <ReviewRow label="Current title" value={d.currentTitle} onEdit={edit("currentTitle")} />
+        <ReviewRow label="Family status" value={d.familyStatus} onEdit={edit("familyStatus")} />
+        <ReviewRow label="Gender" value={d.gender} onEdit={edit("gender")} />
+        <ReviewRow label="Stage" value={stageLabel} onEdit={edit("careerStage")} />
+        <ReviewRow label="Focus" value={focusLabel ?? ""} onEdit={edit("focus")} />
+        <ReviewRow label="Industries" value={d.industries.join(", ")} onEdit={edit("industries")} />
+        {d.careerStage === "student" && <ReviewRow label="Field of study" value={d.fieldOfStudy} onEdit={edit("fieldOfStudy")} />}
+        <ReviewRow label="Goal" value={d.goal} onEdit={edit("goal")} />
       </ReviewGroup>
 
       <ReviewGroup title="Work & skills">
-        <ReviewRow label="Experience" value={d.experiences.length ? `${d.experiences.length} entr${d.experiences.length === 1 ? "y" : "ies"}` : ""} />
-        <ReviewRow label="Education" value={d.education.length ? `${d.education.length} entr${d.education.length === 1 ? "y" : "ies"}` : ""} />
-        <ReviewRow label="Skills" value={d.skills.join(", ")} />
-        <ReviewRow label="Certifications" value={d.certifications.join(", ")} />
-        <ReviewRow label="Languages" value={d.languages.join(", ")} />
+        <ReviewRow label="Experience" value={d.experiences.length ? `${d.experiences.length} entr${d.experiences.length === 1 ? "y" : "ies"}` : ""} onEdit={edit("experiences")} />
+        <ReviewRow label="Education" value={d.education.length ? `${d.education.length} entr${d.education.length === 1 ? "y" : "ies"}` : ""} onEdit={edit("education")} />
+        <ReviewRow label="Skills" value={d.skills.join(", ")} onEdit={edit("skills")} />
+        <ReviewRow label="Certifications" value={d.certifications.join(", ")} onEdit={edit("certifications")} />
+        <ReviewRow label="Languages" value={d.languages.join(", ")} onEdit={edit("languages")} />
       </ReviewGroup>
 
       <ReviewGroup title="Preferences">
-        <ReviewRow label="Desired roles" value={d.targetRoles.join(", ")} onEdit={() => onEditQuestion(qi("targetRoles"))} />
-        <ReviewRow label="Desired locations" value={d.desiredLocations.join(", ")} onEdit={() => onEditQuestion(qi("desiredLocations"))} />
-        <ReviewRow label="Open to relocate" value={d.openToRelocate ? "Yes" : "No"} onEdit={() => onEditQuestion(qi("openToRelocate"))} />
-        <ReviewRow label="Work arrangement" value={d.workArrangement.join(", ")} onEdit={() => onEditQuestion(qi("workArrangement"))} />
-        <ReviewRow label="Job type" value={d.jobTypes.join(", ")} onEdit={() => onEditQuestion(qi("jobTypes"))} />
-        <ReviewRow label="Min salary" value={salary || ""} onEdit={() => onEditQuestion(qi("minSalary"))} />
-        <ReviewRow label="Availability" value={d.availability} onEdit={() => onEditQuestion(qi("availability"))} />
-        <ReviewRow label="Profile visibility" value={d.visibility === "all_recruiters" ? "All recruiters" : "Hidden until opt-in"} onEdit={() => onEditQuestion(qi("visibility"))} />
-        <ReviewRow label="Best environment" value={envLabel ?? ""} onEdit={() => onEditQuestion(qi("workEnvironment"))} />
-        <ReviewRow label="Top values" value={d.topValues.join(" · ")} onEdit={() => onEditQuestion(qi("topValues"))} />
-        <ReviewRow label="Learning / week" value={`${d.learningHoursPerWeek} hrs`} onEdit={() => onEditQuestion(qi("learningHoursPerWeek"))} />
-        <ReviewRow label="Schedule flexibility" value={d.scheduleFlexibility.join(", ")} onEdit={() => onEditQuestion(qi("scheduleFlexibility"))} />
-        <ReviewRow label="Max commute" value={`${d.maxCommuteMinutes} min`} onEdit={() => onEditQuestion(qi("maxCommuteMinutes"))} />
-        <ReviewRow label="Travel" value={d.travelWillingness} onEdit={() => onEditQuestion(qi("travelWillingness"))} />
+        <ReviewRow label="Desired roles" value={d.targetRoles.join(", ")} onEdit={edit("targetRoles")} />
+        <ReviewRow label="Desired locations" value={d.desiredLocations.join(", ")} onEdit={edit("desiredLocations")} />
+        <ReviewRow label="Open to relocate" value={d.openToRelocate ? "Yes" : "No"} onEdit={edit("openToRelocate")} />
+        <ReviewRow label="Work arrangement" value={d.workArrangement.join(", ")} onEdit={edit("workArrangement")} />
+        <ReviewRow label="Job type" value={d.jobTypes.join(", ")} onEdit={edit("jobTypes")} />
+        <ReviewRow label="Min salary" value={salary || ""} onEdit={edit("minSalary")} />
+        <ReviewRow label="Availability" value={d.availability} onEdit={edit("availability")} />
+        <ReviewRow label="Profile visibility" value={d.visibility === "all_recruiters" ? "All recruiters" : "Hidden until opt-in"} onEdit={edit("visibility")} />
+        <ReviewRow label="Best environment" value={envLabel ?? ""} onEdit={edit("workEnvironment")} />
+        <ReviewRow label="Top values" value={d.topValues.join(" · ")} onEdit={edit("topValues")} />
+        <ReviewRow label="Learning / week" value={`${d.learningHoursPerWeek} hrs`} onEdit={edit("learningHoursPerWeek")} />
+        <ReviewRow label="Schedule flexibility" value={d.scheduleFlexibility.join(", ")} onEdit={edit("scheduleFlexibility")} />
+        <ReviewRow label="Max commute" value={`${d.maxCommuteMinutes} min`} onEdit={edit("maxCommuteMinutes")} />
+        <ReviewRow label="Travel" value={d.travelWillingness} onEdit={edit("travelWillingness")} />
       </ReviewGroup>
+
+      <SelfIdSection draft={d} update={update} />
 
       <p className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
         <Compass className="size-3.5 shrink-0" aria-hidden />
-        Edit Personal or Work via the section dots above. Press Finish when ready.
+        Everything autosaves. Press Finish when you&apos;re ready.
       </p>
+    </div>
+  );
+}
+
+/** Optional self-identification — shown ONLY on the review screen (spec:
+ *  "after the user is met with the review"). Private by construction: never
+ *  projected to employers, never an input to any match/score engine. */
+function SelfIdSection({ draft, update }: { draft: Draft; update: UpdateFn }) {
+  const [open, setOpen] = useState(
+    draft.religion.length > 0 || draft.race.length > 0 || !!draft.age,
+  );
+  return (
+    <div className="border-border/15 rounded-xl border p-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-2 text-left"
+        aria-expanded={open}
+      >
+        <span>
+          <span className="text-sm font-medium">A few optional questions</span>
+          <span className="text-muted-foreground block text-[11px]">
+            Helps us understand our community. Skip any — private, never shared with
+            employers, never used for matching.
+          </span>
+        </span>
+        <span className="text-luminous shrink-0 text-xs font-medium">
+          {open ? "Hide" : "Show"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="mt-4 flex flex-col gap-4">
+          <FieldShell id="f-religion" label="Religion" optional>
+            <ChipGroup
+              options={RELIGION}
+              allowOther
+              values={draft.religion}
+              onChange={(v) => update("religion", v)}
+            />
+          </FieldShell>
+          <FieldShell id="f-race" label="Race" optional>
+            <ChipGroup
+              options={RACE}
+              allowOther
+              values={draft.race}
+              onChange={(v) => update("race", v)}
+            />
+          </FieldShell>
+          <FieldShell id="f-age" label="Age" optional>
+            <input
+              id="f-age"
+              type="number"
+              min={0}
+              max={120}
+              value={draft.age}
+              onChange={(e) => update("age", e.target.value)}
+              placeholder="e.g. 28"
+              className="bg-foreground/2 border-border/15 w-32 rounded-lg border px-3 py-2 text-sm outline-none"
+            />
+          </FieldShell>
+        </div>
+      )}
     </div>
   );
 }

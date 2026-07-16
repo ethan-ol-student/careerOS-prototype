@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, Radar, Search } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
+import { usePortfolio } from "@/lib/hooks/usePortfolio";
 import { Chip } from "@/components/ui/Chip";
-import { SkillRadar } from "@/components/skills/SkillRadar";
+import { CategoryRadar } from "@/components/skills/CategoryRadar";
 import { MarketValuePanel } from "@/components/market/MarketValuePanel";
 import {
   SkillBookshelf,
@@ -37,6 +38,7 @@ const TIER_TONE: Record<TrustTier, "clover" | "warning" | "neutral"> = {
  * via the pure skillTruthEngine — same math CI checks.
  */
 export default function SkillsPage() {
+  const { syncSkills } = usePortfolio();
   const [claims, setClaims] = useState<BookshelfClaim[] | null>(null);
   const [jobs, setJobs] = useState<BookshelfJob[]>([]);
   const [jobId, setJobId] = useState("");
@@ -49,9 +51,14 @@ export default function SkillsPage() {
   const loadClaims = useCallback(async () => {
     const res = await fetch("/api/me/skills", { cache: "no-store" });
     const json = await res.json().catch(() => null);
-    if (json?.ok) setClaims(json.data.claims);
-    else setError(json?.error?.message ?? "Could not load your skills.");
-  }, []);
+    if (json?.ok) {
+      const next = json.data.claims as BookshelfClaim[];
+      setClaims(next);
+      // Keep the (long-lived, root-level) Living Portfolio context in sync so
+      // a skill added/removed on the radar reflects there without a reload.
+      syncSkills(next.map((c) => c.name));
+    } else setError(json?.error?.message ?? "Could not load your skills.");
+  }, [syncSkills]);
 
   useEffect(() => {
     // Deep link (?focus=skill from the dashboard) — read post-mount, same
@@ -215,13 +222,17 @@ export default function SkillsPage() {
                         </span>
                       )}
                     </p>
+                    <p className="text-muted-foreground/70 shrink-0 text-[11px]">
+                      The polygon adapts to your skills — flip categories with
+                      the arrows below.
+                    </p>
                     {/* The radar owns the rest of the card — centered and
                         viewport-capped so it can never render out of frame.
-                        (The "next step" note was removed on purpose: the
-                        chart alone is the visual cue, no text overload.) */}
+                        CategoryRadar pages All / Soft / Hard skill matrices
+                        (wireframe arrows); scoring stays whole-job. */}
                     <div className="flex min-h-0 flex-1 items-center justify-center px-2">
                       <div className="w-full max-w-[min(100%,52dvh)]">
-                        <SkillRadar axes={truth.axes} />
+                        <CategoryRadar claims={claims as SkillClaimInput[]} job={job} />
                       </div>
                     </div>
                   </>
@@ -397,6 +408,7 @@ export default function SkillsPage() {
                   <span className="font-mono font-semibold uppercase tracking-wider">
                     Total skills:{" "}
                     <span className="text-luminous text-base">{claims.length}</span>
+                    <span className="text-muted-foreground/70"> / 100</span>
                   </span>
                 </p>
               </div>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
+  Briefcase,
   CheckCircle2,
   Gem,
   Loader2,
@@ -14,11 +15,18 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
-import { PageHeader } from "@/components/app/PageHeader";
+import { Grid12, Col } from "@/components/app/Grid";
 import { Chip } from "@/components/ui/Chip";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { ProgressRing } from "@/components/ui/ProgressRing";
-import { JobStyleCompass } from "@/components/market/JobStyleCompass";
+import {
+  scoreSkillTruth,
+  type SkillClaimInput,
+  type SkillTruth,
+} from "@/lib/intelligence/skillTruthEngine";
+import { ARCHETYPES } from "@/lib/intelligence/scoringConfig";
+import type { TargetJob } from "@/lib/jobs/data";
+import { cn } from "@/lib/utils";
 
 interface Undervalued {
   skill: string;
@@ -58,6 +66,7 @@ interface MarketContext {
   currency: string;
 }
 interface StyleFit {
+  archetype: string; // archetype id (→ ARCHETYPES[...] for the animal)
   archetypeName: string;
   field: string;
   fitPct: number;
@@ -100,35 +109,44 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 export default function InsightsPage() {
   return (
     <AppShell>
-      <PageHeader
-        eyebrow="Career Intelligence"
-        title={
-          <>
-            What your data <span className="text-luminous">reveals</span>
-          </>
-        }
-      />
-      <section className="max-w-container mx-auto px-4 py-8 sm:py-10">
-        <InsightsContent />
-      </section>
+      <InsightsContent />
     </AppShell>
   );
 }
 
+interface JobRow extends TargetJob {
+  match: number;
+}
+
 function InsightsContent() {
   const [data, setData] = useState<Payload | null>(null);
+  const [jobs, setJobs] = useState<JobRow[]>([]);
+  const [claims, setClaims] = useState<SkillClaimInput[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState("");
+  const [tab, setTab] = useState<"analysis" | "actions">("analysis");
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const res = await fetch("/api/me/intelligence", { cache: "no-store" }).catch(
-        () => null,
-      );
-      const json = await res?.json().catch(() => null);
+      const [r1, r2, r3] = await Promise.all([
+        fetch("/api/me/intelligence", { cache: "no-store" }).catch(() => null),
+        fetch("/api/jobs", { cache: "no-store" }).catch(() => null),
+        fetch("/api/me/skills", { cache: "no-store" }).catch(() => null),
+      ]);
+      const [j1, j2, j3] = await Promise.all([
+        r1?.json().catch(() => null),
+        r2?.json().catch(() => null),
+        r3?.json().catch(() => null),
+      ]);
       if (cancelled) return;
-      if (json?.ok) {
-        setData(json.data as Payload);
+      if (j2?.ok) {
+        setJobs(j2.data.jobs as JobRow[]);
+        if (j2.data.jobs[0]) setSelectedJobId(j2.data.jobs[0].id);
+      }
+      if (j3?.ok) setClaims(j3.data.claims as SkillClaimInput[]);
+      if (j1?.ok) {
+        setData(j1.data as Payload);
         setStatus("ready");
       } else {
         setStatus("error");
@@ -139,18 +157,26 @@ function InsightsContent() {
     };
   }, []);
 
+  const selectedJob = jobs.find((j) => j.id === selectedJobId) ?? jobs[0] ?? null;
+  const truth = useMemo(
+    () => (selectedJob && claims.length ? scoreSkillTruth(claims, selectedJob) : null),
+    [claims, selectedJob],
+  );
+
   if (status === "loading") {
     return (
-      <div className="text-muted-foreground flex items-center gap-2">
+      <div className="max-w-container text-muted-foreground mx-auto flex items-center gap-2 px-4 py-8">
         <Loader2 className="size-4 animate-spin" /> Reading across your modules…
       </div>
     );
   }
   if (status === "error") {
     return (
-      <div className="glass-3 rounded-2xl p-8 text-center">
-        <TriangleAlert className="text-destructive mx-auto size-6" />
-        <p className="mt-3 text-sm font-medium">Couldn&apos;t load your intelligence.</p>
+      <div className="max-w-container mx-auto px-4 py-8">
+        <div className="glass-3 rounded-2xl p-8 text-center">
+          <TriangleAlert className="text-destructive mx-auto size-6" />
+          <p className="mt-3 text-sm font-medium">Couldn&apos;t load your intelligence.</p>
+        </div>
       </div>
     );
   }
@@ -161,127 +187,449 @@ function InsightsContent() {
   // No profile data at all → point to the modules that feed this.
   if (!summary || !uv) {
     return (
-      <div className="glass-3 ring-luminous/20 flex flex-col items-center gap-4 rounded-2xl p-10 text-center ring-1">
-        <div className="bg-luminous/15 text-luminous-soft flex size-14 items-center justify-center rounded-2xl">
-          <Sparkles className="size-6" />
-        </div>
-        <h2 className="text-lg font-semibold tracking-tight">
-          Add skills and portfolio entries to unlock insights.
-        </h2>
-        <p className="text-muted-foreground max-w-md text-sm">
-          Career Intelligence compares your Skill Radar against your Living
-          Portfolio, Working Style, and the market — the more each module holds,
-          the more it can reveal.
-        </p>
-        <div className="flex gap-2">
-          <LinkButton href="/candidate/skills" variant="outline" size="sm">
-            Skill Radar
-          </LinkButton>
-          <LinkButton href="/candidate/portfolio" variant="outline" size="sm">
-            Living Portfolio
-          </LinkButton>
+      <div className="max-w-container mx-auto px-4 py-8">
+        <div className="glass-3 ring-luminous/20 flex flex-col items-center gap-4 rounded-2xl p-10 text-center ring-1">
+          <div className="bg-luminous/15 text-luminous-soft flex size-14 items-center justify-center rounded-2xl">
+            <Sparkles className="size-6" />
+          </div>
+          <h2 className="text-lg font-semibold tracking-tight">
+            Add skills and portfolio entries to unlock insights.
+          </h2>
+          <p className="text-muted-foreground max-w-md text-sm">
+            Career Intelligence compares your Skill Radar against your Living
+            Portfolio, Working Style, and the market — the more each module holds,
+            the more it can reveal.
+          </p>
+          <div className="flex gap-2">
+            <LinkButton href="/candidate/skills" variant="outline" size="sm">
+              Skill Radar
+            </LinkButton>
+            <LinkButton href="/candidate/portfolio" variant="outline" size="sm">
+              Living Portfolio
+            </LinkButton>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Signal summary strip — cockpit language */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { cap: "Skills tracked", val: summary.skillsTracked },
-          { cap: "Backed by evidence", val: summary.evidenceBacked },
-          { cap: "Hidden strengths", val: summary.undervaluedCount },
-        ].map((s) => (
-          <div key={s.cap} className="glass-4 rounded-xl p-3 sm:p-4">
-            <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-wider">
-              {s.cap}
-            </p>
-            <p className="text-luminous mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-              {s.val}
-            </p>
-          </div>
-        ))}
+    <main className="max-w-container mx-auto flex h-full w-full flex-col gap-3 px-4 pb-3 pt-3 lg:min-h-0">
+      {/* Anchored header + Analysis|Actions toggle (never scroll) */}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-2 text-xl font-semibold sm:text-2xl">
+          <Sparkles className="text-luminous size-5" />
+          Career Intelligence
+        </h1>
+        <div
+          role="group"
+          aria-label="Intelligence view"
+          className="border-border/15 bg-foreground/2 flex rounded-full border p-0.5"
+        >
+          {(
+            [
+              { id: "analysis", label: "Analysis" },
+              { id: "actions", label: "Actions" },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              aria-pressed={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "min-h-8 rounded-full px-4 text-xs font-medium transition-colors",
+                tab === t.id
+                  ? "bg-luminous/15 text-luminous-soft"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Undervalued strengths — the first cross-feature insight */}
-      <section className="glass-3 rounded-2xl p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Eyebrow>
-            <Gem aria-hidden />
-            Undervalued strengths
-          </Eyebrow>
-          <Link
-            href="/candidate/skills"
-            aria-label="Open Skill Radar"
-            className="text-muted-foreground hover:text-luminous transition-colors"
-          >
-            <ArrowUpRight className="size-4" aria-hidden />
-          </Link>
+      {tab === "analysis" ? (
+        /* Analysis = the read-across bundle (one internal scroll region) */
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+          <Grid12 className="gap-4">
+            <Col span={12} lg={3}>
+              <RolesRail jobs={jobs} selectedId={selectedJob?.id ?? ""} onSelect={setSelectedJobId} />
+            </Col>
+            <Col span={12} lg={5}>
+              <WhereYouAreChart truth={truth} job={selectedJob} />
+            </Col>
+            <Col span={12} lg={4}>
+              <CareerProfilePanel data={data!} truth={truth} job={selectedJob} />
+            </Col>
+          </Grid12>
+          {data?.styleFit && <WorkAnimalCard fit={data.styleFit} />}
+          {data?.narrative && <NarrativeCard n={data.narrative} />}
         </div>
-        <p className="text-muted-foreground mt-2 text-xs">
-          Skills your portfolio proves, but your Skill Radar underrates.
-        </p>
+      ) : (
+        /* Actions = what to do next — gaps left, quiz + strengths right */
+        <Grid12 className="min-h-0 flex-1 gap-4">
+          <Col span={12} lg={7} className="flex min-h-0 flex-col">
+            {data?.marketGaps ? (
+              <MarketGapsCard gaps={data.marketGaps} ctx={data.marketContext} scroll />
+            ) : (
+              <div className="glass-3 text-muted-foreground flex h-full items-center justify-center rounded-2xl p-6 text-sm">
+                No market-gap data yet — add skills to see what to improve.
+              </div>
+            )}
+          </Col>
+          <Col span={12} lg={5} className="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1">
+            {data?.styleFit && <QuizChip fit={data.styleFit} />}
+            <UndervaluedCard uv={uv} />
+          </Col>
+        </Grid12>
+      )}
+    </main>
+  );
+}
 
-        {uv.strengths.length === 0 ? (
-          <div className="mt-5 flex items-start gap-3">
-            <CheckCircle2 className="text-clover mt-0.5 size-5 shrink-0" aria-hidden />
-            <p className="text-sm">
-              Your self-ratings line up with your portfolio evidence — nicely
-              calibrated. Add more portfolio detail and we&apos;ll keep watching
-              for hidden strengths.
+/** Compact working-style quiz entry (Actions tab, wireframe top-right). */
+function QuizChip({ fit }: { fit: StyleFit }) {
+  const a = ARCHETYPES[fit.archetype];
+  return (
+    <section className="glass-3 flex items-center gap-3 rounded-2xl p-4">
+      <span
+        aria-hidden
+        className="bg-luminous/10 ring-luminous/25 flex size-12 shrink-0 items-center justify-center rounded-full text-2xl ring-2"
+      >
+        {a?.animalEmoji ?? "✨"}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">The {a?.animal ?? fit.archetypeName}</p>
+        <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+          {fit.fitPct}% fit · {fit.field}
+        </p>
+      </div>
+      <LinkButton href="/candidate/personality" variant="outline" size="sm">
+        Work style quiz
+      </LinkButton>
+    </section>
+  );
+}
+
+/** Undervalued strengths (extracted verbatim from the old Analysis stack). */
+function UndervaluedCard({ uv }: { uv: UndervaluedResult }) {
+  return (
+    <section className="glass-3 rounded-2xl p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Eyebrow>
+          <Gem aria-hidden />
+          Undervalued strengths
+        </Eyebrow>
+        <Link
+          href="/candidate/skills"
+          aria-label="Open Skill Radar"
+          className="text-muted-foreground hover:text-luminous transition-colors"
+        >
+          <ArrowUpRight className="size-4" aria-hidden />
+        </Link>
+      </div>
+      <p className="text-muted-foreground mt-2 text-xs">
+        Skills your portfolio proves, but your Skill Radar underrates.
+      </p>
+
+      {uv.strengths.length === 0 ? (
+        <div className="mt-5 flex items-start gap-3">
+          <CheckCircle2 className="text-clover mt-0.5 size-5 shrink-0" aria-hidden />
+          <p className="text-sm">
+            Your self-ratings line up with your portfolio evidence — nicely
+            calibrated. Add more portfolio detail and we&apos;ll keep watching
+            for hidden strengths.
+          </p>
+        </div>
+      ) : (
+        <>
+          <ul className="mt-4 space-y-2.5">
+            {uv.strengths.map((s) => (
+              <li
+                key={s.canonical}
+                className="border-border/15 bg-foreground/2 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border p-3"
+              >
+                <Chip tone="luminous" className="shrink-0 capitalize">
+                  {s.skill}
+                </Chip>
+                <span className="text-clover inline-flex shrink-0 items-center gap-1 text-xs font-semibold">
+                  <Gem className="size-3" aria-hidden />
+                  {s.evidenceCount}× in portfolio
+                </span>
+                <span className="text-muted-foreground min-w-40 flex-1 text-xs">
+                  {s.reason}
+                </span>
+                <Link
+                  href={`/candidate/skills?focus=${encodeURIComponent(s.canonical)}`}
+                  className="text-luminous shrink-0 text-xs font-medium hover:underline"
+                >
+                  Fix on radar →
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {uv.nextStep && (
+            <p className="border-luminous/30 bg-luminous/5 text-muted-foreground mt-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs">
+              <Sparkles className="text-luminous mt-0.5 size-3.5 shrink-0" aria-hidden />
+              <span>{uv.nextStep}</span>
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+/** Deterministic "AI" career summary — composed from the same signals the
+ *  cards below expose (working style, portfolio evidence, hidden strength,
+ *  market gap). No LLM: grounded, explainable, and stable for demos. */
+function buildCareerSummary(d: Payload): string {
+  const style = d.styleFit;
+  const s = d.summary;
+  const field = d.marketGaps?.field || d.marketContext?.field || style?.field || "your field";
+  const parts: string[] = [];
+  if (style) {
+    parts.push(
+      `Your working style reads as ${style.archetypeName}, a ${style.fitPct}% fit with the typical ${field} role`,
+    );
+  } else {
+    parts.push(`Your profile is taking shape in ${field}`);
+  }
+  if (s) {
+    parts.push(
+      s.evidenceBacked > 0
+        ? `with ${s.evidenceBacked} of ${s.skillsTracked} tracked skills backed by real evidence`
+        : `with ${s.skillsTracked} tracked skill${s.skillsTracked === 1 ? "" : "s"} still to prove`,
+    );
+  }
+  let text = parts.join(", ") + ".";
+  const strength = d.undervalued?.strengths[0];
+  if (strength) {
+    text += ` Your portfolio shows real depth in ${strength.skill} that your Skill Radar currently underrates.`;
+  }
+  const gap = d.marketGaps?.gaps[0];
+  if (gap) {
+    text += ` To raise your readiness, ${gap.skill} is the highest-demand skill you haven't validated yet.`;
+  } else if (d.undervalued?.nextStep) {
+    text += ` ${d.undervalued.nextStep}`;
+  }
+  return text;
+}
+
+/** LEFT rail (wireframe): current job + selectable potential roles. */
+function RolesRail({
+  jobs,
+  selectedId,
+  onSelect,
+}: {
+  jobs: JobRow[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <section className="glass-3 flex h-full flex-col rounded-2xl p-5">
+      <Eyebrow>
+        <Briefcase aria-hidden />
+        Potential roles
+      </Eyebrow>
+      <p className="text-muted-foreground mt-2 text-xs">
+        Ranked by your match — pick one to analyse.
+      </p>
+      <ul className="mt-3 flex max-h-80 flex-col gap-1.5 overflow-y-auto pr-1">
+        {jobs.slice(0, 8).map((j) => {
+          const active = j.id === selectedId;
+          return (
+            <li key={j.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(j.id)}
+                aria-pressed={active}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors",
+                  active
+                    ? "border-luminous/40 bg-luminous/12"
+                    : "border-border/15 bg-foreground/2 hover:border-luminous/40",
+                )}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-medium">{j.title}</span>
+                  <span className="text-muted-foreground block truncate text-[10px]">
+                    {j.company}
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 font-mono text-[10px] font-semibold tabular-nums",
+                    active ? "text-luminous" : "text-muted-foreground",
+                  )}
+                >
+                  {j.match}%
+                </span>
+              </button>
+            </li>
+          );
+        })}
+        {jobs.length === 0 && (
+          <p className="text-muted-foreground text-xs">No open roles loaded yet.</p>
+        )}
+      </ul>
+    </section>
+  );
+}
+
+/** MIDDLE (wireframe): per-skill bars vs the red dashed requirement line. */
+function WhereYouAreChart({
+  truth,
+  job,
+}: {
+  truth: SkillTruth | null;
+  job: JobRow | null;
+}) {
+  const axes = (truth?.axes ?? []).filter((a) => a.required > 0).slice(0, 5);
+  // The skill closest to (but still under) the bar — the motivational callout.
+  const nearest = [...axes]
+    .filter((a) => a.you < a.required)
+    .sort((a, b) => b.you - a.you)[0];
+
+  return (
+    <section className="glass-3 flex h-full flex-col rounded-2xl p-5">
+      <Eyebrow>
+        <TrendingUp aria-hidden />
+        Where you are{job ? ` — ${job.title}` : ""}
+      </Eyebrow>
+      {axes.length ? (
+        <>
+          {/* Bars area: the dashed destructive line = the requirement (100). */}
+          <div className="relative mt-4 flex-1">
+            <div
+              aria-hidden
+              className="border-destructive/70 absolute inset-x-0 top-0 border-t border-dashed"
+            />
+            <p className="text-destructive/80 absolute -top-3 right-0 font-mono text-[9px] uppercase tracking-wider">
+              Requirement
+            </p>
+            <div className="flex h-40 items-end justify-around gap-3 pt-2">
+              {axes.map((a) => (
+                <div key={a.skill} className="flex h-full w-full max-w-14 flex-col items-center justify-end gap-1">
+                  <span
+                    className={cn(
+                      "text-[10px] font-semibold tabular-nums",
+                      a.you >= a.required ? "text-clover" : "text-luminous",
+                    )}
+                  >
+                    {a.you}
+                  </span>
+                  <div
+                    title={`${a.skill} — ${a.you}/100`}
+                    className={cn(
+                      "w-full rounded-t-lg transition-all",
+                      a.you >= a.required ? "bg-clover/70" : "bg-luminous/70",
+                    )}
+                    style={{ height: `${Math.max(4, a.you)}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="border-border/20 flex justify-around gap-3 border-t pt-1.5">
+              {axes.map((a) => (
+                <p
+                  key={a.skill}
+                  title={a.skill}
+                  className="text-muted-foreground w-full max-w-14 truncate text-center text-[9px] capitalize"
+                >
+                  {a.skill}
+                </p>
+              ))}
+            </div>
+          </div>
+          <div className="border-border/15 bg-foreground/2 mt-3 rounded-lg border px-3 py-2">
+            <p className="text-muted-foreground font-mono text-[9px] font-semibold uppercase tracking-wider">
+              Skills
+            </p>
+            <p className="mt-0.5 text-xs leading-snug">
+              {nearest
+                ? `Your ${nearest.skill} is about to reach the requirement level — level it up by adding evidence.`
+                : "Every required skill clears the bar for this role — nice."}
             </p>
           </div>
-        ) : (
-          <>
-            <ul className="mt-4 space-y-2.5">
-              {uv.strengths.map((s) => (
-                <li
-                  key={s.canonical}
-                  className="border-border/15 bg-foreground/2 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border p-3"
-                >
-                  <Chip tone="luminous" className="shrink-0 capitalize">
-                    {s.skill}
-                  </Chip>
-                  <span className="text-clover inline-flex shrink-0 items-center gap-1 text-xs font-semibold">
-                    <Gem className="size-3" aria-hidden />
-                    {s.evidenceCount}× in portfolio
-                  </span>
-                  <span className="text-muted-foreground min-w-40 flex-1 text-xs">
-                    {s.reason}
-                  </span>
-                  <Link
-                    href={`/candidate/skills?focus=${encodeURIComponent(s.canonical)}`}
-                    className="text-luminous shrink-0 text-xs font-medium hover:underline"
-                  >
-                    Fix on radar →
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            {uv.nextStep && (
-              <p className="border-luminous/30 bg-luminous/5 text-muted-foreground mt-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs">
-                <Sparkles className="text-luminous mt-0.5 size-3.5 shrink-0" aria-hidden />
-                <span>{uv.nextStep}</span>
-              </p>
-            )}
-          </>
-        )}
-      </section>
-
-      {/* Narrative themes — what the Timeline Journal reveals over time */}
-      {data?.narrative && <NarrativeCard n={data.narrative} />}
-
-      {/* Working-style fit — archetype vs the field's O*NET work styles */}
-      {data?.styleFit && <StyleFitCard fit={data.styleFit} />}
-
-      {/* Market gaps — candidate skills vs real ingested JobStreet demand */}
-      {data?.marketGaps && (
-        <MarketGapsCard gaps={data.marketGaps} ctx={data.marketContext} />
+        </>
+      ) : (
+        <p className="text-muted-foreground mt-4 text-xs">
+          Add skills on your Skill Radar to see how you measure against this role.
+        </p>
       )}
-    </div>
+    </section>
+  );
+}
+
+/** RIGHT (wireframe): desired-job progress + portfolio summary + AI summary. */
+function CareerProfilePanel({
+  data,
+  truth,
+  job,
+}: {
+  data: Payload;
+  truth: SkillTruth | null;
+  job: JobRow | null;
+}) {
+  const summary = data.summary;
+  return (
+    <section className="glass-3 ring-luminous/20 flex h-full flex-col gap-3 rounded-2xl p-5 ring-1">
+      {/* Desired job / position progress */}
+      <div>
+        <div className="text-muted-foreground flex items-center justify-between font-mono text-[10px] font-semibold uppercase tracking-wider">
+          <span className="truncate">{job ? job.title : "Desired position"}</span>
+          <span className="text-luminous text-sm tabular-nums">
+            {truth ? `${truth.score}%` : "—"}
+          </span>
+        </div>
+        <div className="bg-foreground/8 mt-1.5 h-2 w-full overflow-hidden rounded-full">
+          <div
+            className="bg-luminous h-full rounded-full transition-all"
+            style={{ width: `${truth?.score ?? 0}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Living Portfolio evidence summary */}
+      <div className="border-border/15 bg-foreground/2 rounded-xl border p-3">
+        <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-wider">
+          Living Portfolio
+        </p>
+        <ul className="text-muted-foreground mt-1.5 space-y-1 text-xs">
+          <li>
+            <span className="text-foreground font-medium">
+              {summary?.evidenceBacked ?? 0}
+            </span>{" "}
+            of {summary?.skillsTracked ?? 0} skills backed by evidence
+          </li>
+          <li>
+            <span className="text-foreground font-medium">
+              {data.narrative?.themes.length ?? 0}
+            </span>{" "}
+            reflection theme{(data.narrative?.themes.length ?? 0) === 1 ? "" : "s"} from your journal
+            {data.narrative?.dominantMood ? ` · mostly ${data.narrative.dominantMood}` : ""}
+          </li>
+        </ul>
+        <LinkButton href="/candidate/portfolio" variant="outline" size="sm" className="mt-2">
+          Open portfolio
+        </LinkButton>
+      </div>
+
+      {/* AI Career Summary — deterministic, grounded in the data above */}
+      <div className="border-luminous/30 bg-luminous/5 rounded-xl border p-3">
+        <p className="text-luminous flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider">
+          <Sparkles className="size-3" aria-hidden /> AI summary
+        </p>
+        <p className="mt-1.5 text-xs leading-relaxed">{buildCareerSummary(data)}</p>
+        <p className="text-muted-foreground/80 mt-2 text-[10px]">
+          Generated from your own data — no black box.
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -383,13 +731,16 @@ function NarrativeCard({ n }: { n: Narrative }) {
   );
 }
 
-function StyleFitCard({ fit }: { fit: StyleFit }) {
+/** Work-animal personality (mentor spec): the compass pentagon is gone —
+ *  the archetype now reads as an animal you can picture in a workplace. */
+function WorkAnimalCard({ fit }: { fit: StyleFit }) {
+  const archetype = ARCHETYPES[fit.archetype];
   return (
     <section className="glass-3 rounded-2xl p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Eyebrow>
           <Sparkles aria-hidden />
-          Working-style fit
+          Your work animal
         </Eyebrow>
         <Link
           href="/candidate/personality"
@@ -399,23 +750,35 @@ function StyleFitCard({ fit }: { fit: StyleFit }) {
           <ArrowUpRight className="size-4" aria-hidden />
         </Link>
       </div>
-      <p className="text-muted-foreground mt-2 text-xs">
-        How <span className="text-foreground/80">{fit.archetypeName}</span> lines
-        up with the typical role in {fit.field}.
-      </p>
 
-      <div className="mt-4 grid items-center gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <JobStyleCompass axes={fit.axes} />
-        <div className="flex flex-col items-center gap-3 sm:pr-2">
-          <ProgressRing value={fit.fitPct} label="Style fit" size={104} />
-          <ul className="text-muted-foreground max-w-56 space-y-1 text-xs">
-            {fit.reasons.slice(1).map((r) => (
+      <div className="mt-4 flex flex-wrap items-center gap-5">
+        <span
+          aria-hidden
+          className="bg-luminous/10 ring-luminous/25 flex size-24 shrink-0 items-center justify-center rounded-full text-5xl ring-2"
+        >
+          {archetype?.animalEmoji ?? "✨"}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xl font-bold tracking-tight">
+            The {archetype?.animal ?? fit.archetypeName}
+            <span className="text-muted-foreground ml-2 text-sm font-normal">
+              {fit.archetypeName}
+            </span>
+          </p>
+          <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+            {archetype?.animalNote ?? ""}
+          </p>
+          <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
+            {fit.reasons.slice(1, 3).map((r) => (
               <li key={r} className="flex gap-1.5">
                 <span className="text-luminous">·</span>
                 {r}
               </li>
             ))}
           </ul>
+        </div>
+        <div className="shrink-0">
+          <ProgressRing value={fit.fitPct} label={`Fit · ${fit.field}`} size={96} />
         </div>
       </div>
 
@@ -436,14 +799,22 @@ function fmtSalary(ctx: MarketContext): string | null {
 function MarketGapsCard({
   gaps,
   ctx,
+  scroll,
 }: {
   gaps: MarketGapsResult;
   ctx: MarketContext | null;
+  /** In the Actions tab the card fills its column and its list scrolls. */
+  scroll?: boolean;
 }) {
   const salary = ctx ? fmtSalary(ctx) : null;
   return (
-    <section className="glass-3 rounded-2xl p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <section
+      className={cn(
+        "glass-3 rounded-2xl p-6",
+        scroll && "flex h-full min-h-0 flex-col",
+      )}
+    >
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
         <Eyebrow>
           <TrendingUp aria-hidden />
           Market gaps
@@ -456,7 +827,7 @@ function MarketGapsCard({
           <ArrowUpRight className="size-4" aria-hidden />
         </Link>
       </div>
-      <p className="text-muted-foreground mt-2 text-xs">
+      <p className="text-muted-foreground mt-2 shrink-0 text-xs">
         In-demand skills you haven&apos;t validated — ranked by real market
         demand.
         {ctx && (
@@ -480,7 +851,12 @@ function MarketGapsCard({
         </div>
       ) : (
         <>
-          <ul className="mt-4 space-y-2.5">
+          <ul
+            className={cn(
+              "mt-4 space-y-2.5",
+              scroll && "min-h-0 flex-1 overflow-y-auto pr-1",
+            )}
+          >
             {gaps.gaps.map((g) => (
               <li
                 key={g.skill}

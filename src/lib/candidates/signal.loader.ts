@@ -47,6 +47,9 @@ export async function loadCandidateSignalInput(
       role: e.role,
       company: e.company,
       detail: e.detail,
+      approach: e.approach,
+      impact: e.impact,
+      skillsUsed: e.skillsUsed,
     })),
     projects: profile.projects.map((p) => ({
       title: p.title,

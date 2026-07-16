@@ -30,6 +30,8 @@ interface ChaptersContextValue {
   }) => void;
   removeEvent: (id: string) => void;
   toggleSubtask: (eventId: string, subtaskId: string) => void;
+  /** Rate an event's "does this move me toward my ideal self?" reflection. */
+  setMeaningful: (eventId: string, value: boolean | null) => void;
   resetEvents: () => void;
   isHydrated: boolean;
   status: ContextStatus;
@@ -206,6 +208,26 @@ export function ChaptersProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const setMeaningful = useCallback(
+    (eventId: string, value: boolean | null) => {
+      setEvents((prev) =>
+        prev.map((e) => (e.id === eventId ? { ...e, meaningful: value } : e)),
+      );
+      void (async () => {
+        try {
+          await fetch(`/api/me/chapters/${encodeURIComponent(eventId)}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ meaningful: value }),
+          });
+        } catch {
+          /* keep optimistic */
+        }
+      })();
+    },
+    [],
+  );
+
   const resetEvents = useCallback(() => {
     setEvents([]);
     try {
@@ -221,12 +243,13 @@ export function ChaptersProvider({ children }: { children: ReactNode }) {
       addEvent,
       removeEvent,
       toggleSubtask,
+      setMeaningful,
       resetEvents,
       isHydrated,
       status,
       error,
     }),
-    [events, addEvent, removeEvent, toggleSubtask, resetEvents, isHydrated, status, error],
+    [events, addEvent, removeEvent, toggleSubtask, setMeaningful, resetEvents, isHydrated, status, error],
   );
 
   return (

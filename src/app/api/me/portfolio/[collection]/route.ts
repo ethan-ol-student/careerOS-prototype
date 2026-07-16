@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentCandidateProfile } from "@/lib/api/currentUser";
 import { syncMarketplaceMirror } from "@/lib/candidates/projection";
+import { addTier1Claims } from "@/lib/skills/claims";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 
 /**
@@ -35,10 +36,17 @@ const AwardSchema = z.object({
   description: z.string().max(600).optional(),
 });
 const ExperienceSchema = z.object({
-  role: z.string().min(1).max(120),
+  role: z.string().min(1).max(120), // the problem/project title when kind="project"
   company: z.string().max(120).default(""),
   period: z.string().max(60).default(""),
   detail: z.string().max(600).optional(),
+  // Structured merge (Experience = experience ∪ projects ∪ problems solved)
+  kind: z.enum(["role", "project"]).default("role"),
+  contribution: z.enum(["", "lead", "assistant", "participant"]).default(""),
+  approach: z.string().max(600).default(""),
+  impact: z.string().max(600).default(""),
+  skillsUsed: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
+  link: z.string().max(300).optional(),
 });
 
 export async function POST(
@@ -86,6 +94,11 @@ export async function POST(
       created = await prisma.experience.create({
         data: { ...p.data, profileId: profile.id },
       });
+      // "Skills strengthened or learned" auto-land on the Skill Radar as
+      // tier-1 claims (never downgrades an existing validated claim).
+      if (p.data.skillsUsed.length) {
+        await addTier1Claims(profile.id, p.data.skillsUsed);
+      }
     }
 
     // Touch the parent profile so "last updated" reflects the change.

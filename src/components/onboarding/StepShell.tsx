@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import Link from "next/link";
 import { Compass } from "lucide-react";
 import { LayoutLines } from "@/components/ui/LayoutLines";
 import { Badge } from "@/components/ui/Badge";
@@ -35,15 +34,14 @@ export default function StepShell({
         <div className="fade-bottom bg-background/15 absolute left-0 h-24 w-full backdrop-blur-lg" />
         <div className="max-w-container relative mx-auto">
           <div className="flex items-center justify-between py-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-base font-semibold tracking-tight"
-            >
+            {/* Not a link during onboarding — leaving the flow via the logo
+                stranded users on the landing page while still signed in. */}
+            <span className="flex items-center gap-2 text-base font-semibold tracking-tight">
               {/* Role-aware accent: --btn-from is luminous on candidate
                   shells, clover under data-role-accent="employer". */}
               <Compass className="size-5 text-(--btn-from)" />
               Career OS
-            </Link>
+            </span>
             <p className="text-muted-foreground font-mono text-xs">
               Step {stepNumber} of {totalSteps}
             </p>

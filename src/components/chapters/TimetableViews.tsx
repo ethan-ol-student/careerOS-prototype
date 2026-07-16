@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Clock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Clock, Trash2, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { useChapters } from "@/lib/context/ChaptersContext";
 import { PRIORITY_META, type ChapterEvent, type Timeframe } from "@/lib/chapters/data";
 import { cn } from "@/lib/utils";
@@ -95,7 +95,7 @@ export function TimetableHeader({
 }
 
 // ─── weekly ────────────────────────────────────────────────────
-export function WeeklyView({ anchor }: { anchor: Date }) {
+export function WeeklyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id: string) => void }) {
   const { events } = useChapters();
   const start = startOfWeek(anchor);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -136,7 +136,7 @@ export function WeeklyView({ anchor }: { anchor: Date }) {
               <p className="text-muted-foreground/60 mt-2 text-[11px] italic">No events</p>
             ) : (
               <ul className="flex flex-col gap-2">
-                {list.map((e) => <EventChip key={e.id} event={e} />)}
+                {list.map((e) => <EventChip key={e.id} event={e} onSelect={onSelect} />)}
               </ul>
             )}
           </div>
@@ -147,7 +147,7 @@ export function WeeklyView({ anchor }: { anchor: Date }) {
 }
 
 // ─── monthly ───────────────────────────────────────────────────
-export function MonthlyView({ anchor }: { anchor: Date }) {
+export function MonthlyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id: string) => void }) {
   const { events } = useChapters();
   const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
   const gridStart = startOfWeek(first);
@@ -185,12 +185,18 @@ export function MonthlyView({ anchor }: { anchor: Date }) {
                 {list.slice(0, 2).map((e) => {
                   const meta = PRIORITY_META[e.priority];
                   return (
-                    <li
-                      key={e.id}
-                      title={`${e.time} · ${e.name}`}
-                      className={cn("truncate rounded px-1 py-0.5 text-[10px] border", meta.tone)}
-                    >
-                      {e.time} {e.name}
+                    <li key={e.id}>
+                      <button
+                        type="button"
+                        onClick={() => onSelect?.(e.id)}
+                        title={`${e.time} · ${e.name}`}
+                        className={cn(
+                          "w-full truncate rounded border px-1 py-0.5 text-left text-[10px] transition-colors hover:brightness-125",
+                          meta.tone,
+                        )}
+                      >
+                        {e.time} {e.name}
+                      </button>
                     </li>
                   );
                 })}
@@ -237,19 +243,20 @@ export function YearlyView({ anchor }: { anchor: Date }) {
 }
 
 // ─── event chip with sub-tasks ─────────────────────────────────
-function EventChip({ event }: { event: ChapterEvent }) {
+function EventChip({ event, onSelect }: { event: ChapterEvent; onSelect?: (id: string) => void }) {
   const { removeEvent, toggleSubtask } = useChapters();
   const [open, setOpen] = useState(false);
   const meta = PRIORITY_META[event.priority];
   const done = event.subtasks.filter((s) => s.done).length;
   return (
     <li className={cn("rounded-lg border p-2", meta.tone.replace("text-", "border-"), "bg-card/40")}>
-      {/* <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-start justify-between gap-2 text-left"
-      >
-        <div className="min-w-0 flex-1">
+      <div className="flex w-full items-start justify-between gap-2 text-left">
+        {/* Name selects the event (feeds the reflection rail). */}
+        <button
+          type="button"
+          onClick={() => onSelect?.(event.id)}
+          className="min-w-0 flex-1 text-left"
+        >
           <div className="flex items-center gap-1.5">
             <span className={cn("size-1.5 rounded-full", meta.dot)} />
             <p className="truncate text-xs font-medium">{event.name}</p>
@@ -260,47 +267,29 @@ function EventChip({ event }: { event: ChapterEvent }) {
               <span className="ml-1">· {done}/{event.subtasks.length} done</span>
             )}
           </p>
+        </button>
+
+        <div className="flex shrink-0 items-center gap-1">
+          {event.subtasks.length > 0 && (
+            <button
+              type="button"
+              aria-label={open ? "Hide sub-tasks" : "Show sub-tasks"}
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label="Delete event"
+            onClick={() => removeEvent(event.id)}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="size-3" />
+          </button>
         </div>
-        <button
-          type="button"
-          aria-label="Delete event"
-          onClick={(e) => { e.stopPropagation(); removeEvent(event.id); }}
-          className="text-muted-foreground hover:text-destructive shrink-0"
-        >
-          <Trash2 className="size-3" />
-        </button>
-      </button> */}
-
-      {/* Better Change for the buttons to present hydration error */}
-      <div className="flex w-full items-start justify-between gap-2 text-left">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="min-w-0 flex-1 text-left"
-        >
-          <div className="flex items-center gap-1.5">
-            <span className={cn("size-1.5 rounded-full", meta.dot)} />
-            <p className="truncate text-xs font-medium">{event.name}</p>
-          </div>
-
-          <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[10px]">
-            <Clock className="size-2.5" /> {event.time}
-            {event.subtasks.length > 0 && (
-              <span className="ml-1">
-                · {done}/{event.subtasks.length} done
-              </span>
-            )}
-          </p>
-        </button>
-
-        <button
-          type="button"
-          aria-label="Delete event"
-          onClick={() => removeEvent(event.id)}
-          className="text-muted-foreground hover:text-destructive shrink-0"
-        >
-          <Trash2 className="size-3" />
-        </button>
       </div>
 
       {open && event.subtasks.length > 0 && (

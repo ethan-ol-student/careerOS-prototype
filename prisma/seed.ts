@@ -245,6 +245,11 @@ async function seedDemoCatalog() {
       update: fields,
     });
   }
+  // Fully curated demo table — drop rows no longer in the CSV so a re-seed
+  // that changes the list (e.g. international → Malaysian) leaves no stragglers.
+  await prisma.university.deleteMany({
+    where: { name: { notIn: universities.map((u) => u.name) } },
+  });
 
   const benchmarks = readCsv("salary_benchmarks.csv");
   console.log(`Seeding ${benchmarks.length} salary benchmarks…`);

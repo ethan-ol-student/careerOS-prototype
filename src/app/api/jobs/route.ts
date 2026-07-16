@@ -5,6 +5,7 @@ import {
   JobsService,
 } from "@/lib/services/jobs.service";
 import { scoreSkillBridge } from "@/lib/intelligence/skillBridgeEngine";
+import { toMarketField } from "@/lib/market/fieldMap";
 import { ok, failFromUnknown } from "@/lib/api/respond";
 
 /**
@@ -69,7 +70,19 @@ export async function GET(request: Request) {
     jobs.sort((a, b) => b.match - a.match);
 
     const fields = [...new Set(rows.map((r) => r.field))].sort();
-    return ok({ jobs, fields });
+
+    // Real posting volume for the selected field (the "is it hot" count) —
+    // only when a field is chosen; nullable end-to-end (ingest may be empty).
+    const demand = field
+      ? await prisma.marketFieldDemand
+          .findUnique({
+            where: { field: toMarketField(field) },
+            select: { field: true, postingCount: true },
+          })
+          .catch(() => null)
+      : null;
+
+    return ok({ jobs, fields, demand });
   } catch (err) {
     return failFromUnknown(err);
   }

@@ -56,6 +56,12 @@ export interface Archetype {
   strengths: string[];
   /** Employer-facing interpretation (context, not a screen). */
   interpretation: string;
+  // Work-animal identity (CANDIDATE-SIDE display only — never an engine
+  // input; employer surfaces keep the professional archetype name).
+  animal: string;
+  animalEmoji: string;
+  /** What this animal looks like in a workplace — the visualization line. */
+  animalNote: string;
 }
 
 export const ARCHETYPES: Record<string, Archetype> = {
@@ -68,6 +74,10 @@ export const ARCHETYPES: Record<string, Archetype> = {
     strengths: ["Bias to action", "Prototype-first problem solving", "Strong follow-through"],
     interpretation:
       "Thrives on concrete deliverables and ownership; give them something real to ship early.",
+    animal: "Beaver",
+    animalEmoji: "🦫",
+    animalNote:
+      "The Beaver builds the dam before the flood — the teammate with a working version while others are still sketching.",
   },
   strategist: {
     id: "strategist",
@@ -78,6 +88,10 @@ export const ARCHETYPES: Record<string, Archetype> = {
     strengths: ["Systems thinking", "Prioritisation under constraints", "Long-horizon planning"],
     interpretation:
       "Strongest when scope is ambiguous; give them the problem, not the task list.",
+    animal: "Owl",
+    animalEmoji: "🦉",
+    animalNote:
+      "The Owl watches the whole forest before it moves — the teammate who spots the trade-off everyone else missed.",
   },
   connector: {
     id: "connector",
@@ -88,6 +102,10 @@ export const ARCHETYPES: Record<string, Archetype> = {
     strengths: ["Stakeholder alignment", "Communication across functions", "Mentoring energy"],
     interpretation:
       "Impact compounds in cross-functional roles; pair with deep specialists.",
+    animal: "Dolphin",
+    animalEmoji: "🐬",
+    animalNote:
+      "The Dolphin travels in pods — the teammate who gets two groups that weren't talking to ship together.",
   },
   explorer: {
     id: "explorer",
@@ -98,6 +116,10 @@ export const ARCHETYPES: Record<string, Archetype> = {
     strengths: ["Fast learning curves", "Comfort with uncertainty", "Cross-domain range"],
     interpretation:
       "Best where the answer isn't known yet; avoid boxing into rigid, repetitive scope.",
+    animal: "Fox",
+    animalEmoji: "🦊",
+    animalNote:
+      "The Fox is first into new territory and quick to learn its paths — the teammate who's already tried the tool you just heard of.",
   },
 };
 

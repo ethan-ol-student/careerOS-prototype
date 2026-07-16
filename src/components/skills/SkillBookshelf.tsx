@@ -6,6 +6,9 @@ import {
   BadgeCheck,
   BookOpen,
   Briefcase,
+  Calendar,
+  CalendarCheck,
+  Check,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -20,7 +23,7 @@ import {
 } from "@/lib/intelligence/skillTruthEngine";
 import { normalizeSkill, type TargetJob } from "@/lib/jobs/data";
 import { learningFor } from "@/lib/skills/learning";
-import { SKILL_TAXONOMY, extractSkillsFromText } from "@/lib/skills/taxonomy";
+import { SKILL_TAXONOMY } from "@/lib/skills/taxonomy";
 import { cn } from "@/lib/utils";
 
 export interface BookshelfClaim {
@@ -106,8 +109,19 @@ export function SkillBookshelf({
   // Add-modal drafts.
   const [newSkill, setNewSkill] = useState("");
   const [newLevel, setNewLevel] = useState(3);
-  const [paste, setPaste] = useState("");
-  const [suggested, setSuggested] = useState<string[] | null>(null);
+  const [skillsOpen, setSkillsOpen] = useState(false);
+
+  // Learning-material quick-actions (per open skill, keyed by list index).
+  // Client-only simulation — no roadmap/calendar backend exists yet.
+  const [added, setAdded] = useState<Set<number>>(new Set());
+  const [scheduled, setScheduled] = useState<Map<number, string>>(new Map());
+  const [scheduleOpen, setScheduleOpen] = useState<number | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const fireToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 1600);
+  };
 
   const openSkill = (claim: BookshelfClaim) => {
     setOpen(claim.name);
@@ -116,6 +130,9 @@ export function SkillBookshelf({
     setEndorsedBy(claim.endorsedBy);
     setEndorserNote(claim.endorserNote);
     setFeedback(null);
+    setAdded(new Set());
+    setScheduled(new Map());
+    setScheduleOpen(null);
   };
 
   // Deep-link focus (?focus=skill): open its detail, or prefill Add.
@@ -184,10 +201,7 @@ export function SkillBookshelf({
         {/* + Add spine */}
         <button
           type="button"
-          onClick={() => {
-            setAddOpen(true);
-            setSuggested(null);
-          }}
+          onClick={() => setAddOpen(true)}
           aria-label="Add a skill"
           className="border-border/20 text-muted-foreground hover:border-luminous/60 hover:text-luminous flex w-9 shrink-0 items-center justify-center rounded-t-md border border-b-0 border-dashed transition-all hover:-translate-y-1"
           style={{ height: 92 }}
@@ -313,10 +327,87 @@ export function SkillBookshelf({
                 <BookOpen className="text-clover size-3.5" aria-hidden />
                 Learning materials
               </h3>
-              <ul className="text-muted-foreground mt-2 list-disc space-y-1 pl-4 text-xs">
-                {learningFor(active.name).map((tip) => (
-                  <li key={tip}>{tip}</li>
-                ))}
+              <ul className="mt-2 space-y-1.5">
+                {learningFor(active.name).map((tip, i) => {
+                  const isAdded = added.has(i);
+                  const sched = scheduled.get(i);
+                  return (
+                    <li
+                      key={tip}
+                      className="border-border/15 bg-foreground/2 rounded-lg border px-3 py-2"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <BookOpen
+                          className="text-muted-foreground/40 mt-0.5 size-3.5 shrink-0"
+                          aria-hidden
+                        />
+                        <p className="text-muted-foreground min-w-0 flex-1 text-xs">
+                          {tip}
+                        </p>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={isAdded}
+                            aria-label={isAdded ? "Added to roadmap" : "Add to roadmap"}
+                            title={isAdded ? "Added to roadmap" : "Add to roadmap"}
+                            onClick={() => {
+                              setAdded((prev) => new Set(prev).add(i));
+                              fireToast("Added to roadmap!");
+                            }}
+                            className={cn(
+                              "flex size-7 items-center justify-center rounded-md border transition-colors",
+                              isAdded
+                                ? "border-clover/40 text-clover"
+                                : "border-border/15 text-muted-foreground hover:border-luminous/50 hover:text-luminous",
+                            )}
+                          >
+                            {isAdded ? <Check className="size-3.5" /> : <Plus className="size-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={sched ? `Scheduled for ${sched}` : "Schedule"}
+                            title={sched ? `Scheduled for ${sched}` : "Schedule"}
+                            onClick={() =>
+                              setScheduleOpen((cur) => (cur === i ? null : i))
+                            }
+                            className={cn(
+                              "flex size-7 items-center justify-center rounded-md border transition-colors",
+                              sched
+                                ? "border-clover/40 text-clover"
+                                : "border-border/15 text-muted-foreground hover:border-luminous/50 hover:text-luminous",
+                            )}
+                          >
+                            {sched ? (
+                              <CalendarCheck className="size-3.5" />
+                            ) : (
+                              <Calendar className="size-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      {scheduleOpen === i && (
+                        <input
+                          type="date"
+                          autoFocus
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            setScheduled((prev) =>
+                              new Map(prev).set(i, e.target.value),
+                            );
+                            setScheduleOpen(null);
+                            fireToast("Scheduled!");
+                          }}
+                          className="bg-foreground/2 border-border/15 focus:border-luminous mt-2 ml-6 rounded-lg border px-2 py-1 text-xs outline-none"
+                        />
+                      )}
+                      {sched && scheduleOpen !== i && (
+                        <p className="text-clover mt-1 ml-6 text-[11px]">
+                          Scheduled for {sched}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           </div>
@@ -337,37 +428,98 @@ export function SkillBookshelf({
               Remove skill
             </Button>
           </div>
+
+          {/* Frictionless quick-action confirmation */}
+          {toast && (
+            <div className="pointer-events-none fixed inset-x-0 bottom-6 z-70 flex justify-center">
+              <span className="bg-clover/15 border-clover/40 text-clover-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur">
+                <Check className="size-3.5" />
+                {toast}
+              </span>
+            </div>
+          )}
         </Modal>
       )}
 
-      {/* ── Add modal ── */}
+      {/* ── Add modal — one sleek searchable dropdown, no resume paste ── */}
       <Modal
         isOpen={addOpen}
-        onClose={() => setAddOpen(false)}
+        onClose={() => {
+          setAddOpen(false);
+          setSkillsOpen(false);
+        }}
         title="Add a skill"
         description="Any skill counts — technical, trade, creative, or soft."
       >
         <form
-          className="flex gap-2"
+          className="flex items-start gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             void addSkill(newSkill, newLevel);
           }}
         >
-          <input
-            type="text"
-            list="skill-taxonomy"
-            value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
-            maxLength={40}
-            placeholder="Add a skill (any skill counts)"
-            className="bg-foreground/2 border-border/15 focus:border-luminous min-h-10 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-          />
-          <datalist id="skill-taxonomy">
-            {SKILL_TAXONOMY.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
+          {/* Combobox: type to filter the taxonomy, click to fill, free text still counts. */}
+          <div className="relative w-full">
+            <input
+              type="text"
+              value={newSkill}
+              onChange={(e) => {
+                setNewSkill(e.target.value);
+                setSkillsOpen(true);
+              }}
+              onFocus={() => setSkillsOpen(true)}
+              onBlur={() => setSkillsOpen(false)}
+              maxLength={40}
+              placeholder="Search or type a skill…"
+              role="combobox"
+              aria-label="Add a skill"
+              aria-expanded={skillsOpen}
+              aria-controls="add-skill-listbox"
+              autoComplete="off"
+              className="bg-foreground/2 border-border/15 focus:border-luminous min-h-10 w-full rounded-lg border px-3 py-2 text-sm outline-none"
+            />
+            <div
+              className={cn(
+                "bg-popover border-border/20 absolute inset-x-0 top-full z-30 mt-1 origin-top rounded-xl border shadow-xl transition-all duration-200",
+                skillsOpen
+                  ? "translate-y-0 scale-100 opacity-100"
+                  : "pointer-events-none -translate-y-1 scale-[0.99] opacity-0",
+              )}
+            >
+              <ul id="add-skill-listbox" className="max-h-40 overflow-y-auto p-1.5">
+                {SKILL_TAXONOMY.filter(
+                  (s) =>
+                    s.toLowerCase().includes(newSkill.trim().toLowerCase()) &&
+                    !claimedNames.has(s.toLowerCase()),
+                )
+                  .slice(0, 40)
+                  .map((s) => (
+                    <li key={s}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setNewSkill(s);
+                          setSkillsOpen(false);
+                        }}
+                        className="hover:bg-accent flex w-full items-center rounded-lg px-3 py-1.5 text-left text-sm transition-colors"
+                      >
+                        {s}
+                      </button>
+                    </li>
+                  ))}
+                {SKILL_TAXONOMY.filter(
+                  (s) =>
+                    s.toLowerCase().includes(newSkill.trim().toLowerCase()) &&
+                    !claimedNames.has(s.toLowerCase()),
+                ).length === 0 && (
+                  <li className="text-muted-foreground px-3 py-2 text-xs">
+                    No taxonomy match — free text still counts.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
           <Select
             aria-label="Claimed level"
             value={newLevel}
@@ -381,56 +533,13 @@ export function SkillBookshelf({
               </option>
             ))}
           </Select>
-          <Button type="submit" size="sm" className="min-h-10 shrink-0" disabled={busy}>
+          <Button type="submit" size="sm" className="min-h-10 shrink-0" disabled={busy || !newSkill.trim()}>
             <Plus className="size-3.5" />
           </Button>
         </form>
-
-        {/* Low-friction import: paste resume text → suggested skills */}
-        <section className="border-border/15 mt-5 border-t pt-4">
-          <h3 className="text-sm font-semibold">Import from your resume</h3>
-          <p className="text-muted-foreground mt-1 text-xs">
-            Paste any resume text — we detect known skills; you confirm. Nothing
-            is added without your click.
-          </p>
-          <textarea
-            value={paste}
-            onChange={(e) => setPaste(e.target.value)}
-            rows={3}
-            placeholder="Paste your resume or a job history paragraph…"
-            className="bg-foreground/2 border-border/15 focus:border-luminous mt-2 w-full rounded-lg border px-3 py-2 text-xs outline-none"
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            className="mt-2"
-            onClick={() => setSuggested(extractSkillsFromText(paste))}
-          >
-            Extract skills
-          </Button>
-          {suggested && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {suggested.filter((s) => !claimedNames.has(s.toLowerCase())).length === 0 ? (
-                <p className="text-muted-foreground text-xs">
-                  No new skills detected — try adding manually above.
-                </p>
-              ) : (
-                suggested
-                  .filter((s) => !claimedNames.has(s.toLowerCase()))
-                  .map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => void addSkill(s, 3)}
-                      className="border-luminous/40 bg-luminous/10 hover:bg-luminous/20 rounded-full border px-2.5 py-1 text-xs transition-colors"
-                    >
-                      + {s}
-                    </button>
-                  ))
-              )}
-            </div>
-          )}
-        </section>
+        <p className="text-muted-foreground mt-2 text-[11px]">
+          New skills start self-claimed — validate them with evidence to raise their weight.
+        </p>
       </Modal>
     </>
   );

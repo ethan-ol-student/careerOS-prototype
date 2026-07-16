@@ -10,20 +10,21 @@ import { ScoreBar } from "@/components/ui/ScoreBar";
 const CX = 170;
 const CY = 150;
 const R = 100;
-const SIDES = 5; // pentagon
+const MIN_SIDES = 3; // a 1-2 skill set still draws a triangle frame
+const MAX_SIDES = 12; // legibility ceiling — beyond this, labels collide
 
 /** Spoke as rendered — carries a stable React key so blank padding spokes
- *  (added only to complete the pentagon) don't collide on an empty label. */
+ *  (added only to reach the minimum polygon) don't collide on an empty label. */
 type Spoke = RadarAxis & { key: string; filler: boolean };
 
 /**
  * Trust-weighted skill radar: the candidate's validated strength (luminous
  * polygon) against the role requirement (dashed neutral ring). One colored
  * series + a shape-encoded reference — legible without color vision, no
- * chart dependency. Always drawn as a 5-spoke PENTAGON: real role/extra
- * skills first, topped up with blank spokes so the frame is consistent.
- * Memoized: `axes` is referentially stable (useMemo upstream), so parent
- * re-renders (e.g. role-search keystrokes) skip the chart entirely.
+ * chart dependency. The polygon ADAPTS to the axis count (3–12 spokes):
+ * real skills draw the shape, blank fillers only top up to the minimum
+ * triangle. Memoized: `axes` is referentially stable (useMemo upstream),
+ * so parent re-renders (e.g. role-search keystrokes) skip the chart.
  */
 export const SkillRadar = memo(function SkillRadar({
   axes,
@@ -41,11 +42,11 @@ export const SkillRadar = memo(function SkillRadar({
     );
   }
 
-  // Exactly 5 spokes: real skills first, blank fillers to complete the pentagon.
+  // Shape follows the data: up to 12 real spokes, filler only below 3.
   const spokes: Spoke[] = axes
-    .slice(0, SIDES)
+    .slice(0, MAX_SIDES)
     .map((a, i) => ({ ...a, key: `${i}-${a.skill}`, filler: false }));
-  while (spokes.length < SIDES) {
+  while (spokes.length < MIN_SIDES) {
     const i = spokes.length;
     spokes.push({
       key: `filler-${i}`,
@@ -57,7 +58,7 @@ export const SkillRadar = memo(function SkillRadar({
     });
   }
 
-  const n = SIDES;
+  const n = spokes.length;
   const point = (i: number, r: number): [number, number] => {
     const ang = (2 * Math.PI * i) / n - Math.PI / 2;
     return [CX + r * Math.cos(ang), CY + r * Math.sin(ang)];

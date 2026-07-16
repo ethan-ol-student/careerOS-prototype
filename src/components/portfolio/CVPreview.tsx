@@ -22,6 +22,21 @@ export function CVPreview() {
   const { intent } = useIntent();
   const firstName = intent.name.split(" ")[0] || "Friend";
 
+  // Merged Living Portfolio: role-kind experiences are roles; project-kind
+  // rows join the legacy Project rows in the Projects section.
+  const roleExperiences = portfolio.experiences.filter((e) => e.kind !== "project");
+  const mergedProjects = [
+    ...portfolio.projects,
+    ...portfolio.experiences
+      .filter((e) => e.kind === "project")
+      .map((e) => ({
+        id: e.id,
+        title: e.role,
+        description: [e.detail, e.approach, e.impact].filter(Boolean).join(" — "),
+        link: e.link,
+      })),
+  ];
+
   if (!isHydrated) {
     return (
       <div className="glass-3 flex items-center justify-center rounded-2xl p-12">
@@ -97,9 +112,9 @@ export function CVPreview() {
               empty="Add roles, internships, or work in the Experience tab."
               icon={Briefcase}
             >
-              {portfolio.experiences.length > 0 && (
+              {roleExperiences.length > 0 && (
                 <ul className="flex flex-col gap-4">
-                  {portfolio.experiences.map((e) => (
+                  {roleExperiences.map((e) => (
                     <li
                       key={e.id}
                       className="border-luminous/40 border-l-2 pl-3"
@@ -111,9 +126,9 @@ export function CVPreview() {
                         </p>
                       </div>
                       <p className="text-foreground/80 text-xs">{e.company}</p>
-                      {e.detail && (
+                      {(e.detail || e.approach || e.impact) && (
                         <p className="text-foreground/75 mt-1.5 text-xs leading-snug">
-                          {e.detail}
+                          {[e.detail, e.approach, e.impact].filter(Boolean).join(" — ")}
                         </p>
                       )}
                     </li>
@@ -123,13 +138,13 @@ export function CVPreview() {
             </CVSection>
 
             <CVSection
-              title="Projects"
-              empty="Add projects in the Projects tab."
+              title="Projects & problems solved"
+              empty="Add a project entry in the Experience tab."
               icon={FolderGit2}
             >
-              {portfolio.projects.length > 0 && (
+              {mergedProjects.length > 0 && (
                 <ul className="flex flex-col gap-3">
-                  {portfolio.projects.map((p) => (
+                  {mergedProjects.map((p) => (
                     <li key={p.id} className="text-sm">
                       <p className="font-semibold">{p.title}</p>
                       {p.description && (
@@ -167,32 +182,24 @@ export function CVPreview() {
             </CVSection>
 
             <CVSection
-              title="Certificates"
-              icon={GraduationCap}
-              empty="Add certificates in the Certificates tab."
+              title="Certificates & awards"
+              icon={AwardIcon}
+              empty="Add recognition in the Recognition tab."
             >
-              {portfolio.certificates.length > 0 && (
+              {portfolio.certificates.length + portfolio.awards.length > 0 && (
                 <ul className="flex flex-col gap-2">
                   {portfolio.certificates.map((c) => (
                     <li key={c.id} className="text-xs">
-                      <p className="text-foreground font-medium">{c.title}</p>
+                      <p className="text-foreground flex items-center gap-1 font-medium">
+                        <GraduationCap className="text-muted-foreground size-3 shrink-0" aria-hidden />
+                        {c.title}
+                      </p>
                       <p className="text-muted-foreground">
                         {c.issuer}
                         {c.year ? ` · ${c.year}` : ""}
                       </p>
                     </li>
                   ))}
-                </ul>
-              )}
-            </CVSection>
-
-            <CVSection
-              title="Awards"
-              icon={AwardIcon}
-              empty="Add awards in the Awards tab."
-            >
-              {portfolio.awards.length > 0 && (
-                <ul className="flex flex-col gap-2">
                   {portfolio.awards.map((a) => (
                     <li key={a.id} className="text-xs">
                       <p className="text-foreground font-medium">

@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  Factory,
+  Laptop,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import {
   getFairPayLabel,
@@ -42,8 +50,28 @@ const VERDICT_CLASSES: Record<FairPayVerdict["tone"], string> = {
   luminous: "bg-luminous/10 text-luminous-soft border-luminous/30",
 };
 
-const fmtMoney = (row: MarketRow, n: number) =>
-  `${row.currency} ${n.toLocaleString("en-US")}`;
+/** Short industry context per field, for the sector badge next to "Demo data". */
+const SECTOR: Record<string, { label: string; icon: typeof Laptop }> = {
+  "Technology and software": { label: "Tech Sector", icon: Laptop },
+  "Engineering and manufacturing": { label: "Engineering Sector", icon: Factory },
+};
+
+const round1k = (n: number) => Math.round(n / 1000) * 1000;
+const fmtK = (n: number) => `${Math.round(n / 1000)}k`;
+
+/** Split the indicative range into three experience tiers. Fractions are tuned
+ *  so the flagship Tech range (60k–216k) lands on the mentor's spec
+ *  (60–95k / 96–150k / 151–216k) and degrade proportionally for other fields. */
+function salaryTiers(row: MarketRow) {
+  const span = row.salaryMax - row.salaryMin;
+  const entryMax = round1k(row.salaryMin + span * 0.224);
+  const midMax = round1k(row.salaryMin + span * 0.577);
+  return [
+    { label: "Entry-Level", years: "0–2 Yrs", min: row.salaryMin, max: entryMax },
+    { label: "Mid-Career", years: "3–5 Yrs", min: entryMax + 1000, max: midMax },
+    { label: "Senior", years: "5+ Yrs", min: midMax + 1000, max: row.salaryMax },
+  ];
+}
 
 export function MarketValuePanel({
   field,
@@ -59,62 +87,78 @@ export function MarketValuePanel({
   const verdict = getFairPayLabel(offer, data);
 
   const trend = TREND_META[data.demandTrend] ?? TREND_META.stable;
+  const sector = SECTOR[data.field] ?? { label: data.field, icon: Building2 };
+  const tiers = salaryTiers(data);
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs font-mono font-semibold uppercase tracking-wider">
           Market value — {roleTitle}
         </h3>
-        <Badge variant="outline">Demo data</Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge variant="outline">Demo data</Badge>
+          <span className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium">
+            <sector.icon className="size-3" aria-hidden />
+            {sector.label}
+          </span>
+        </div>
       </div>
 
-      {/* Primary figure — the indicative range leads the panel */}
-      <div>
-        <p className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {fmtMoney(data, data.salaryMin)}
-          <span className="text-muted-foreground/70 mx-1 font-normal">–</span>
-          {fmtMoney(data, data.salaryMax)}
-        </p>
-        <p className="text-muted-foreground/80 mt-0.5 font-mono text-[11px] uppercase tracking-wider">
-          Indicative range · per year
-        </p>
+      {/* Salary by experience tier — replaces the single wide range */}
+      <div className="grid grid-cols-3 gap-2">
+        {tiers.map((t) => (
+          <div
+            key={t.label}
+            className="border-border/15 bg-foreground/2 rounded-lg border px-2.5 py-2"
+          >
+            <div className="text-luminous/80 flex items-center gap-1">
+              <BarChart3 className="size-3" aria-hidden />
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-wide">
+                {t.years}
+              </span>
+            </div>
+            <p className="text-muted-foreground mt-1 text-[11px]">{t.label}</p>
+            <p className="mt-0.5 text-sm font-semibold tracking-tight">
+              {data.currency} {fmtK(t.min)}
+              <span className="text-muted-foreground/60">–</span>
+              {fmtK(t.max)}
+            </p>
+          </div>
+        ))}
       </div>
 
-      {/* Secondary: trend + growth, deliberately quieter */}
+      {/* Trend trajectory only — sector + period now live in the badge/source */}
       <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
         <trend.icon className={cn("size-3.5", trend.cls)} aria-hidden />
         <span className={cn("font-medium", trend.cls)}>{trend.label}</span>
-        <span>
-          · {data.salaryGrowth} · {data.demandPeriod} · {data.field}
-        </span>
+        <span>· {data.salaryGrowth}</span>
       </p>
-      <div className="bg-foreground/8 h-1.5 overflow-hidden rounded-full">
-        <div className="bg-luminous/50 h-full w-full rounded-full" />
-      </div>
 
-      {/* Fair-pay check — client-side only, live as the slider moves */}
+      {/* Fair-pay check — client-side only */}
       <div>
-        <div className="flex items-center justify-between text-sm">
-          <label htmlFor={`fair-pay-offer-${field}`} className="font-medium">
-            Check an offer
-          </label>
-          <span className="text-luminous font-semibold">
-            {fmtMoney(data, offer)}
-          </span>
+        <label
+          htmlFor={`fair-pay-offer-${field}`}
+          className="text-sm font-medium"
+        >
+          Check an offer
+        </label>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="text-muted-foreground text-sm">{data.currency}</span>
+          <input
+            id={`fair-pay-offer-${field}`}
+            type="number"
+            inputMode="numeric"
+            min={OFFER_MIN}
+            max={OFFER_MAX}
+            step={1000}
+            value={offer}
+            onChange={(e) => setOffer(Number(e.target.value))}
+            aria-label="Salary offer to check"
+            className="bg-foreground/2 border-border/15 focus:border-luminous min-h-9 w-full rounded-lg border px-3 py-2 text-sm tabular-nums outline-none"
+          />
         </div>
-        <input
-          id={`fair-pay-offer-${field}`}
-          type="range"
-          min={OFFER_MIN}
-          max={OFFER_MAX}
-          step={1000}
-          value={offer}
-          onChange={(e) => setOffer(Number(e.target.value))}
-          aria-label="Salary offer to check"
-          className="accent-luminous mt-1 w-full"
-        />
-        <p className="mt-1 text-sm">
+        <p className="mt-2 text-sm">
           <span
             className={cn(
               "mr-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",

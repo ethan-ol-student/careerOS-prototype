@@ -82,7 +82,7 @@ const NAV: NavGroup[] = [
     label: "My Progress",
     items: [
       { label: "My Applications", href: "/candidate/applications", icon: ClipboardList },
-      { label: "Career Path Navigation", href: "#", icon: Route, soon: true },
+      { label: "Career Path Navigation", href: "/candidate/path", icon: Route },
       { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
       { label: "Messages", href: "/candidate/messages", icon: MessageSquare },
     ],

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { FeedbackModal } from "@/components/ui/FeedbackModal";
 import {
   SkillMatrixInput,
   MATRIX_MIN,
@@ -272,11 +273,6 @@ export function JobPostForm({
       )}
 
       {error && <p className="text-destructive text-sm">{error}</p>}
-      {posted && !error && (
-        <p className="text-clover text-sm">
-          Job posted — it&apos;s live in the candidate feed for 30 days.
-        </p>
-      )}
 
       <div className="flex items-center justify-end gap-3">
         <Button type="submit" disabled={!canSubmit}>
@@ -284,6 +280,14 @@ export function JobPostForm({
           {full ? "Post job" : "Quick post"}
         </Button>
       </div>
+
+      <FeedbackModal
+        isOpen={posted && !error}
+        onClose={() => setPosted(false)}
+        variant="success"
+        title="Successfully posted your job!"
+        description="It's live in the candidate feed for the next 30 days."
+      />
     </form>
   );
 }

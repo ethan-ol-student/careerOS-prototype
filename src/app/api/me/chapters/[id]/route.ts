@@ -16,6 +16,7 @@ const ChapterPatchSchema = z
     date: z.string().max(32).optional(),
     time: z.string().max(32).optional(),
     subtasks: z.array(SubtaskSchema).max(20).optional(),
+    meaningful: z.boolean().nullable().optional(),
   })
   .strict();
 

@@ -28,8 +28,10 @@ export async function GET() {
         prisma.midCareerProfile.findUnique({
           where: { candidateProfileId: profile.id },
         }),
+        // Role-kind only: the Career Story Map counts ROLES — project-kind
+        // experiences (merged Living Portfolio) would inflate the pattern.
         prisma.experience.findMany({
-          where: { profileId: profile.id },
+          where: { profileId: profile.id, kind: "role" },
           orderBy: { id: "asc" },
         }),
         prisma.candidatesAI.findUnique({ where: { userId: profile.userId } }),

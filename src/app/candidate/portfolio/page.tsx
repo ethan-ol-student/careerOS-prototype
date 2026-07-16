@@ -8,15 +8,17 @@ import {
   ChevronUp,
   Circle,
   Download,
+  Eye,
   History,
   Lock,
-  Plus,
+  PencilLine,
   RotateCcw,
   Save,
-  X,
+  Sparkles,
 } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Modal } from "@/components/ui/Modal";
 import { MeterRow } from "@/components/dashboard/PhaseWidgetGrid";
@@ -26,7 +28,7 @@ import { CareerTimeline } from "@/components/portfolio/CareerTimeline";
 import { CVPreview } from "@/components/portfolio/CVPreview";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
-import { resumeCompleteness } from "@/lib/resume/completeness";
+import { resumeCompleteness, type CompletenessKey } from "@/lib/resume/completeness";
 import { cn } from "@/lib/utils";
 
 interface VersionRow {
@@ -89,11 +91,12 @@ function PortfolioContent() {
   const { portfolio, resetPortfolio } = usePortfolio();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [section, setSection] = useState<Section>("identity");
+  // Wireframe: one main column, toggled between the builder and the preview.
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
 
   // Resume tooling state (versions, problems solved, PDF gate).
   const [versions, setVersions] = useState<VersionRow[]>([]);
   const [problemsSolved, setProblemsSolved] = useState<string[]>([]);
-  const [newProblem, setNewProblem] = useState("");
   const [isPro, setIsPro] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -141,18 +144,16 @@ function PortfolioContent() {
   const complete = completeness.pct === 100;
 
   /** Checklist click → jump to the exact spot that completes the task. */
-  function goToTask(key: Section | "problems") {
+  function goToTask(key: CompletenessKey) {
     setChecklistOpen(false);
-    if (key === "problems") {
+    setMode("edit"); // tasks are completed in the builder
+    // Problems solved lives inside the Experience section now.
+    setSection(key === "problems" ? "experience" : key);
+    requestAnimationFrame(() =>
       document
-        .getElementById("problems-editor")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-    setSection(key);
-    document
-      .getElementById("portfolio-builder")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        .getElementById(key === "problems" ? "problems-editor" : "portfolio-builder")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
   }
 
   async function saveProblems(next: string[]) {
@@ -207,6 +208,35 @@ function PortfolioContent() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {note && <p className="text-clover max-w-56 truncate text-xs">{note}</p>}
+            {/* Wireframe: Edit CV | Preview CV segmented toggle */}
+            <div
+              role="group"
+              aria-label="Portfolio mode"
+              className="border-border/15 bg-foreground/2 flex rounded-full border p-0.5"
+            >
+              {(
+                [
+                  { id: "edit", label: "Edit CV", icon: PencilLine },
+                  { id: "preview", label: "Preview CV", icon: Eye },
+                ] as const
+              ).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-pressed={mode === m.id}
+                  onClick={() => setMode(m.id)}
+                  className={cn(
+                    "inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors",
+                    mode === m.id
+                      ? "bg-luminous/15 text-luminous-soft"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <m.icon className="size-3.5" aria-hidden />
+                  {m.label}
+                </button>
+              ))}
+            </div>
             <Button variant="ghost" size="sm" onClick={() => setTimelineOpen(true)}>
               <History className="size-3.5" />
               Timeline
@@ -258,71 +288,21 @@ function PortfolioContent() {
           </div>
         </div>
 
-        {/* ── Body: input left, completeness + preview right ── */}
+        {/* ── Body: main column (Edit ↔ Preview) left, insight rail right ── */}
         <div className="mt-3 grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-12">
-          {/* Left: builder + problems solved (internally scrolling) */}
+          {/* Main column — the mode toggle decides what fills it. */}
           <div className="flex min-h-0 flex-col gap-3 lg:col-span-7">
             <div className="min-h-0 flex-1 space-y-4 lg:overflow-y-auto lg:pr-1">
-              <PortfolioBuilder section={section} onSectionChange={setSection} />
-
-              {/* Problems solved — proof of capability, leads the PDF. */}
-              <section
-                id="problems-editor"
-                className="glass-3 scroll-mt-4 rounded-2xl p-6"
-              >
-                <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
-                  Problems solved
-                </p>
-                <p className="text-muted-foreground mt-2 text-xs">
-                  Notable problems you solved and their impact — these lead your
-                  PDF, before job titles.
-                </p>
-                {problemsSolved.length > 0 && (
-                  <ul className="mt-3 space-y-2">
-                    {problemsSolved.map((p) => (
-                      <li
-                        key={p}
-                        className="border-border/15 bg-foreground/2 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
-                      >
-                        <span className="min-w-0 flex-1">{p}</span>
-                        <button
-                          type="button"
-                          aria-label={`Remove "${p}"`}
-                          onClick={() =>
-                            void saveProblems(problemsSolved.filter((x) => x !== p))
-                          }
-                          className="text-muted-foreground hover:text-destructive shrink-0"
-                        >
-                          <X className="size-4" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <form
-                  className="mt-3 flex gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const v = newProblem.trim();
-                    if (!v || problemsSolved.includes(v)) return;
-                    void saveProblems([...problemsSolved, v]);
-                    setNewProblem("");
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={newProblem}
-                    onChange={(e) => setNewProblem(e.target.value)}
-                    maxLength={240}
-                    placeholder="e.g. Cut deployment time from 2 days to 20 minutes"
-                    className="bg-foreground/2 border-border/15 focus:border-luminous/60 focus:ring-luminous/30 min-h-11 w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors focus:ring-2"
-                  />
-                  <Button type="submit" size="sm" className="min-h-11 shrink-0">
-                    <Plus className="size-3.5" />
-                    Add
-                  </Button>
-                </form>
-              </section>
+              {mode === "edit" ? (
+                <PortfolioBuilder
+                  section={section}
+                  onSectionChange={setSection}
+                  problemsSolved={problemsSolved}
+                  onSaveProblems={(next) => void saveProblems(next)}
+                />
+              ) : (
+                <CVPreview />
+              )}
             </div>
 
             {/* Saved versions — collapsed bar, expands upward as an overlay */}
@@ -378,7 +358,7 @@ function PortfolioContent() {
             </div>
           </div>
 
-          {/* Right: completeness (expand-down overlay) + CV preview */}
+          {/* Right rail (both modes): completeness + auto skills summary */}
           <div className="flex min-h-0 flex-col gap-3 lg:col-span-5">
             <div className="relative shrink-0">
               <button
@@ -453,8 +433,9 @@ function PortfolioContent() {
               </ExpandOverlay>
             </div>
 
+            {/* Wireframe: auto summary of skills learnt or strengthened */}
             <div className="min-h-0 flex-1 lg:overflow-y-auto">
-              <CVPreview />
+              <AutoSkillsPanel />
             </div>
           </div>
         </div>
@@ -492,5 +473,83 @@ function PortfolioContent() {
         <CareerTimeline />
       </Modal>
     </>
+  );
+}
+
+/**
+ * Auto summary — skills learnt or strengthened (wireframe right rail).
+ * Derived from the experiences' `skillsUsed` chips: "strengthened" when the
+ * matching Skill Radar claim is validated (tier ≥ 2), "learnt" otherwise.
+ */
+function AutoSkillsPanel() {
+  const { portfolio } = usePortfolio();
+  const [tiers, setTiers] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch("/api/me/skills", { cache: "no-store" }).catch(() => null);
+      const json = await res?.json().catch(() => null);
+      if (json?.ok) {
+        const map: Record<string, number> = {};
+        for (const c of json.data.claims as { name: string; tier: number }[]) {
+          map[c.name.toLowerCase()] = c.tier;
+        }
+        setTiers(map);
+      }
+    })();
+  }, []);
+
+  // Mention counts across all experiences' skillsUsed.
+  const rows = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of portfolio.experiences) {
+      for (const s of e.skillsUsed ?? []) {
+        const k = s.trim();
+        if (k) counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .map(([skill, count]) => ({
+        skill,
+        count,
+        strengthened: (tiers[skill.toLowerCase()] ?? 1) >= 2,
+      }))
+      .sort((a, b) => b.count - a.count || a.skill.localeCompare(b.skill));
+  }, [portfolio.experiences, tiers]);
+
+  return (
+    <section className="glass-3 rounded-2xl p-5">
+      <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+        <Sparkles className="size-3" aria-hidden />
+        Skills you&apos;ve learnt or strengthened
+      </p>
+      <p className="text-muted-foreground mt-2 text-xs">
+        Auto-summarized from your experience entries — each one lands on your
+        Skill Radar automatically.
+      </p>
+      {rows.length ? (
+        <ul className="mt-3 space-y-1.5">
+          {rows.map((r) => (
+            <li
+              key={r.skill}
+              className="border-border/15 bg-foreground/2 flex items-center gap-2 rounded-lg border px-3 py-2"
+            >
+              <span className="min-w-0 flex-1 truncate text-sm capitalize">{r.skill}</span>
+              <Chip tone={r.strengthened ? "clover" : "neutral"}>
+                {r.strengthened ? "Strengthened" : "Learnt"}
+              </Chip>
+              <span className="text-muted-foreground shrink-0 font-mono text-[10px] tabular-nums">
+                ×{r.count}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-muted-foreground/70 mt-3 rounded-lg border border-dashed p-3 text-center text-xs">
+          Add an experience with &quot;skills strengthened or learned&quot; to
+          see your auto summary here.
+        </p>
+      )}
+    </section>
   );
 }

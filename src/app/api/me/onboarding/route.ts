@@ -59,8 +59,17 @@ const OnboardingPatchSchema = z
     fieldOfStudy: z.string().max(120).optional(),
     expectedGraduation: z.string().max(40).optional(),
 
-    // Onboarding v2 — profile-bound fields (routed to CandidateProfile)
+    // Onboarding v3 — focus + optional self-ID (PRIVATE, never projected)
+    focus: z.enum(["", "improve", "discovering"]).optional(),
+    familyStatus: z.string().max(40).optional(),
+    gender: z.string().max(40).optional(),
+    religion: z.array(z.string().max(40)).max(10).optional(),
+    race: z.array(z.string().max(40)).max(10).optional(),
+    age: z.number().int().min(0).max(120).nullable().optional(),
+
+    // Onboarding v2/v3 — profile-bound fields (routed to CandidateProfile)
     fullName: z.string().max(120).optional(),
+    nickname: z.string().max(60).optional(),
     currentTitle: z.string().max(120).optional(),
     phone: z.string().max(40).optional(),
     location: z.string().max(120).optional(),
@@ -90,11 +99,12 @@ export async function GET() {
     // Include the profile-bound fields so onboarding can prefill them.
     const profile = await prisma.candidateProfile.findUnique({
       where: { userId: user.id },
-      select: { name: true, headline: true, phone: true, location: true },
+      select: { name: true, nickname: true, headline: true, phone: true, location: true },
     });
     return ok({
       ...row,
       fullName: profile?.name ?? user.name ?? "",
+      nickname: profile?.nickname ?? "",
       currentTitle: profile?.headline ?? "",
       phone: profile?.phone ?? "",
       location: profile?.location ?? "",
@@ -129,9 +139,10 @@ export async function PATCH(request: Request) {
     }
     await getOrCreateRow(user.id);
     // Profile-bound fields live on CandidateProfile, not CandidatesAI.
-    const { fullName, currentTitle, phone, location, ...aiData } = parsed.data;
+    const { fullName, nickname, currentTitle, phone, location, ...aiData } = parsed.data;
     const profilePatch = {
       ...(fullName !== undefined ? { name: fullName } : {}),
+      ...(nickname !== undefined ? { nickname } : {}),
       ...(currentTitle !== undefined ? { headline: currentTitle } : {}),
       ...(phone !== undefined ? { phone } : {}),
       ...(location !== undefined ? { location } : {}),

@@ -12,9 +12,16 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function EventEditor() {
+export function EventEditor({
+  initialName = "",
+  onSaved,
+}: {
+  initialName?: string;
+  /** Called after a successful add — lets a modal host close itself. */
+  onSaved?: () => void;
+}) {
   const { addEvent } = useChapters();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialName);
   const [priority, setPriority] = useState<Priority>("medium");
   const [date, setDate] = useState(todayISO());
   const [time, setTime] = useState("09:00");
@@ -37,6 +44,7 @@ export function EventEditor() {
     if (!canSave) return;
     addEvent({ name, priority, date, time, subtasks });
     reset();
+    onSaved?.();
   };
 
   const addSub = (e: React.FormEvent) => {
@@ -55,7 +63,7 @@ export function EventEditor() {
 
       <div className="relative mb-4">
         <p className="text-luminous text-xs font-mono font-semibold uppercase tracking-[0.18em]">
-          Design mode · new event
+          New event
         </p>
         <h3 className="mt-1 text-xl font-semibold tracking-tight">
           Add an activity to your timetable

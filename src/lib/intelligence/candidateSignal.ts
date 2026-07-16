@@ -63,7 +63,15 @@ export interface CandidateSignal {
 /** Plain data the server loader fills — no Prisma types, so the builder is pure. */
 export interface CandidateSignalInput {
   claims: { name: string; level: number; tier: number }[];
-  experiences: { role?: string | null; company?: string | null; detail?: string | null }[];
+  experiences: {
+    role?: string | null;
+    company?: string | null;
+    detail?: string | null;
+    // Structured merge fields (optional — older fixtures stay valid)
+    approach?: string | null;
+    impact?: string | null;
+    skillsUsed?: string[] | null;
+  }[];
   projects: { title?: string | null; description?: string | null }[];
   problemsSolved: string[];
   journal: JournalSignal[];
@@ -109,7 +117,9 @@ export function buildCandidateSignal(input: CandidateSignalInput): CandidateSign
     input.headline,
     input.summary,
     ...input.experiences.map((e) =>
-      [e.role, e.company, e.detail].filter(Boolean).join(" "),
+      [e.role, e.company, e.detail, e.approach, e.impact, ...(e.skillsUsed ?? [])]
+        .filter(Boolean)
+        .join(" "),
     ),
     ...input.projects.map((p) => [p.title, p.description].filter(Boolean).join(" ")),
     ...input.problemsSolved,

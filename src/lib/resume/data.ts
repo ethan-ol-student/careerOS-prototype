@@ -49,12 +49,32 @@ export async function getResumeData(): Promise<ResumeData> {
     skills: profile.skills,
     problemsSolved: midCareer?.problemsSolved ?? [],
     careerPattern: midCareer?.careerPattern ?? "",
-    experiences: experiences.map((e) => ({
-      role: e.role, company: e.company, period: e.period, detail: e.detail,
-    })),
-    projects: projects.map((p) => ({
-      title: p.title, description: p.description, link: p.link,
-    })),
+    // Merged Living Portfolio: role-kind rows are experiences; project-kind
+    // rows join the projects section (so the PDF template + old ResumeVersion
+    // snapshots keep one stable shape).
+    experiences: experiences
+      .filter((e) => e.kind !== "project")
+      .map((e) => ({
+        role: e.role,
+        company: e.company,
+        period: e.period,
+        detail:
+          [e.detail, e.approach, e.impact].filter(Boolean).join(" — ") || null,
+      })),
+    projects: [
+      ...projects.map((p) => ({
+        title: p.title, description: p.description, link: p.link,
+      })),
+      ...experiences
+        .filter((e) => e.kind === "project")
+        .map((e) => ({
+          title: e.role,
+          description: [e.detail, e.approach, e.impact]
+            .filter(Boolean)
+            .join(" — "),
+          link: e.link,
+        })),
+    ],
     certificates: certificates.map((c) => ({
       title: c.title, issuer: c.issuer, year: c.year,
     })),

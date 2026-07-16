@@ -127,6 +127,7 @@ function toChapterEvent(row: {
   date: string;
   time: string;
   subtasks: unknown;
+  meaningful?: boolean | null;
   createdAt: string;
 }): ChapterEvent {
   return {
@@ -136,6 +137,7 @@ function toChapterEvent(row: {
     date: row.date,
     time: row.time,
     subtasks: (row.subtasks as Subtask[]) ?? [],
+    meaningful: row.meaningful ?? null,
     createdAt: row.createdAt,
   };
 }
@@ -220,6 +222,12 @@ function toPortfolio(profile: {
     company: string;
     period: string;
     detail: string | null;
+    kind?: string;
+    contribution?: string;
+    approach?: string;
+    impact?: string;
+    skillsUsed?: string[];
+    link?: string | null;
   }[];
 }): PortfolioData {
   return {
@@ -246,6 +254,12 @@ function toPortfolio(profile: {
       company: e.company,
       period: e.period,
       detail: e.detail ?? undefined,
+      kind: e.kind === "project" ? ("project" as const) : ("role" as const),
+      contribution: (e.contribution ?? "") as "" | "lead" | "assistant" | "participant",
+      approach: e.approach ?? "",
+      impact: e.impact ?? "",
+      skillsUsed: e.skillsUsed ?? [],
+      link: e.link ?? undefined,
     })),
     lastUpdated: profile.lastUpdated,
     totalAdditions: profile.totalAdditions,

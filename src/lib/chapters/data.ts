@@ -17,6 +17,8 @@ export interface ChapterEvent {
   date: string;   // YYYY-MM-DD
   time: string;   // HH:MM (24h)
   subtasks: Subtask[];
+  /** "Does this move me toward my ideal self?" — null/undefined = unrated. */
+  meaningful?: boolean | null;
   createdAt: string;
 }
 

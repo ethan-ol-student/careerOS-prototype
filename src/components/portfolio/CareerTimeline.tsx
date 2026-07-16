@@ -126,15 +126,16 @@ export function CareerTimeline({ className }: { className?: string }) {
 
   const entries = useMemo<TimelineEntry[]>(() => {
     const list: TimelineEntry[] = [
+      // Merged Living Portfolio: an experience row is a role OR a project.
       ...portfolio.experiences.map((e) => ({
         key: `exp:${e.id}`,
-        type: "role" as const,
+        type: (e.kind === "project" ? "project" : "role") as "project" | "role",
         title: e.role,
         subtitle: e.company,
         dateLabel: e.period,
         year: yearOf(e.period),
-        detail: e.detail ?? "",
-        builtInEvidence: "",
+        detail: [e.detail, e.approach, e.impact].filter(Boolean).join(" — "),
+        builtInEvidence: e.link ?? "",
       })),
       ...portfolio.certificates.map((c) => ({
         key: `cert:${c.id}`,

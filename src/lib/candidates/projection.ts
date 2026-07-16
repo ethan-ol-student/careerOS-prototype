@@ -133,8 +133,17 @@ export async function syncMarketplaceMirror(userId: string): Promise<void> {
       ...((ai?.currentSkills as string[] | undefined) ?? []),
     ]).slice(0, 8);
 
+    // Projects = legacy Project rows ∪ project-kind Experience rows
+    // (the merged Living Portfolio writes new projects as experiences).
+    const projectExperiences = profile.experiences.filter(
+      (e) => e.kind === "project",
+    );
+    const roleExperiences = profile.experiences.filter(
+      (e) => e.kind !== "project",
+    );
     const portfolioProjects = dedupe([
       ...profile.projects.map((p) => p.title),
+      ...projectExperiences.map((e) => e.role),
       ...((ai?.projects as string[] | undefined) ?? []),
     ]).slice(0, 6);
 
@@ -160,8 +169,8 @@ export async function syncMarketplaceMirror(userId: string): Promise<void> {
 
     const availability = inferAvailability(ai?.availability);
     const growthSignal = inferGrowthSignal({
-      projectCount: profile.projects.length,
-      experienceCount: profile.experiences.length,
+      projectCount: profile.projects.length + projectExperiences.length,
+      experienceCount: roleExperiences.length,
       skillsToImprove: ((ai?.skillsToImprove as string[] | undefined) ?? []).length,
       weeklyLearningTime: ai?.weeklyLearningTime,
     });

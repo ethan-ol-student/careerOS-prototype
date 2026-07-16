@@ -6,30 +6,28 @@ import {
   ArrowUpRight,
   BookOpen,
   Briefcase,
-  CalendarPlus,
-  ChevronLeft,
-  ChevronRight,
+  CalendarDays,
   Compass,
   HeartPulse,
   Loader2,
   Radar as RadarIcon,
   Sparkles,
-  Upload,
+  TrendingUp,
   User,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { ProgressRing } from "@/components/ui/ProgressRing";
-import { SkillRadar } from "@/components/skills/SkillRadar";
+import { CategoryRadar } from "@/components/skills/CategoryRadar";
+import { DayTimeline } from "@/components/dashboard/DayTimeline";
 import {
   scoreSkillTruth,
   marketValue,
   type SkillClaimInput,
+  type SkillTruth,
   type TrustTier,
 } from "@/lib/intelligence/skillTruthEngine";
 import { getPhaseConfig } from "@/lib/dashboard/phaseConfig";
 import { useUiDensity } from "@/lib/dashboard/useUiDensity";
-import { PRIORITY_META, type Priority } from "@/lib/chapters/data";
+import type { Priority } from "@/lib/chapters/data";
 import type { TargetJob } from "@/lib/jobs/data";
 import type { CandidateDashboardData } from "@/lib/dashboard/types";
 import { cn } from "@/lib/utils";
@@ -48,23 +46,6 @@ interface EventRow {
   priority: Priority;
   date: string; // YYYY-MM-DD
   time: string;
-}
-interface ActionRow {
-  icon: typeof Sparkles;
-  label: string;
-  href: string;
-}
-
-// ── Date helpers (local-time, matches ChapterEvent's YYYY-MM-DD) ──
-
-const toISODate = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-function mondayOf(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-  return x;
 }
 
 /**
@@ -120,39 +101,6 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
   const industry = data.field || data.ai?.interestedIndustries?.[0] || "";
   const target =
     data.targetJob || data.desiredNextMove || data.longTermGoal || "";
-
-  // AI insight nudge (spec Step 7): personalize by what the candidate said
-  // matters most × their biggest current gap. Falls back to gap-only.
-  const insight = useMemo(() => {
-    const topValue = data.ai?.topValues?.[0];
-    const gap = truth?.gaps[0];
-    if (topValue && gap) {
-      return `You told us "${topValue}" matters most — closing "${gap}" is the fastest move toward roles that offer it.`;
-    }
-    if (topValue) {
-      return `You value "${topValue}" most — we'll weight matches toward roles that deliver it.`;
-    }
-    if (gap) return `Your biggest lever right now: close the "${gap}" gap.`;
-    return null;
-  }, [data.ai?.topValues, truth]);
-
-  // Recommended actions: the engine's ONE next step, the top gaps as
-  // learn-links, and the always-available CV quick upload.
-  const actions: ActionRow[] | null = truth
-    ? [
-        { icon: Sparkles, label: truth.nextStep, href: "/candidate/skills" },
-        ...truth.gaps.slice(0, 2).map((g) => ({
-          icon: BookOpen,
-          label: `Learn ${g}`,
-          href: `/candidate/skills?focus=${encodeURIComponent(g)}`,
-        })),
-        {
-          icon: Upload,
-          label: "Quick upload CV",
-          href: "/candidate/onboarding?edit=1",
-        },
-      ]
-    : null;
 
   return (
     <div data-ui-density={uiDensity} className="flex h-full flex-col">
@@ -231,7 +179,9 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
             </div>
           </CockpitCard>
 
-          {/* 4 — How do I get there? */}
+          {/* 4 — How do I get there? — read-only calendar preview + the AI
+              recommendation (the trigger point into the Life Chapter Designer).
+              Scheduling/adding modules lives in the designer, not here. */}
           <CockpitCard
             className="lg:col-span-7"
             eyebrow="How do I get there?"
@@ -241,26 +191,29 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
               midCareerPlus ? "Open Career Health home" : "Open Life Chapter Designer"
             }
           >
-            <WeekStrip events={events} />
-            <p className="text-muted-foreground mt-3 text-xs font-mono font-semibold uppercase tracking-wider">
-              Recommended actions
-            </p>
-            {actions ? (
-              <RecommendedActions
-                actions={actions}
-                onAdded={(created) => setEvents((prev) => [...prev, created])}
-              />
-            ) : (
-              <div className="mt-2">
-                <CardLoading />
+            <div className="flex h-full min-h-0 flex-col gap-3 lg:flex-row">
+              {/* Left ONLY: the single-day hourly timeline (wireframe). */}
+              <div className="flex min-h-0 flex-col lg:w-1/2">
+                <Link
+                  href="/candidate/chapters"
+                  className="text-muted-foreground hover:text-luminous mb-1 flex shrink-0 items-center gap-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider transition-colors"
+                >
+                  <CalendarDays className="size-3" aria-hidden /> Your day — plan it in Life Chapters
+                </Link>
+                <div className="min-h-44 flex-1">
+                  <DayTimeline events={events} />
+                </div>
               </div>
-            )}
-            {insight && (
-              <p className="border-luminous/30 bg-luminous/5 text-muted-foreground mt-2 flex items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs">
-                <Sparkles className="text-luminous mt-0.5 size-3.5 shrink-0" aria-hidden />
-                <span>{insight}</span>
-              </p>
-            )}
+              {/* Right: the AI recommendation, two growth lanes. */}
+              <div className="border-border/15 min-h-0 lg:w-1/2 lg:border-l lg:pl-4">
+                {truth && topJob ? (
+                  <AiRecommendation truth={truth} jobTitle={topJob.title} planHref="/candidate/chapters" />
+                ) : (
+                  <CardLoading />
+                )}
+              </div>
+            </div>
+            
             {midCareerPlus && (
               <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
                 <HeartPulse className="text-clover size-3.5" aria-hidden />
@@ -278,29 +231,61 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
             href="/candidate/skills"
             linkLabel="Open Skill Radar"
           >
-            {truth && topJob ? (
-              <div className="flex h-full min-h-0 items-center gap-4">
+            {truth && topJob && claims ? (
+              <div className="flex h-full min-h-0 items-stretch gap-4">
+                {/* Wireframe: You vs Job radar with soft/hard arrows */}
                 <div className="w-1/2 min-w-0">
-                  <SkillRadar axes={truth.axes} />
+                  <CategoryRadar claims={claims as SkillClaimInput[]} job={topJob} />
                 </div>
-                <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
-                  <ProgressRing value={truth.score} label="Suitability" size={100} />
+                {/* Wireframe: big Suitability % + minimum-requirements bars */}
+                <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="glass-4 text-luminous rounded-xl px-3.5 py-1.5 text-3xl font-bold tracking-tight">
+                      {truth.score}%
+                    </span>
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+                      Suitability
+                    </span>
+                  </div>
                   <p className="text-muted-foreground text-xs">
                     vs {topJob.title} — your best match
+                    {mv && (
+                      <span title={mv.reason}>
+                        {" "}· market signal{" "}
+                        <span className="text-clover font-medium">{mv.label}</span>
+                      </span>
+                    )}
                   </p>
-                  {mv && (
-                    <p className="text-muted-foreground text-xs" title={mv.reason}>
-                      Market signal:{" "}
-                      <span className="text-clover font-medium">{mv.label}</span>
-                    </p>
-                  )}
-                  {truth.gaps.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {truth.gaps.map((g) => (
-                        <Chip key={g}>{g}</Chip>
+                  <p className="text-muted-foreground mt-1 font-mono text-[10px] font-semibold uppercase tracking-wider">
+                    Minimum requirements
+                  </p>
+                  <ul className="flex flex-col gap-1.5">
+                    {truth.axes
+                      .filter((a) => a.required > 0)
+                      .slice(0, 5)
+                      .map((a) => (
+                        <li key={a.skill} className="flex items-center gap-2">
+                          <span
+                            className="w-24 shrink-0 truncate text-[11px] capitalize"
+                            title={a.skill}
+                          >
+                            {a.skill}
+                          </span>
+                          <span className="bg-foreground/8 relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full">
+                            <span
+                              className={cn(
+                                "block h-full rounded-full",
+                                a.you >= a.required ? "bg-clover" : "bg-luminous",
+                              )}
+                              style={{ width: `${a.you}%` }}
+                            />
+                          </span>
+                          <span className="text-muted-foreground w-8 shrink-0 text-right font-mono text-[10px] tabular-nums">
+                            {a.you}
+                          </span>
+                        </li>
                       ))}
-                    </div>
-                  )}
+                  </ul>
                 </div>
               </div>
             ) : (
@@ -337,222 +322,106 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
   );
 }
 
-// ── Card 4: 7-day calendar strip (Life Chapter events) ─────────────
+// ── Card 4: AI recommendation — two growth lanes ───────────────────
+// Mentor feedback: the AI recommendation is the "trigger point" into the
+// Life Chapter Designer, split into "learn new" vs "strengthen existing".
+// No scheduling/adding happens here — every item links into the designer.
 
-function WeekStrip({ events }: { events: EventRow[] }) {
-  const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
-  const todayIso = toISODate(new Date());
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-  const byDate = new Map<string, EventRow[]>();
-  for (const e of events) {
-    const list = byDate.get(e.date) ?? [];
-    list.push(e);
-    byDate.set(e.date, list);
-  }
-
-  const shift = (weeks: number) =>
-    setWeekStart((prev) => {
-      const next = new Date(prev);
-      next.setDate(next.getDate() + weeks * 7);
-      return next;
-    });
+function AiRecommendation({
+  truth,
+  jobTitle,
+  planHref,
+}: {
+  truth: SkillTruth;
+  jobTitle: string;
+  planHref: string;
+}) {
+  // Required skills not yet on the profile → learn new. Claimed but below
+  // the bar (low tier / partial strength) → strengthen existing.
+  const learnNew = truth.axes
+    .filter((a) => a.tier === null && a.required > 0)
+    .map((a) => a.skill)
+    .slice(0, 3);
+  const strengthen = truth.axes
+    .filter((a) => a.tier !== null && a.you < a.required)
+    .map((a) => a.skill)
+    .slice(0, 3);
 
   return (
-    <div>
-      <div className="flex items-center justify-center gap-3">
-        <button
-          type="button"
-          aria-label="Previous week"
-          onClick={() => shift(-1)}
-          className="text-muted-foreground hover:text-luminous transition-colors"
-        >
-          <ChevronLeft className="size-4" />
-        </button>
-        <p
-          className="text-xs font-mono font-bold uppercase tracking-[0.18em]"
-          title={weekStart.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-        >
-          {weekStart.toLocaleDateString("en-US", { month: "long" })}
+    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-y-auto">
+      <div className="border-luminous/30 bg-luminous/5 rounded-lg border px-2.5 py-2">
+        <p className="text-luminous flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider">
+          <Sparkles className="size-3" aria-hidden /> AI recommendation
         </p>
-        <button
-          type="button"
-          aria-label="Next week"
-          onClick={() => shift(1)}
-          className="text-muted-foreground hover:text-luminous transition-colors"
-        >
-          <ChevronRight className="size-4" />
-        </button>
+        <p className="mt-1 text-xs leading-snug">{truth.nextStep}</p>
       </div>
-      <div className="mt-1.5 grid grid-cols-7 gap-1">
-        {days.map((d) => {
-          const iso = toISODate(d);
-          const todays = (byDate.get(iso) ?? []).sort((a, b) =>
-            a.time.localeCompare(b.time),
-          );
-          return (
-            <div
-              key={iso}
-              className={cn(
-                "border-border/15 bg-foreground/2 h-16 overflow-hidden rounded-lg border px-1 py-1",
-                iso === todayIso && "ring-luminous/50 ring-1",
-              )}
-            >
-              <p className="text-muted-foreground text-center text-[9px] font-semibold uppercase leading-tight">
-                {d.toLocaleDateString("en-US", { weekday: "short" })}{" "}
-                <span className={cn(iso === todayIso && "text-luminous")}>
-                  {d.getDate()}
-                </span>
-              </p>
-              {todays.slice(0, 2).map((e) => (
-                <p
-                  key={e.id}
-                  title={`${e.name}${e.time ? ` · ${e.time}` : ""}`}
-                  className="flex items-center gap-1 truncate text-[9px] leading-tight"
-                >
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "size-1 shrink-0 rounded-full",
-                      PRIORITY_META[e.priority]?.dot ?? "bg-luminous",
-                    )}
-                  />
-                  <span className="truncate">{e.name}</span>
-                </p>
-              ))}
-              {todays.length > 2 && (
-                <p className="text-muted-foreground text-[9px] leading-tight">
-                  +{todays.length - 2} more
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <RecoGroup
+        title="Learn new skills"
+        icon={BookOpen}
+        skills={learnNew}
+        summary={
+          learnNew.length
+            ? `${jobTitle} expects these and they're not on your profile — plan a first session for each.`
+            : undefined
+        }
+        planHref={planHref}
+        empty="You've claimed every skill this role needs — nice."
+      />
+      <RecoGroup
+        title="Strengthen existing skills"
+        icon={TrendingUp}
+        skills={strengthen}
+        summary={
+          strengthen.length
+            ? "Claimed but below the bar — evidence or an endorsement lifts these over it."
+            : undefined
+        }
+        planHref={planHref}
+        empty="Your claimed skills already clear the bar for this role."
+      />
     </div>
   );
 }
 
-// ── Card 4: scrollable actions with add-to-calendar ────────────────
-
-function RecommendedActions({
-  actions,
-  onAdded,
+function RecoGroup({
+  title,
+  icon: Icon,
+  skills,
+  summary,
+  planHref,
+  empty,
 }: {
-  actions: ActionRow[];
-  onAdded: (created: EventRow) => void;
+  title: string;
+  icon: typeof Sparkles;
+  skills: string[];
+  summary?: string;
+  planHref: string;
+  empty: string;
 }) {
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [draftDate, setDraftDate] = useState(() => toISODate(new Date()));
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function addToCalendar(label: string) {
-    setBusy(true);
-    setError(null);
-    const res = await fetch("/api/me/chapters", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: label.slice(0, 80),
-        priority: "medium",
-        date: draftDate,
-        time: "",
-        subtasks: [],
-      }),
-    });
-    const json = await res.json().catch(() => null);
-    setBusy(false);
-    if (!json?.ok) {
-      setError(json?.error?.message ?? "Couldn't add to your calendar.");
-      return;
-    }
-    onAdded(json.data as EventRow);
-    setExpanded(null);
-  }
-
   return (
-    /* Wireframe: one recessed strip, actions as a horizontal tile row. */
-    <div className="border-border/15 bg-background/50 mt-1.5 rounded-xl border p-2">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {actions.slice(0, 4).map((a) => {
-          const open = expanded === a.label;
-          return (
-            <div
-              key={a.label}
-              className={cn(
-                "group relative rounded-lg border transition-colors",
-                open
-                  ? "border-luminous/50 bg-luminous/8"
-                  : "border-border/15 bg-foreground/2 hover:border-luminous/40",
-              )}
+    <div className="border-border/15 bg-foreground/2 rounded-lg border p-2.5">
+      <p className="text-muted-foreground flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider">
+        <Icon className="size-3" aria-hidden /> {title}
+      </p>
+      {summary && (
+        <p className="text-muted-foreground mt-1 text-[11px] leading-snug">{summary}</p>
+      )}
+      {skills.length ? (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {skills.map((s) => (
+            <Link
+              key={s}
+              href={`${planHref}?add=${encodeURIComponent(s)}`}
+              title={`Plan "${s}" in your Life Chapter Designer`}
+              className="border-border/15 bg-foreground/2 hover:border-luminous/40 hover:text-luminous inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] capitalize transition-colors"
             >
-              <Link
-                href={a.href}
-                title={a.label}
-                className="flex h-full flex-col items-center gap-1.5 px-2 pb-2 pt-3 text-center"
-              >
-                <span className="bg-luminous/15 text-luminous-soft flex size-8 shrink-0 items-center justify-center rounded-lg">
-                  <a.icon className="size-4" aria-hidden />
-                </span>
-                <span className="line-clamp-2 text-[11px] leading-tight">
-                  {a.label}
-                </span>
-              </Link>
-              <button
-                type="button"
-                aria-label={`Add "${a.label}" to your calendar`}
-                aria-expanded={open}
-                onClick={() => {
-                  setExpanded(open ? null : a.label);
-                  setError(null);
-                }}
-                className={cn(
-                  "absolute right-1 top-1 rounded-md p-1 transition-colors",
-                  open
-                    ? "text-luminous"
-                    : "text-muted-foreground hover:text-luminous",
-                )}
-              >
-                <CalendarPlus className="size-3.5" aria-hidden />
-              </button>
-            </div>
-          );
-        })}
-      </div>
-      {expanded && (
-        <form
-          className="border-border/15 mt-2 flex flex-wrap items-center gap-2 border-t px-1 pt-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void addToCalendar(expanded);
-          }}
-        >
-          <label
-            htmlFor="action-date"
-            className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]"
-            title={expanded}
-          >
-            Schedule “{expanded}”
-          </label>
-          <input
-            id="action-date"
-            type="date"
-            required
-            value={draftDate}
-            onChange={(e) => setDraftDate(e.target.value)}
-            className="bg-foreground/2 border-border/15 rounded-lg border px-2 py-1 text-xs outline-none [color-scheme:dark]"
-          />
-          <Button type="submit" size="xs" disabled={busy}>
-            <CalendarPlus className="size-3" />
-            Add
-          </Button>
-          {error && <p className="text-destructive w-full text-[11px]">{error}</p>}
-        </form>
+              {s}
+              <ArrowUpRight className="size-3" aria-hidden />
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="text-muted-foreground/70 mt-1 text-[11px] italic">{empty}</p>
       )}
     </div>
   );

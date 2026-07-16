@@ -4,6 +4,7 @@ import { getCurrentCandidateProfile } from "@/lib/api/currentUser";
 import { NotFoundError } from "@/lib/api/errors";
 import { ok, failFromCode, failFromUnknown } from "@/lib/api/respond";
 import { assessEvidence, assessEndorsement } from "@/lib/skills/skillValidation";
+import { syncProfileSkills } from "@/lib/skills/claims";
 
 /**
  * /api/me/skills — the caller's skill claims with 3-tier trust.
@@ -23,19 +24,6 @@ import { assessEvidence, assessEndorsement } from "@/lib/skills/skillValidation"
 
 function deriveTier(evidence: string, endorsedBy: string): number {
   return endorsedBy.trim() ? 3 : evidence.trim() ? 2 : 1;
-}
-
-/** Mirror claim names into profile.skills (stable name order). */
-async function syncProfileSkills(profileId: string) {
-  const claims = await prisma.skillClaim.findMany({
-    where: { profileId },
-    orderBy: { name: "asc" },
-  });
-  await prisma.candidateProfile.update({
-    where: { id: profileId },
-    data: { skills: claims.map((c) => c.name) },
-  });
-  return claims;
 }
 
 export async function GET() {
@@ -79,6 +67,22 @@ export async function POST(request: Request) {
       return failFromCode("validation", "Invalid skill payload.");
     }
     const { name, level } = parsed.data;
+    // Hard ceiling: 100 claims per profile (level updates always allowed).
+    const exists = await prisma.skillClaim.findUnique({
+      where: { profileId_name: { profileId: profile.id, name } },
+      select: { id: true },
+    });
+    if (!exists) {
+      const count = await prisma.skillClaim.count({
+        where: { profileId: profile.id },
+      });
+      if (count >= 100) {
+        return failFromCode(
+          "validation",
+          "Skill limit reached (100). Remove a skill to add another.",
+        );
+      }
+    }
     const claim = await prisma.skillClaim.upsert({
       where: { profileId_name: { profileId: profile.id, name } },
       create: { profileId: profile.id, name, level },

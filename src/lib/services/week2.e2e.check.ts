@@ -34,11 +34,13 @@ async function main() {
   const skills = [...new Set([...profile.skills, ...user.candidatesAI.currentSkills])];
 
   // 1) Jobs render from DB with personalized match scores
-  const jobs = (await prisma.job.findMany({ include: { company: true } })).map((r) => ({
+  // (catalogue rows only — employer-posted jobs land in the same table and
+  // are soft-deleted by design, so total count is not a stable invariant)
+  const jobs = (await prisma.job.findMany({ where: { employerId: null }, include: { company: true } })).map((r) => ({
     row: r,
     bridge: scoreSkillBridge(toTargetJob(r), skills),
   }));
-  assert.equal(jobs.length, 20, "20 jobs from DB");
+  assert.equal(jobs.length, 20, "20 catalogue jobs from DB");
   assert.ok(jobs.every((j) => j.bridge.score >= 0 && j.bridge.reasons.length > 0), "every job has explainable match");
   const best = [...jobs].sort((a, b) => b.bridge.score - a.bridge.score)[0];
   console.log(`jobs ✓ best match for demo user: ${best.row.title} (${best.bridge.score})`);

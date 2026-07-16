@@ -37,10 +37,17 @@ export interface Project {
 }
 export interface Experience {
   id: string;
-  role: string;
+  role: string; // the problem/project title when kind="project"
   company: string;
   period: string;
   detail?: string;
+  // Structured merge (Experience ∪ Projects ∪ Problems solved)
+  kind?: "role" | "project";
+  contribution?: "" | "lead" | "assistant" | "participant";
+  approach?: string;
+  impact?: string;
+  skillsUsed?: string[];
+  link?: string;
 }
 export interface PortfolioData {
   headline: string;
@@ -131,6 +138,9 @@ interface PortfolioContextValue {
   setSummary: (v: string) => void;
   addSkill: (skill: string) => void;
   removeSkill: (skill: string) => void;
+  /** Reconcile the local skills view to the authoritative claim names after
+   *  the Skill Radar mutated them elsewhere (server already persisted). */
+  syncSkills: (names: string[]) => void;
   addCertificate: (c: Omit<Certificate, "id">) => void;
   removeCertificate: (id: string) => void;
   addAward: (a: Omit<Award, "id">) => void;
@@ -309,6 +319,20 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     },
     [queueServerPatch],
   );
+
+  const syncSkills = useCallback((names: string[]) => {
+    // The Skill Radar's /api/me/skills write already mirrored these into
+    // CandidateProfile.skills server-side — here we only refresh the local
+    // paint cache so the portfolio view isn't stale (no second server write).
+    setPortfolio((p) => {
+      if (p.skills.length === names.length && p.skills.every((s, i) => s === names[i])) {
+        return p; // already in sync — avoid a needless re-render
+      }
+      const next = { ...p, skills: names };
+      persistCache(next);
+      return next;
+    });
+  }, []);
 
   // Certificates, awards, projects, experiences round-trip to the
   // dedicated `/api/me/portfolio/[collection]` routes. Each add is
@@ -585,6 +609,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setSummary,
       addSkill,
       removeSkill,
+      syncSkills,
       addCertificate,
       removeCertificate,
       addAward,
@@ -604,6 +629,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setSummary,
       addSkill,
       removeSkill,
+      syncSkills,
       addCertificate,
       removeCertificate,
       addAward,

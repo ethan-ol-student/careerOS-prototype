@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { ScoreBar } from "@/components/ui/ScoreBar";
+import { FeedbackModal } from "@/components/ui/FeedbackModal";
 import { MarketValuePanel } from "@/components/market/MarketValuePanel";
 
 interface JobDetail {
@@ -51,6 +52,7 @@ export default function JobDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [justApplied, setJustApplied] = useState(false); // fresh apply → celebrate
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/jobs/${id}`, { cache: "no-store" });
@@ -75,6 +77,7 @@ export default function JobDetailPage({
     const json = await res.json();
     setApplying(false);
     if (json.ok || res.status === 409) setApplied(true);
+    if (json.ok) setJustApplied(true);
     if (!json.ok && res.status !== 409) {
       setError(json.error?.message ?? "Could not apply.");
     }
@@ -209,6 +212,14 @@ export default function JobDetailPage({
           </Grid12>
         )}
       </main>
+
+      <FeedbackModal
+        isOpen={justApplied}
+        onClose={() => setJustApplied(false)}
+        variant="success"
+        title="Application submitted!"
+        description="You'll see status updates in your Applications tracker."
+      />
     </AppShell>
   );
 }

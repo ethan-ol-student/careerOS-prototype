@@ -39,6 +39,28 @@ export const SKILL_TAXONOMY: string[] = [
   "Mentoring", "Conflict Resolution", "Multilingual",
 ];
 
+// ── Soft vs hard classification (derived, never stored) ─────────
+// The radar/dashboard soft|hard matrices classify at read time so no
+// backfill or claim column is ever needed. Unknown skills default to hard.
+
+export type SkillCategory = "soft" | "hard";
+
+const SOFT_SKILLS = new Set(
+  [
+    // the "Soft / transferable" block
+    "Communication", "Leadership", "Teamwork", "Problem Solving",
+    "Time Management", "Negotiation", "Critical Thinking", "Adaptability",
+    "Mentoring", "Conflict Resolution", "Multilingual",
+    // people-first skills from other blocks
+    "Public Speaking", "Event Planning", "Customer Service",
+    "Training & Coaching", "Recruiting", "Sales",
+  ].map((s) => s.toLowerCase()),
+);
+
+export function skillCategory(name: string): SkillCategory {
+  return SOFT_SKILLS.has(name.trim().toLowerCase()) ? "soft" : "hard";
+}
+
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Deterministic skill extraction: taxonomy terms found in pasted text. */

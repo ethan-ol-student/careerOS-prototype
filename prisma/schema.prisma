@@ -117,6 +117,7 @@ model CandidateProfile {
   // Contact (onboarding v2) — optional, owner-visible
   phone    String @default("")
   location String @default("")
+  nickname String @default("") // onboarding v3 — dashboard greeting; falls back to name
 
   // Candidate-controlled discovery opt-in. When true, the candidate is
   // projected into the marketplace `Candidate` catalog (visible to
@@ -216,10 +217,20 @@ model Experience {
   id        String           @id @default(cuid())
   profileId String
   profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  role      String
+  role      String // role title — or the problem/project title when kind="project"
   company   String
   period    String
   detail    String?
+
+  // Structured merge (mentor spec): Experience/Project/Problems-solved are
+  // ONE section. Legacy Project rows stay and display merged; new project
+  // entries are Experience rows with kind="project". TS owns legal values.
+  kind         String   @default("role") // "role" | "project"
+  contribution String   @default("") // "" | "lead" | "assistant" | "participant"
+  approach     String   @default("") // how did you solve it?
+  impact       String   @default("") // impact / outcome
+  skillsUsed   String[] @default([]) // auto-added to the Skill Radar as tier-1 claims
+  link         String?
 
   @@index([profileId])
 }
@@ -233,6 +244,9 @@ model ChapterEvent {
   date      String
   time      String
   subtasks  Json // [{ id, label, done }]
+  // "Does this move me toward my ideal self?" reflection: null = unrated,
+  // true = meaningful, false = not. Powers the meaningful-time analytics.
+  meaningful Boolean?
   createdAt DateTime         @default(now())
 
   @@index([profileId])
@@ -423,6 +437,20 @@ model CandidatesAI {
   languages           String[] @default([])
   fieldOfStudy        String   @default("") // student stage only
   expectedGraduation  String   @default("")
+
+  // Onboarding v3 — focus (recommendation input) + optional self-ID.
+  // PRIVATE by construction: these are NEVER copied into the marketplace
+  // projection (src/lib/candidates/projection.ts whitelists fields) and are
+  // NEVER an input to any match/score engine. Self-ID is collected only
+  // after the review screen and only to understand our community.
+  // ponytail: guardrail is "don't add these to projection.ts or any engine",
+  // enforced by convention + the projection whitelist, not a type barrier.
+  focus         String   @default("") // "" | "improve" | "discovering"
+  familyStatus  String   @default("") // "" | "single" | "married" | ...
+  gender        String   @default("") // free-ish; "" | "male" | "female" | "other" | ...
+  religion      String[] @default([]) // optional, self-ID
+  race          String[] @default([]) // optional, self-ID
+  age           Int?     // optional, self-ID
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

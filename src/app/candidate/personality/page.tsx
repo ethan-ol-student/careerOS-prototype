@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Fingerprint, Loader2, RotateCcw, ShieldCheck, Check } from "lucide-react";
+import { Loader2, RotateCcw, ShieldCheck, Check } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
 import { Grid12, Col } from "@/components/app/Grid";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { ProgressRing } from "@/components/ui/ProgressRing";
-import { ArchetypeRadar } from "@/components/personality/ArchetypeRadar";
+import { FeedbackModal } from "@/components/ui/FeedbackModal";
 import { QUIZ_QUESTIONS, ARCHETYPE_ORDER } from "@/lib/intelligence/personalityEngine";
 import { ARCHETYPES } from "@/lib/intelligence/scoringConfig";
 import { cn } from "@/lib/utils";
@@ -18,10 +18,22 @@ interface StoredResult {
   scores: Record<string, number>;
 }
 
-/** Short axis label per archetype ("The Builder" → "Builder"). */
+/** Short label per archetype ("The Builder" → "Builder"). */
 const SHORT_LABEL: Record<string, string> = Object.fromEntries(
   ARCHETYPE_ORDER.map((id) => [id, ARCHETYPES[id].name.replace(/^The\s+/i, "")]),
 );
+
+/** Relative share (% of total quiz points) — sums to ~100 across archetypes,
+ *  so a dominant animal never reads as a misleading raw "36/100". */
+function shareOf(scores: Record<string, number>, id: string): number {
+  const total = ARCHETYPE_ORDER.reduce((s, k) => s + (scores[k] ?? 0), 0);
+  return total > 0 ? Math.round(((scores[id] ?? 0) / total) * 100) : 0;
+}
+
+/** Qualitative strength of the dominant lean — replaces the bare number. */
+function leanLabel(share: number): string {
+  return share >= 45 ? "Strong lean" : share >= 33 ? "Clear lean" : "Balanced mix";
+}
 
 /** Accent-pill eyebrow, matching the dashboard cockpit cards. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -45,6 +57,7 @@ export default function PersonalityPage() {
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -75,6 +88,7 @@ export default function PersonalityPage() {
         archetype: json.data.result.archetype,
         scores: json.data.result.scores,
       });
+      setCelebrate(true);
     } else {
       setError(json.error?.message ?? "Could not save your result.");
     }
@@ -108,27 +122,27 @@ export default function PersonalityPage() {
             <Loader2 className="size-4 animate-spin" /> Loading…
           </div>
         ) : archetype && result ? (
-          /* ── Result view — radar + breakdown, cockpit language ── */
+          /* ── Result view — animal-first, share-based scoring ── */
           <Grid12>
-            {/* Left: the working-style shape */}
+            {/* Left: your work animal (replaces the pentagon web) */}
             <Col span={12} lg={5}>
-              <section className="glass-3 flex flex-col rounded-2xl p-6">
-                <Eyebrow>
-                  <Fingerprint aria-hidden />
-                  Your working style
-                </Eyebrow>
-                <div className="mt-4 flex flex-col items-center">
-                  <ArchetypeRadar
-                    order={ARCHETYPE_ORDER}
-                    scores={result.scores}
-                    labels={SHORT_LABEL}
-                    dominant={result.archetype}
-                  />
-                  <h2 className="mt-2 text-2xl font-extrabold tracking-tight">
-                    {archetype.name}
-                  </h2>
-                  <p className="text-luminous-soft text-sm">{archetype.tagline}</p>
-                </div>
+              <section className="glass-3 flex flex-col items-center rounded-2xl p-6 text-center">
+                <Eyebrow>Your work animal</Eyebrow>
+                <span
+                  aria-hidden
+                  className="bg-luminous/10 ring-luminous/25 mt-4 flex size-28 items-center justify-center rounded-full text-6xl ring-2"
+                >
+                  {archetype.animalEmoji}
+                </span>
+                <h2 className="mt-3 text-2xl font-extrabold tracking-tight">
+                  The {archetype.animal}
+                </h2>
+                <p className="text-luminous-soft text-sm">
+                  {archetype.name} · {archetype.tagline}
+                </p>
+                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                  {archetype.animalNote}
+                </p>
                 <div className="mt-4 flex flex-wrap justify-center gap-1.5">
                   {archetype.strengths.map((s) => (
                     <Chip key={s} tone="luminous">
@@ -139,7 +153,7 @@ export default function PersonalityPage() {
               </section>
             </Col>
 
-            {/* Right: narrative + score breakdown + bias note */}
+            {/* Right: narrative + share breakdown + bias note */}
             <Col span={12} lg={7}>
               <section className="glass-3 rounded-2xl p-6">
                 <Eyebrow>Explanation &amp; scoring</Eyebrow>
@@ -147,25 +161,37 @@ export default function PersonalityPage() {
                   {archetype.description}
                 </p>
 
-                <p className="text-muted-foreground mt-6 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
-                  Score breakdown
-                </p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {ARCHETYPE_ORDER.map((id) => (
-                    <ScoreBar
-                      key={id}
-                      label={SHORT_LABEL[id]}
-                      value={Math.min(100, (result.scores[id] ?? 0) * 6)}
-                      accent={id === result.archetype ? "luminous" : "clover"}
-                      size="sm"
-                      surfaceClassName={
-                        id === result.archetype
-                          ? "border border-luminous/30 bg-luminous/5"
-                          : "glass-4"
-                      }
-                    />
-                  ))}
+                <div className="mt-6 flex items-center justify-between">
+                  <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                    How your answers split
+                  </p>
+                  <Chip tone="luminous">
+                    {leanLabel(shareOf(result.scores, result.archetype))} · The{" "}
+                    {archetype.animal}
+                  </Chip>
                 </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[...ARCHETYPE_ORDER]
+                    .sort((a, b) => shareOf(result.scores, b) - shareOf(result.scores, a))
+                    .map((id) => (
+                      <ScoreBar
+                        key={id}
+                        label={`${ARCHETYPES[id].animalEmoji} ${SHORT_LABEL[id]}`}
+                        value={shareOf(result.scores, id)}
+                        accent={id === result.archetype ? "luminous" : "clover"}
+                        size="sm"
+                        surfaceClassName={
+                          id === result.archetype
+                            ? "border border-luminous/30 bg-luminous/5"
+                            : "glass-4"
+                        }
+                      />
+                    ))}
+                </div>
+                <p className="text-muted-foreground mt-2 text-[11px]">
+                  Shares of your quiz answers — they add up to your whole style,
+                  not a pass/fail score.
+                </p>
 
                 <p className="border-border/15 bg-foreground/2 text-muted-foreground mt-5 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs">
                   <ShieldCheck className="text-clover mt-0.5 size-4 shrink-0" aria-hidden />
@@ -278,6 +304,18 @@ export default function PersonalityPage() {
           </Grid12>
         )}
       </section>
+
+      <FeedbackModal
+        isOpen={celebrate}
+        onClose={() => setCelebrate(false)}
+        variant="celebrate"
+        title={
+          archetype
+            ? `Congratulations — you're The ${archetype.animal}! ${archetype.animalEmoji}`
+            : "Your working style is ready!"
+        }
+        description={archetype?.tagline}
+      />
     </AppShell>
   );
 }

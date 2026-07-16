@@ -4,15 +4,13 @@
  * checklist and `key` names the section that completes it.
  */
 
-/** Anchor for the checklist deep-link — six PortfolioBuilder sections plus
- *  the problems-solved editor on the Living Portfolio page. */
+/** Anchor for the checklist deep-link — the four merged PortfolioBuilder
+ *  sections plus the problems-solved editor (inside Experience). */
 export type CompletenessKey =
   | "identity"
   | "skills"
   | "experience"
-  | "projects"
-  | "certificates"
-  | "awards"
+  | "recognition"
   | "problems";
 
 export interface CompletenessItem {
@@ -34,6 +32,12 @@ export interface CompletenessInput {
   awards: unknown[];
 }
 
+/** kind is optional metadata — old snapshots/ResumeData rows have none. */
+const kindOf = (e: unknown): string =>
+  typeof e === "object" && e !== null && "kind" in e
+    ? String((e as { kind?: unknown }).kind ?? "role")
+    : "role";
+
 export function resumeCompleteness(d: CompletenessInput): {
   pct: number;
   items: CompletenessItem[];
@@ -49,11 +53,17 @@ export function resumeCompleteness(d: CompletenessInput): {
     {
       key: "experience",
       label: "Work experience",
-      done: d.experiences.length > 0,
+      done: d.experiences.some((e) => kindOf(e) !== "project"),
     },
-    { key: "projects", label: "A project", done: d.projects.length > 0 },
     {
-      key: "certificates",
+      key: "experience",
+      label: "A project or problem solved",
+      done:
+        d.projects.length > 0 ||
+        d.experiences.some((e) => kindOf(e) === "project"),
+    },
+    {
+      key: "recognition",
       label: "A certificate or award",
       done: d.certificates.length > 0 || d.awards.length > 0,
     },

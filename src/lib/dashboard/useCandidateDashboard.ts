@@ -108,10 +108,14 @@ export function useCandidateDashboard(): CandidateDashboardPayload {
         headline: portfolio.headline,
         summary: portfolio.summary,
         skills: portfolio.skills,
-        projectCount: portfolio.projects.length,
+        // Merged Living Portfolio: projects = legacy rows ∪ project-kind
+        // experiences; experience count = role-kind only (no double count).
+        projectCount:
+          portfolio.projects.length +
+          portfolio.experiences.filter((e) => e.kind === "project").length,
         certificateCount: portfolio.certificates.length,
         awardCount: portfolio.awards.length,
-        experienceCount: portfolio.experiences.length,
+        experienceCount: portfolio.experiences.filter((e) => e.kind !== "project").length,
         totalAdditions: portfolio.totalAdditions,
         hasBio: portfolio.bio.trim().length > 0,
       },
