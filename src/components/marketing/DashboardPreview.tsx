@@ -111,7 +111,7 @@ export function DashboardPreview() {
             </span>
             <h3 className="text-sm font-bold text-zinc-100">Target: Product Engineer</h3>
             <p className="text-xs text-zinc-400 mt-1 leading-normal">
-              Readiness fills as your validated skills close the role's bar.
+              Readiness fills as your validated skills close the role&apos;s bar.
             </p>
           </div>
         </div>

@@ -149,7 +149,7 @@ export function DashboardPreview1() {
                 <Sparkles className="size-3" /> AI Summary
               </span>
               <p className="text-xs text-zinc-300 leading-relaxed tracking-tight font-medium">
-                Your working style reads as <span className="text-zinc-100 font-bold">The Explorer</span>, a <span className="text-zinc-100 font-bold">42% fit</span> with the typical Technology role, with 1 of 11 tracked skills backed by real evidence. To raise your readiness, <span className="text-blue-400 font-semibold">systems design</span> is the highest-demand skill you haven't validated yet.
+                Your working style reads as <span className="text-zinc-100 font-bold">The Explorer</span>, a <span className="text-zinc-100 font-bold">42% fit</span> with the typical Technology role, with 1 of 11 tracked skills backed by real evidence. To raise your readiness, <span className="text-blue-400 font-semibold">systems design</span> is the highest-demand skill you haven&apos;t validated yet.
               </p>
             </div>
             <Info className="size-3.5 text-zinc-600 mt-3 cursor-help hover:text-zinc-400 transition-colors" />
