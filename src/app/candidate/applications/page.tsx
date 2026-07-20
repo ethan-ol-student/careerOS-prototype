@@ -15,6 +15,7 @@ import {
 import AppShell from "@/components/app/AppShell";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Chip } from "@/components/ui/Chip";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { cn } from "@/lib/utils";
 
 interface EventRow {
@@ -210,10 +211,10 @@ export default function ApplicationsPage() {
         <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
           My applications
         </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <InfoHint className="text-muted-foreground mt-1 block text-sm">
           One card per application, with an explicit stage timeline and next
           action.
-        </p>
+        </InfoHint>
 
         {!apps ? (
           <div className="text-muted-foreground mt-12 flex items-center gap-2">
@@ -235,7 +236,7 @@ export default function ApplicationsPage() {
             {/* Summary strip */}
             <div className="mt-6 flex flex-wrap gap-3">
               <div className="border-luminous/25 bg-linear-to-b from-luminous/10 to-luminous/2 min-w-36 flex-1 rounded-xl border p-4">
-                <p className="text-luminous-soft font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+                <p className="text-luminous-soft font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
                   Active
                 </p>
                 <p className="mt-1.5 text-2xl font-extrabold leading-none">
@@ -243,7 +244,7 @@ export default function ApplicationsPage() {
                 </p>
               </div>
               <div className="border-border/15 bg-foreground/2 min-w-36 flex-1 rounded-xl border p-4">
-                <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+                <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
                   Interviews
                 </p>
                 <p className="mt-1.5 text-2xl font-extrabold leading-none text-yellow-400">
@@ -251,7 +252,7 @@ export default function ApplicationsPage() {
                 </p>
               </div>
               <div className="border-border/15 bg-foreground/2 min-w-36 flex-1 rounded-xl border p-4">
-                <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+                <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
                   Offers
                 </p>
                 <p className="text-clover mt-1.5 text-2xl font-extrabold leading-none">
@@ -259,7 +260,7 @@ export default function ApplicationsPage() {
                 </p>
               </div>
               <div className="border-border/15 bg-foreground/2 min-w-36 flex-1 rounded-xl border p-4">
-                <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+                <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
                   Avg. response
                 </p>
                 <p className="mt-1.5 text-2xl font-extrabold leading-none">
@@ -426,7 +427,7 @@ export default function ApplicationsPage() {
 
                     {/* full timeline (append-only trail, collapsed) */}
                     <details className="mt-4">
-                      <summary className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+                      <summary className="text-muted-foreground hover:text-foreground cursor-pointer font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
                         Full timeline
                       </summary>
                       <ol className="border-border/15 mt-3 space-y-3 border-l pl-4">

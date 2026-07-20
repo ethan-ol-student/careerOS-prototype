@@ -225,7 +225,7 @@ function MenuGroup({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium">{label}</span>
-          <span className="text-muted-foreground block truncate text-[11px]">
+          <span className="text-muted-foreground block truncate text-[0.6875rem]">
             {hint}
           </span>
         </span>
@@ -277,7 +277,7 @@ function MenuLink({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{label}</span>
-        <span className="text-muted-foreground block truncate text-[11px]">
+        <span className="text-muted-foreground block truncate text-[0.6875rem]">
           {hint}
         </span>
       </span>

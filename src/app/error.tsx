@@ -48,7 +48,7 @@ export default function RouteError({
         </p>
 
         {error?.digest ? (
-          <p className="text-muted-foreground/80 font-mono text-[10px] uppercase tracking-wider">
+          <p className="text-muted-foreground/80 font-mono text-[0.625rem] uppercase tracking-wider">
             Ref · {error.digest}
           </p>
         ) : null}

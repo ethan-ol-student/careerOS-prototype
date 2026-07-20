@@ -55,7 +55,7 @@ export default function GoogleRolePage() {
   return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-lg">
-        <p className="text-luminous flex items-center justify-center gap-2 text-sm font-semibold">
+        <p className="text-luminous flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold">
           <Compass className="size-5" /> Career OS
         </p>
         <h1 className="mt-3 text-center text-2xl font-semibold">

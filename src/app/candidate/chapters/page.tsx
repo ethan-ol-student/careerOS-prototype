@@ -99,7 +99,7 @@ function ChaptersContent() {
         <div className="mb-6 grid grid-cols-3 gap-3">
           {stats.map((s) => (
             <div key={s.cap} className="glass-4 rounded-xl p-3 sm:p-4">
-              <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-wider">
+              <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
                 {s.cap}
               </p>
               <p className="text-luminous mt-1 text-xl font-bold tracking-tight sm:text-2xl">

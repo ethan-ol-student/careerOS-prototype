@@ -23,10 +23,10 @@ function JudgeTourShell() {
       <LayoutLines />
       <header className="sticky top-0 z-40 border-b border-border/10 bg-background/85 px-4 backdrop-blur">
         <div className="mx-auto flex max-w-container items-center justify-between gap-3 py-4">
-          <div className="flex items-center gap-2 text-base font-semibold tracking-tight">
+          <div className="flex items-center gap-2 whitespace-nowrap text-base font-semibold tracking-tight">
             <Compass className="size-5 text-luminous" />
             Career OS
-            <span className="text-muted-foreground ml-1 text-[10px] font-mono font-medium uppercase tracking-wider">
+            <span className="text-muted-foreground ml-1 text-[0.625rem] font-mono font-medium uppercase tracking-wider">
               Judge Tour
             </span>
           </div>

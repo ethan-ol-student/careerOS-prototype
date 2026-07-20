@@ -465,7 +465,7 @@ function DemoCandidateModal({
           <ScoreBar label="Match" value={candidate.matchScore} accent="luminous" />
           <ScoreBar label="Readiness" value={candidate.readinessScore} accent="clover" />
           <div className="glass-3 rounded-lg p-3">
-            <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+            <p className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
               Growth signal
             </p>
             <p className="text-clover mt-1 flex items-center gap-1 text-sm font-semibold">
@@ -475,13 +475,13 @@ function DemoCandidateModal({
           </div>
         </div>
         <section className="mt-5">
-          <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
             Why recommended
           </p>
           <p className="mt-2 text-sm leading-relaxed">{candidate.whyRecommended}</p>
         </section>
         <section className="mt-5">
-          <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
             Portfolio evidence
           </p>
           <ul className="mt-2 grid gap-2">
@@ -636,7 +636,7 @@ function InfoPanel({
   return (
     <section data-judge-target={target} className="glass-3 rounded-2xl p-5">
       <Icon className="mb-3 size-6 text-luminous" />
-      <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+      <p className="text-luminous text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
         {eyebrow}
       </p>
       <h2 className="mt-1 text-lg font-semibold">{title}</h2>
@@ -650,7 +650,7 @@ function InfoPanel({
 function MiniSignal({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-border/15 bg-card/30 p-3">
-      <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+      <p className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
         {label}
       </p>
       <p className="mt-1 text-xs leading-relaxed">{value}</p>

@@ -1,40 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Sparkles, BookOpenText, Wand2 } from "lucide-react";
+import { CheckCircle2, Sparkles, BookOpenText } from "lucide-react";
+import { InfoHint } from "@/components/ui/InfoHint";
+import { broadcastDensity } from "@/lib/dashboard/uiDensityBus";
 import { cn } from "@/lib/utils";
 
-type Choice = "" | "calm" | "vibrant";
+type Choice = "calm" | "vibrant";
 
-const OPTIONS: { value: Choice; label: string; hint: string; icon: typeof Wand2 }[] = [
-  {
-    value: "",
-    label: "Auto",
-    hint: "Match my career phase",
-    icon: Wand2,
-  },
+const OPTIONS: { value: Choice; label: string; hint: string; icon: typeof Sparkles }[] = [
   {
     value: "calm",
-    label: "Calm",
-    hint: "Editorial — larger text, fewer effects",
+    label: "Detailed",
+    hint: "Complete descriptions on every page",
     icon: BookOpenText,
   },
   {
     value: "vibrant",
     label: "Vibrant",
-    hint: "Visual — glows, streaks, energy",
+    hint: "Compact — key info first, details behind ⓘ",
     icon: Sparkles,
   },
 ];
 
 /**
- * Age-adaptive UI override (Feature 14). The dashboard adapts to your
- * career phase by default, but the mode is a preference, never a lock —
- * this is the "never locked to age" control. Follows DiscoverySection's
- * optimistic-update + rollback pattern against PATCH /api/me/ui-density.
+ * Dashboard style: a binary Detailed | Vibrant choice ("calm" stays the
+ * stored value for Detailed — no data migration). Follows
+ * DiscoverySection's optimistic-update + rollback pattern against
+ * PATCH /api/me/ui-density.
  */
 export function UiDensitySection() {
-  const [choice, setChoice] = useState<Choice>("");
+  const [choice, setChoice] = useState<Choice>("calm");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,9 +45,10 @@ export function UiDensitySection() {
           | null;
         if (cancelled || !body?.ok) return;
         const v = body.data?.uiDensity ?? "";
-        if (v === "" || v === "calm" || v === "vibrant") setChoice(v);
+        // "" (never chosen) reads as the Detailed default.
+        if (v === "calm" || v === "vibrant") setChoice(v);
       } catch {
-        /* defaults to Auto */
+        /* defaults to Detailed */
       }
     })();
     return () => {
@@ -63,6 +60,7 @@ export function UiDensitySection() {
     if (next === choice || saving) return;
     const prev = choice;
     setChoice(next); // optimistic
+    broadcastDensity(next); // live-update the whole app immediately
     setSaving(true);
     setSaved(false);
     setError(null);
@@ -77,12 +75,14 @@ export function UiDensitySection() {
         | null;
       if (!res.ok || body?.ok === false) {
         setChoice(prev); // roll back
+        broadcastDensity(prev);
         setError(body?.error?.message ?? "Couldn't save your preference.");
         return;
       }
       setSaved(true);
     } catch (err) {
       setChoice(prev);
+      broadcastDensity(prev);
       setError(err instanceof Error ? err.message : "Couldn't save your preference.");
     } finally {
       setSaving(false);
@@ -91,17 +91,17 @@ export function UiDensitySection() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-muted-foreground text-sm">
-        Your dashboard adapts to your career phase — calmer and more
-        editorial for experienced professionals, more visual for earlier
-        phases. It&apos;s a preference, not a rule: pick whichever reads
-        best to you.
-      </p>
+      <InfoHint className="text-muted-foreground block text-sm">
+        <span className="font-medium">Detailed</span> spells everything out
+        in full sentences. <span className="font-medium">Vibrant</span>{" "}
+        compresses the layout — secondary explanations tuck behind small
+        info icons so key numbers lead.
+      </InfoHint>
 
       <div
         role="radiogroup"
         aria-label="Dashboard style"
-        className="grid grid-cols-1 gap-2 sm:grid-cols-3"
+        className="grid grid-cols-1 gap-2 sm:grid-cols-2"
       >
         {OPTIONS.map((o) => (
           <button

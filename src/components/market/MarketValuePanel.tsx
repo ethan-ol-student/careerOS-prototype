@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { InfoHint } from "@/components/ui/InfoHint";
 import {
   getFairPayLabel,
   marketRowFor,
@@ -98,7 +99,7 @@ export function MarketValuePanel({
         </h3>
         <div className="flex items-center gap-1.5">
           <Badge variant="outline">Demo data</Badge>
-          <span className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium">
+          <span className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.6875rem] font-medium">
             <sector.icon className="size-3" aria-hidden />
             {sector.label}
           </span>
@@ -110,16 +111,16 @@ export function MarketValuePanel({
         {tiers.map((t) => (
           <div
             key={t.label}
-            className="border-border/15 bg-foreground/2 rounded-lg border px-2.5 py-2"
+            className="border-border/15 bg-foreground/2 rounded-lg border px-2.5 py-4"
           >
             <div className="text-luminous/80 flex items-center gap-1">
               <BarChart3 className="size-3" aria-hidden />
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-wide">
+              <span className="font-mono text-[0.625rem] font-semibold uppercase tracking-wide">
                 {t.years}
               </span>
             </div>
-            <p className="text-muted-foreground mt-1 text-[11px]">{t.label}</p>
-            <p className="mt-0.5 text-sm font-semibold tracking-tight">
+            <p className="text-muted-foreground mt-1 text-[0.6875rem]">{t.label}</p>
+            <p className="mt-0.5 text-xl font-semibold tracking-tight">
               {data.currency} {fmtK(t.min)}
               <span className="text-muted-foreground/60">–</span>
               {fmtK(t.max)}
@@ -136,7 +137,7 @@ export function MarketValuePanel({
       </p>
 
       {/* Fair-pay check — client-side only */}
-      <div>
+      {/* <div>
         <label
           htmlFor={`fair-pay-offer-${field}`}
           className="text-sm font-medium"
@@ -161,7 +162,7 @@ export function MarketValuePanel({
         <p className="mt-2 text-sm">
           <span
             className={cn(
-              "mr-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
+              "mr-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[0.6875rem] font-medium",
               VERDICT_CLASSES[verdict.tone],
             )}
           >
@@ -171,9 +172,9 @@ export function MarketValuePanel({
         </p>
       </div>
 
-      <p className="text-muted-foreground/60 text-[11px]">
+      <InfoHint className="text-muted-foreground/60 block text-[0.6875rem]">
         Source: {data.dataSource} · Updated {data.lastUpdated}
-      </p>
-    </div>
+      </InfoHint>*/}
+    </div> 
   );
 }

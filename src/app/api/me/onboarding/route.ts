@@ -59,6 +59,20 @@ const OnboardingPatchSchema = z
     fieldOfStudy: z.string().max(120).optional(),
     expectedGraduation: z.string().max(40).optional(),
 
+    // Onboarding v4 — phase-conditional preference answers (mid/senior/exec).
+    // One JSON bag keyed by question id; values are free text, choice
+    // arrays, or slider numbers. The onboarding page owns legal keys.
+    phaseAnswers: z
+      .record(
+        z.string().max(40),
+        z.union([
+          z.string().max(600),
+          z.array(z.string().max(160)).max(15),
+          z.number().min(0).max(100),
+        ]),
+      )
+      .optional(),
+
     // Onboarding v3 — focus + optional self-ID (PRIVATE, never projected)
     focus: z.enum(["", "improve", "discovering"]).optional(),
     familyStatus: z.string().max(40).optional(),

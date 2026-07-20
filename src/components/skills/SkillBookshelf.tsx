@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { InfoHint } from "@/components/ui/InfoHint";
+import { emitCarrie } from "@/components/carrie/carrieBus";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import {
@@ -152,6 +154,11 @@ export function SkillBookshelf({
 
   const active = open ? claims.find((c) => c.name === open) ?? null : null;
   const claimedNames = new Set(claims.map((c) => c.name.toLowerCase()));
+  const taxonomyMatches = SKILL_TAXONOMY.filter(
+    (s) =>
+      s.toLowerCase().includes(newSkill.trim().toLowerCase()) &&
+      !claimedNames.has(s.toLowerCase()),
+  ).slice(0, 40);
   const rolesFor = (name: string) => {
     const canonical = normalizeSkill(name);
     return jobs.filter((j) => j.requiredSkills.includes(canonical));
@@ -166,11 +173,17 @@ export function SkillBookshelf({
       endorserNote,
     });
     setFeedback(msgs);
+    if (msgs) {
+      emitCarrie("success", `Evidence logged for “${active.name}” — validation is what moves your weight!`);
+    }
   }
 
   async function addSkill(name: string, lvl: number) {
     if (!name.trim()) return;
-    if (await onAdd(name.trim(), lvl)) setNewSkill("");
+    if (await onAdd(name.trim(), lvl)) {
+      setNewSkill("");
+      emitCarrie("success", `“${name.trim()}” is on the shelf! It starts self-claimed — add evidence to raise it.`);
+    }
   }
 
   return (
@@ -190,9 +203,10 @@ export function SkillBookshelf({
               SPINE_TONE[c.tier],
             )}
             // Level sets the book height — a taller spine = a stronger claim.
-            style={{ height: 72 + c.level * 10 }}
+            // rem so the shelf scales with the global root font-size.
+            style={{ height: `${(72 + c.level * 10) / 16}rem` }}
           >
-            <span className="max-h-full truncate text-[11px] font-medium [writing-mode:vertical-rl] rotate-180">
+            <span className="max-h-full truncate text-[0.6875rem] font-medium [writing-mode:vertical-rl] rotate-180">
               {c.name}
             </span>
           </button>
@@ -204,7 +218,7 @@ export function SkillBookshelf({
           onClick={() => setAddOpen(true)}
           aria-label="Add a skill"
           className="border-border/20 text-muted-foreground hover:border-luminous/60 hover:text-luminous flex w-9 shrink-0 items-center justify-center rounded-t-md border border-b-0 border-dashed transition-all hover:-translate-y-1"
-          style={{ height: 92 }}
+          style={{ height: "5.75rem" }}
         >
           <Plus className="size-4" />
         </button>
@@ -283,7 +297,7 @@ export function SkillBookshelf({
                     Save validation
                   </Button>
                   {feedback?.map((f, i) => (
-                    <p key={i} className={cn("text-[11px]", FEEDBACK_TONE[f.tone])}>
+                    <p key={i} className={cn("text-[0.6875rem]", FEEDBACK_TONE[f.tone])}>
                       {f.text}
                     </p>
                   ))}
@@ -353,6 +367,7 @@ export function SkillBookshelf({
                             onClick={() => {
                               setAdded((prev) => new Set(prev).add(i));
                               fireToast("Added to roadmap!");
+                              emitCarrie("success", "Added to your roadmap — one step closer!");
                             }}
                             className={cn(
                               "flex size-7 items-center justify-center rounded-md border transition-colors",
@@ -396,12 +411,13 @@ export function SkillBookshelf({
                             );
                             setScheduleOpen(null);
                             fireToast("Scheduled!");
+                            emitCarrie("success", `Scheduled for ${e.target.value} — it's on the calendar!`);
                           }}
                           className="bg-foreground/2 border-border/15 focus:border-luminous mt-2 ml-6 rounded-lg border px-2 py-1 text-xs outline-none"
                         />
                       )}
                       {sched && scheduleOpen !== i && (
-                        <p className="text-clover mt-1 ml-6 text-[11px]">
+                        <p className="text-clover mt-1 ml-6 text-[0.6875rem]">
                           Scheduled for {sched}
                         </p>
                       )}
@@ -487,32 +503,22 @@ export function SkillBookshelf({
               )}
             >
               <ul id="add-skill-listbox" className="max-h-40 overflow-y-auto p-1.5">
-                {SKILL_TAXONOMY.filter(
-                  (s) =>
-                    s.toLowerCase().includes(newSkill.trim().toLowerCase()) &&
-                    !claimedNames.has(s.toLowerCase()),
-                )
-                  .slice(0, 40)
-                  .map((s) => (
-                    <li key={s}>
-                      <button
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setNewSkill(s);
-                          setSkillsOpen(false);
-                        }}
-                        className="hover:bg-accent flex w-full items-center rounded-lg px-3 py-1.5 text-left text-sm transition-colors"
-                      >
-                        {s}
-                      </button>
-                    </li>
-                  ))}
-                {SKILL_TAXONOMY.filter(
-                  (s) =>
-                    s.toLowerCase().includes(newSkill.trim().toLowerCase()) &&
-                    !claimedNames.has(s.toLowerCase()),
-                ).length === 0 && (
+                {taxonomyMatches.map((s) => (
+                  <li key={s}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setNewSkill(s);
+                        setSkillsOpen(false);
+                      }}
+                      className="hover:bg-accent flex w-full items-center rounded-lg px-3 py-1.5 text-left text-sm transition-colors"
+                    >
+                      {s}
+                    </button>
+                  </li>
+                ))}
+                {taxonomyMatches.length === 0 && (
                   <li className="text-muted-foreground px-3 py-2 text-xs">
                     No taxonomy match — free text still counts.
                   </li>
@@ -537,9 +543,9 @@ export function SkillBookshelf({
             <Plus className="size-3.5" />
           </Button>
         </form>
-        <p className="text-muted-foreground mt-2 text-[11px]">
+        <InfoHint className="text-muted-foreground mt-2 block text-[0.6875rem]">
           New skills start self-claimed — validate them with evidence to raise their weight.
-        </p>
+        </InfoHint>
       </Modal>
     </>
   );

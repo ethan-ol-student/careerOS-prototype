@@ -45,7 +45,7 @@ export function JudgeTourNavigation() {
   return (
     <aside className="glass-4 sticky top-20 z-30 rounded-2xl p-3">
       <div className="mb-3 px-2">
-        <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
           Judge mode
         </p>
         <p className="text-muted-foreground mt-1 text-xs">

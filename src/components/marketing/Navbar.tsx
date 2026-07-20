@@ -10,7 +10,8 @@ interface NavLink {
 }
 
 const NAV_LINKS: NavLink[] = [
-  { text: "Employer", href: "#employer-vp" },
+  { text: "Features", href: "#features" },
+  { text: "FAQ", href: "#faq" },
 ];
 
 export function Navbar() {
@@ -22,7 +23,7 @@ export function Navbar() {
           <div className="flex items-center gap-8">
             <Link
               href="/"
-              className="flex items-center gap-2 text-base font-semibold tracking-tight"
+              className="flex items-center gap-2 whitespace-nowrap text-base font-semibold tracking-tight"
             >
               <Compass className="size-5 text-brand" />
               Career OS

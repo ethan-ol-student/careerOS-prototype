@@ -125,7 +125,7 @@ export function WeeklyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id:
             )}
           >
             <div className="mb-2 flex items-baseline justify-between">
-              <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-wider">
+              <p className="text-muted-foreground text-[0.625rem] font-mono font-semibold uppercase tracking-wider">
                 {DOW[i]}
               </p>
               <p className={cn("font-mono text-sm", today && "text-luminous font-semibold")}>
@@ -133,7 +133,7 @@ export function WeeklyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id:
               </p>
             </div>
             {list.length === 0 ? (
-              <p className="text-muted-foreground/60 mt-2 text-[11px] italic">No events</p>
+              <p className="text-muted-foreground/60 mt-2 text-[0.6875rem] italic">No events</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {list.map((e) => <EventChip key={e.id} event={e} onSelect={onSelect} />)}
@@ -160,7 +160,7 @@ export function MonthlyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id
 
   return (
     <div className="glass-3 rounded-2xl p-4">
-      <div className="text-muted-foreground mb-2 grid grid-cols-7 gap-1 text-center font-mono text-[10px] uppercase tracking-wider">
+      <div className="text-muted-foreground mb-2 grid grid-cols-7 gap-1 text-center font-mono text-[0.625rem] uppercase tracking-wider">
         {DOW.map((d) => <span key={d}>{d}</span>)}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -178,7 +178,7 @@ export function MonthlyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id
                 today && "ring-luminous/40 border-luminous/50 ring-2",
               )}
             >
-              <p className={cn("text-[11px] font-mono", today && "text-luminous font-semibold")}>
+              <p className={cn("text-[0.6875rem] font-mono", today && "text-luminous font-semibold")}>
                 {d.getDate()}
               </p>
               <ul className="mt-1 flex flex-col gap-0.5">
@@ -191,7 +191,7 @@ export function MonthlyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id
                         onClick={() => onSelect?.(e.id)}
                         title={`${e.time} · ${e.name}`}
                         className={cn(
-                          "w-full truncate rounded border px-1 py-0.5 text-left text-[10px] transition-colors hover:brightness-125",
+                          "w-full truncate rounded border px-1 py-0.5 text-left text-[0.625rem] transition-colors hover:brightness-125",
                           meta.tone,
                         )}
                       >
@@ -201,7 +201,7 @@ export function MonthlyView({ anchor, onSelect }: { anchor: Date; onSelect?: (id
                   );
                 })}
                 {list.length > 2 && (
-                  <li className="text-muted-foreground text-[10px]">+{list.length - 2} more</li>
+                  <li className="text-muted-foreground text-[0.625rem]">+{list.length - 2} more</li>
                 )}
               </ul>
             </div>
@@ -229,11 +229,11 @@ export function YearlyView({ anchor }: { anchor: Date }) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
       {MONTHS.map((m, i) => (
         <div key={m} className="glass-3 flex flex-col gap-2 rounded-xl p-4">
-          <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-wider">
+          <p className="text-muted-foreground text-[0.625rem] font-mono font-semibold uppercase tracking-wider">
             {m} {String(year).slice(2)}
           </p>
           <p className="font-mono text-2xl">{counts[i]}</p>
-          <p className="text-muted-foreground text-[11px]">
+          <p className="text-muted-foreground text-[0.6875rem]">
             {counts[i] === 0 ? "no events" : counts[i] === 1 ? "event" : "events"}
           </p>
         </div>
@@ -261,7 +261,7 @@ function EventChip({ event, onSelect }: { event: ChapterEvent; onSelect?: (id: s
             <span className={cn("size-1.5 rounded-full", meta.dot)} />
             <p className="truncate text-xs font-medium">{event.name}</p>
           </div>
-          <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[10px]">
+          <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[0.625rem]">
             <Clock className="size-2.5" /> {event.time}
             {event.subtasks.length > 0 && (
               <span className="ml-1">· {done}/{event.subtasks.length} done</span>
@@ -295,7 +295,7 @@ function EventChip({ event, onSelect }: { event: ChapterEvent; onSelect?: (id: s
       {open && event.subtasks.length > 0 && (
         <ul className="border-border/15 mt-2 flex flex-col gap-1 border-t pt-2">
           {event.subtasks.map((s) => (
-            <li key={s.id} className="flex items-center gap-2 text-[11px]">
+            <li key={s.id} className="flex items-center gap-2 text-[0.6875rem]">
               <button
                 type="button"
                 onClick={() => toggleSubtask(event.id, s.id)}

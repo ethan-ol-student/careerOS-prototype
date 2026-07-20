@@ -1,23 +1,19 @@
-import type { CareerPhase, UiDensity } from "./types";
-import { PHASE_CONFIG } from "./phaseConfig";
+import type { UiDensity } from "./types";
 
 /**
- * Age-adaptive UI density resolution (Feature 14). TS source of truth
- * for the `CandidateProfile.uiDensity` String field ("" | "calm" |
- * "vibrant"). Mirrors `cadenceForPhase()` in gamification.service.ts:
- * a pure phase→mode function, with the user's Settings override always
- * winning — the experience adapts to age but is never locked to it.
+ * UI density resolution. TS source of truth for the
+ * `CandidateProfile.uiDensity` String field ("" | "calm" | "vibrant").
+ * Binary choice (Settings → Dashboard style): "calm" renders as
+ * **Detailed** (complete descriptive text, the default) and "vibrant"
+ * as the **compact** visual mode (secondary prose collapses to info
+ * hints). "" (never set) resolves to the Detailed default.
  */
 
 function isUiDensity(v: unknown): v is UiDensity {
   return v === "calm" || v === "vibrant";
 }
 
-/** Settings override first; otherwise the phase's default. */
-export function resolveUiDensity(
-  phase: CareerPhase,
-  override: string | null | undefined,
-): UiDensity {
-  if (isUiDensity(override)) return override;
-  return PHASE_CONFIG[phase].density;
+/** The user's saved choice; Detailed ("calm") when unset. */
+export function resolveUiDensity(override: string | null | undefined): UiDensity {
+  return isUiDensity(override) ? override : "calm";
 }

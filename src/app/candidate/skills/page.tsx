@@ -6,6 +6,7 @@ import { Loader2, Radar, Search } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
 import { Chip } from "@/components/ui/Chip";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { CategoryRadar } from "@/components/skills/CategoryRadar";
 import { MarketValuePanel } from "@/components/market/MarketValuePanel";
 import {
@@ -21,6 +22,8 @@ import {
   type SkillClaimInput,
   type TrustTier,
 } from "@/lib/intelligence/skillTruthEngine";
+import { getFutureSelf } from "@/lib/futureSelf";
+import { useCandidatesAI } from "@/lib/hooks/useCandidatesAI";
 import { cn } from "@/lib/utils";
 
 // Tier colors: 1 = no color, 2 = yellow, 3 = green (matches the shelf).
@@ -39,6 +42,12 @@ const TIER_TONE: Record<TrustTier, "clover" | "warning" | "neutral"> = {
  */
 export default function SkillsPage() {
   const { syncSkills } = usePortfolio();
+  const { data: ai } = useCandidatesAI();
+  // Early phases compare against their chosen Future Self path; the "vs"
+  // line links back into the module for them.
+  const earlyPhase = ["student", "young-adult", "early-career"].includes(
+    ai?.careerStage ?? "",
+  );
   const [claims, setClaims] = useState<BookshelfClaim[] | null>(null);
   const [jobs, setJobs] = useState<BookshelfJob[]>([]);
   const [jobId, setJobId] = useState("");
@@ -71,7 +80,13 @@ export default function SkillsPage() {
       const json = await res.json().catch(() => null);
       if (json?.ok) {
         setJobs(json.data.jobs);
-        if (json.data.jobs[0]) setJobId(json.data.jobs[0].id);
+        // Default comparison role: the chosen Future Self path when set,
+        // otherwise the strongest match.
+        const fs = getFutureSelf();
+        const preferred =
+          (fs && json.data.jobs.find((j: BookshelfJob) => j.id === fs.jobId)) ||
+          json.data.jobs[0];
+        if (preferred) setJobId(preferred.id);
       }
     })();
   }, [loadClaims]);
@@ -178,12 +193,12 @@ export default function SkillsPage() {
         <div className="flex shrink-0 flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="flex items-center gap-2 text-xl font-semibold">
             <Radar className="text-luminous size-5" />
-            Where are you — really?
+            Your skill radar - compiled
           </h1>
-          <p className="text-muted-foreground hidden text-xs md:block">
+          <InfoHint className="text-muted-foreground hidden text-xs md:block">
             Self-claimed counts half, evidence-backed 80%, endorsed 100% — the
             radar shows your <em>validated</em> strength against a real role.
-          </p>
+          </InfoHint>
           {error && <p className="text-destructive text-xs">{error}</p>}
         </div>
 
@@ -213,7 +228,17 @@ export default function SkillsPage() {
                       </p>
                     </div>
                     <p className="text-muted-foreground shrink-0 text-xs">
-                      vs {job.title} at {job.company}
+                      {earlyPhase ? (
+                        <Link
+                          href="/candidate/future-self"
+                          className="text-luminous-soft hover:text-luminous font-medium transition-colors"
+                          title="Change your Future Self path"
+                        >
+                          vs {job.title} at {job.company} →
+                        </Link>
+                      ) : (
+                        <>vs {job.title} at {job.company}</>
+                      )}
                       {mv && (
                         <span title={mv.reason}>
                           {" "}
@@ -222,16 +247,16 @@ export default function SkillsPage() {
                         </span>
                       )}
                     </p>
-                    <p className="text-muted-foreground/70 shrink-0 text-[11px]">
+                    <InfoHint className="text-muted-foreground/70 shrink-0 text-[0.6875rem]">
                       The polygon adapts to your skills — flip categories with
                       the arrows below.
-                    </p>
+                    </InfoHint>
                     {/* The radar owns the rest of the card — centered and
                         viewport-capped so it can never render out of frame.
                         CategoryRadar pages All / Soft / Hard skill matrices
                         (wireframe arrows); scoring stays whole-job. */}
                     <div className="flex min-h-0 flex-1 items-center justify-center px-2">
-                      <div className="w-full max-w-[min(100%,52dvh)]">
+                      <div className="w-full max-w-[min(80%,52dvh)]">
                         <CategoryRadar claims={claims as SkillClaimInput[]} job={job} />
                       </div>
                     </div>
@@ -316,7 +341,7 @@ export default function SkillsPage() {
                         </li>
                       )}
                     </ul>
-                    <p className="border-border/15 text-muted-foreground border-t px-3 py-1.5 text-[11px]">
+                    <p className="border-border/15 text-muted-foreground border-t px-3 py-1.5 text-[0.6875rem]">
                       {jobs.length} open role{jobs.length === 1 ? "" : "s"} ·{" "}
                       <Link href="/jobs" className="text-luminous hover:underline">
                         Browse all jobs
@@ -346,7 +371,7 @@ export default function SkillsPage() {
                                   style={{ width: `${a.you}%` }}
                                 />
                               </span>
-                              <span className="text-muted-foreground w-7 shrink-0 text-right text-[11px]">
+                              <span className="text-muted-foreground w-7 shrink-0 text-right text-[0.6875rem]">
                                 {a.you}
                               </span>
                               <Chip
@@ -379,7 +404,7 @@ export default function SkillsPage() {
                     )}
 
                     {/* Market value for the selected role (Feature 5.7) */}
-                    <div className="border-border/15 min-h-0 border-t pt-3">
+                    <div className="border-border/15 min-h-0 border-t pt-8">
                       <MarketValuePanel
                         key={job.field}
                         field={job.field}

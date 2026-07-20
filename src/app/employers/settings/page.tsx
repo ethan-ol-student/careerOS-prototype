@@ -182,13 +182,13 @@ function CompanyProfileSection() {
 
       <div className="border-border/15 mt-5 grid gap-4 border-t pt-5 sm:grid-cols-2">
         <div>
-          <p className="text-muted-foreground mb-1 text-[11px] font-mono font-medium uppercase tracking-wider">
+          <p className="text-muted-foreground mb-1 text-[0.6875rem] font-mono font-medium uppercase tracking-wider">
             Company type
           </p>
           <p className="text-sm">{ai?.companyType || "—"}</p>
         </div>
         <div>
-          <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
+          <p className="text-muted-foreground mb-2 text-[0.6875rem] font-mono font-medium uppercase tracking-wider">
             Industries
           </p>
           {industries.length ? (
@@ -204,7 +204,7 @@ function CompanyProfileSection() {
           )}
         </div>
         <div className="sm:col-span-2">
-          <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
+          <p className="text-muted-foreground mb-2 text-[0.6875rem] font-mono font-medium uppercase tracking-wider">
             Hiring focus
           </p>
           {hiringReasons.length ? (

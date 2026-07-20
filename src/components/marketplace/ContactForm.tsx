@@ -158,7 +158,7 @@ export function ContactForm({ candidate }: ContactFormProps) {
                     "border-destructive/60 focus-visible:ring-destructive/40",
                 )}
               />
-              <p className="text-muted-foreground mt-2 text-[11px]">
+              <p className="text-muted-foreground mt-2 text-[0.6875rem]">
                 Tip: candidates reply faster when the message is specific to
                 their portfolio.
               </p>
@@ -194,7 +194,7 @@ export function ContactForm({ candidate }: ContactFormProps) {
             {candidate.topSkills.slice(0, 5).map((skill) => (
               <span
                 key={skill}
-                className="bg-card/60 border-border/20 text-foreground/90 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px]"
+                className="bg-card/60 border-border/20 text-foreground/90 inline-flex items-center rounded-full border px-2 py-0.5 text-[0.6875rem]"
               >
                 {skill}
               </span>
@@ -233,7 +233,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground font-mono text-[11px] uppercase tracking-wider">
+      <span className="text-muted-foreground font-mono text-[0.6875rem] uppercase tracking-wider">
         {label}
       </span>
       {children}

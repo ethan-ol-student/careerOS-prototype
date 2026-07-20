@@ -116,7 +116,7 @@ export function DayTimeline({ events }: { events: TimelineEvent[] }) {
           <ChevronLeft className="size-4" aria-hidden />
         </button>
         <p
-          className="min-w-24 text-center font-mono text-[11px] font-bold uppercase tracking-[0.18em]"
+          className="min-w-24 text-center font-mono text-[0.6875rem] font-bold uppercase tracking-[0.18em]"
           title={day.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
         >
           {isToday
@@ -142,7 +142,7 @@ export function DayTimeline({ events }: { events: TimelineEvent[] }) {
               className="absolute inset-x-0 flex items-center gap-2"
               style={{ top: i * ROW_PX }}
             >
-              <span className="text-muted-foreground/70 w-9 shrink-0 text-right font-mono text-[9px] uppercase leading-none">
+              <span className="text-muted-foreground/70 w-9 shrink-0 text-right font-mono text-[0.5625rem] uppercase leading-none">
                 {hourLabel(HOUR_START + i)}
               </span>
               <span className="border-border/20 h-px flex-1 border-t" aria-hidden />
@@ -163,7 +163,7 @@ export function DayTimeline({ events }: { events: TimelineEvent[] }) {
                   width: `calc(${100 / lanes}% - 3px)`,
                 }}
               >
-                <p className="flex items-center gap-1.5 text-[10px] leading-tight">
+                <p className="flex items-center gap-1.5 text-[0.625rem] leading-tight">
                   <span
                     aria-hidden
                     className={cn(
@@ -174,12 +174,12 @@ export function DayTimeline({ events }: { events: TimelineEvent[] }) {
                   <span className="truncate font-medium">{e.name}</span>
                 </p>
                 {lanes === 1 && e.time && (
-                  <p className="text-muted-foreground pl-3 font-mono text-[9px]">{e.time}</p>
+                  <p className="text-muted-foreground pl-3 font-mono text-[0.5625rem]">{e.time}</p>
                 )}
               </div>
             ))}
             {laid.length === 0 && (
-              <p className="text-muted-foreground absolute inset-x-0 top-6 text-center text-[11px]">
+              <p className="text-muted-foreground absolute inset-x-0 top-6 text-center text-[0.6875rem]">
                 Nothing planned {isToday ? "today" : "this day"}.
               </p>
             )}

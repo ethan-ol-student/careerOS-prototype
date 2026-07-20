@@ -86,7 +86,7 @@ export function SkillMatrixInput({
               />
               <span
                 className={cn(
-                  "text-muted-foreground absolute max-w-24 truncate text-[10px] transition-all duration-300",
+                  "text-muted-foreground absolute max-w-24 truncate text-[0.625rem] transition-all duration-300",
                   ly < 40 ? "-translate-y-full" : "",
                   lx < 45 ? "-translate-x-full" : lx > 55 ? "" : "-translate-x-1/2",
                 )}
@@ -146,7 +146,7 @@ export function SkillMatrixInput({
             Add skill ({n}/{MATRIX_MAX})
           </button>
         )}
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-[0.6875rem]">
           {MATRIX_MIN}–{MATRIX_MAX} skills — the shape adapts: 3 = triangle,
           4 = square, 5 = pentagon.
         </p>

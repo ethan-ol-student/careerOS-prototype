@@ -28,29 +28,51 @@ const VIEW_LABEL: Record<View, string> = {
 export function CategoryRadar({
   claims,
   job,
+  focusGaps = false,
 }: {
   claims: SkillClaimInput[];
   job: TargetJob;
+  /**
+   * When true, the polygon is built ONLY from the required skills you're
+   * still short on (the ones to improve/focus on) — so the shape's side
+   * count equals how many skills need work. Default off (the skills page
+   * keeps the full required-plus-context view).
+   */
+  focusGaps?: boolean;
 }) {
   const [view, setView] = useState<View>("all");
 
-  const axes = useMemo<RadarAxis[]>(() => {
+  const { axes, allMet } = useMemo<{ axes: RadarAxis[]; allMet: boolean }>(() => {
     const inView = (name: string) =>
       view === "all" || skillCategory(name) === (view as SkillCategory);
     const byName = new Map(claims.map((c) => [normalizeSkill(c.name), c]));
+    const scored = (skill: string): RadarAxis => {
+      const c = byName.get(normalizeSkill(skill));
+      return {
+        skill,
+        you: c ? claimStrength(c) : 0,
+        required: 100,
+        tier: c ? c.tier : null,
+      };
+    };
+
+    if (focusGaps) {
+      // Only the skills still below the required bar — biggest gap first.
+      const gaps = job.requiredSkills
+        .filter(inView)
+        .map(scored)
+        .filter((a) => a.you < a.required)
+        .sort((a, b) => b.required - b.you - (a.required - a.you))
+        .slice(0, 12);
+      const anyRequired = job.requiredSkills.some(inView);
+      return { axes: gaps, allMet: anyRequired && gaps.length === 0 };
+    }
+
     // Required skills in this category first (the bar to clear)…
     const required: RadarAxis[] = job.requiredSkills
       .filter(inView)
       .slice(0, 12)
-      .map((skill) => {
-        const c = byName.get(normalizeSkill(skill));
-        return {
-          skill,
-          you: c ? claimStrength(c) : 0,
-          required: 100,
-          tier: c ? c.tier : null,
-        };
-      });
+      .map(scored);
     // …then the user's strongest other claims in the category (context spokes).
     const requiredSet = new Set(required.map((a) => normalizeSkill(a.skill)));
     const extras: RadarAxis[] = claims
@@ -63,8 +85,8 @@ export function CategoryRadar({
       }))
       .sort((a, b) => b.you - a.you)
       .slice(0, Math.max(0, 12 - required.length));
-    return [...required, ...extras];
-  }, [claims, job, view]);
+    return { axes: [...required, ...extras], allMet: false };
+  }, [claims, job, view, focusGaps]);
 
   const shift = (dir: -1 | 1) =>
     setView((v) => VIEWS[(VIEWS.indexOf(v) + dir + VIEWS.length) % VIEWS.length]);
@@ -74,6 +96,16 @@ export function CategoryRadar({
       <div className="min-h-0 flex-1">
         {axes.length > 0 ? (
           <SkillRadar axes={axes} />
+        ) : allMet ? (
+          <p className="text-clover px-2 py-6 text-center text-xs">
+            On track — you meet every {VIEW_LABEL[view].toLowerCase()}{" "}
+            requirement for {job.title}. Try the arrows.
+          </p>
+        ) : focusGaps ? (
+          <p className="text-muted-foreground px-2 py-6 text-center text-xs translate-y-18">
+            No {VIEW_LABEL[view].toLowerCase()} to focus on for {job.title}. Try
+            the arrows.
+          </p>
         ) : (
           <p className="text-muted-foreground px-2 py-6 text-center text-xs">
             No {VIEW_LABEL[view].toLowerCase()} claimed yet — and{" "}
@@ -91,7 +123,7 @@ export function CategoryRadar({
         >
           <ChevronLeft className="size-4" aria-hidden />
         </button>
-        <p className="w-28 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <p className="w-28 text-center font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.18em]">
           {VIEW_LABEL[view]}
         </p>
         <button

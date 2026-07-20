@@ -26,7 +26,7 @@ export function TestRouteSwitcher({
         if (routes.length === 0) return null;
         return (
           <div key={group}>
-            <p className="text-muted-foreground mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider">
+            <p className="text-muted-foreground mb-2 text-[0.6875rem] font-mono font-semibold uppercase tracking-wider">
               {group}
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -44,16 +44,16 @@ export function TestRouteSwitcher({
                       <span className="text-sm font-medium">{route.label}</span>
                       <ArrowUpRight className="text-muted-foreground group-hover:text-luminous size-3.5 shrink-0" />
                     </span>
-                    <span className="text-muted-foreground block truncate font-mono text-[11px]">
+                    <span className="text-muted-foreground block truncate font-mono text-[0.6875rem]">
                       {path}
                     </span>
                     {route.note ? (
-                      <span className="text-muted-foreground/70 block text-[10px]">
+                      <span className="text-muted-foreground/70 block text-[0.625rem]">
                         {route.note}
                       </span>
                     ) : null}
                     {missingSample ? (
-                      <span className="block text-[10px] text-yellow-400">
+                      <span className="block text-[0.625rem] text-yellow-400">
                         Using fallback id — run db:seed for real data.
                       </span>
                     ) : null}

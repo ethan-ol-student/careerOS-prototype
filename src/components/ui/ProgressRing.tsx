@@ -81,14 +81,14 @@ export function ProgressRing({
         <span
           className={cn(
             "font-bold leading-none",
-            compact ? "text-[11px]" : "text-2xl",
+            compact ? "text-[0.6875rem]" : "text-2xl",
             TEXT[accent],
           )}
         >
           {safe}%
         </span>
         {!compact && (
-          <span className="text-muted-foreground mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em]">
+          <span className="text-muted-foreground mt-1 font-mono text-[0.5625rem] font-semibold uppercase tracking-[0.14em]">
             {label}
           </span>
         )}

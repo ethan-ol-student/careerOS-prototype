@@ -199,7 +199,7 @@ export default function AuthPage() {
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-col gap-6">
         <Link
           href="/"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 self-start text-sm transition-colors"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 self-start whitespace-nowrap text-sm transition-colors"
         >
           <Compass className="text-brand size-4" />
           Career OS
@@ -272,7 +272,7 @@ export default function AuthPage() {
                 </svg>
                 Continue with Google
               </a>
-              <div className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-[11px] uppercase tracking-wider">
+              <div className="text-muted-foreground mt-4 flex items-center gap-3 font-mono text-[0.6875rem] uppercase tracking-wider">
                 <span className="line-t h-px flex-1" />
                 or use email
                 <span className="line-t h-px flex-1" />
@@ -516,7 +516,7 @@ function Field({
     <div className="flex flex-col">
       <label
         htmlFor={htmlFor}
-        className="text-muted-foreground font-mono text-[11px] uppercase tracking-wider"
+        className="text-muted-foreground font-mono text-[0.6875rem] uppercase tracking-wider"
       >
         {label}
         {required ? <span aria-hidden> *</span> : null}
@@ -578,7 +578,7 @@ function RoleCard({
         {icon}
         {label}
       </span>
-      <span className="text-muted-foreground text-[11px]">{description}</span>
+      <span className="text-muted-foreground text-[0.6875rem]">{description}</span>
     </button>
   );
 }

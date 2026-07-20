@@ -53,12 +53,12 @@ export function SettingsField({
 }) {
   return (
     <label htmlFor={htmlFor} className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-[11px] font-mono font-medium uppercase tracking-wider">
+      <span className="text-muted-foreground text-[0.6875rem] font-mono font-medium uppercase tracking-wider">
         {label}
       </span>
       {children}
       {hint ? (
-        <span className="text-muted-foreground/70 text-[11px]">{hint}</span>
+        <span className="text-muted-foreground/70 text-[0.6875rem]">{hint}</span>
       ) : null}
     </label>
   );

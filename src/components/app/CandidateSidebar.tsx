@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
+  HeartPulse,
   Radar,
+  Telescope,
   BookOpen,
   NotebookPen,
   Fingerprint,
@@ -17,6 +19,7 @@ import {
   MessageSquare,
   LogOut,
 } from "lucide-react";
+import { useCandidatesAI } from "@/lib/hooks/useCandidatesAI";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -47,7 +50,6 @@ const NAV: NavGroup[] = [
         label: "Dashboard",
         href: "/candidate/dashboard",
         icon: LayoutDashboard,
-        match: ["/candidate/dashboard", "/candidate/career-health"],
       },
       {
         label: "Jobs",
@@ -96,10 +98,56 @@ const NAV: NavGroup[] = [
  */
 export function CandidateSidebar({ onSignOut }: { onSignOut: () => void }) {
   const pathname = usePathname();
+  const { data: ai } = useCandidatesAI();
   const isActive = (it: NavItem) =>
     (it.match ?? [it.href]).some(
       (p) => pathname === p || pathname.startsWith(`${p}/`),
     );
+
+  const stage = ai?.careerStage ?? "";
+  // Career Health is a mid-career+ surface — the link only exists for
+  // those phases (the page itself redirects earlier phases too).
+  const midCareerPlus = ["mid-career", "senior-career", "executive"].includes(stage);
+  // Students are exploration-first — no job section at all.
+  const isStudent = stage === "student";
+
+  let nav: NavGroup[] = midCareerPlus
+    ? NAV.map((g, i) =>
+        i === 0
+          ? {
+              ...g,
+              items: [
+                g.items[0],
+                {
+                  label: "Career Health",
+                  href: "/candidate/career-health",
+                  icon: HeartPulse,
+                },
+                ...g.items.slice(1),
+              ],
+            }
+          : g,
+      )
+    : NAV;
+  if (isStudent) {
+    nav = nav.map((g) => ({
+      ...g,
+      items: g.items.filter((it) => it.href !== "/jobs"),
+    }));
+  }
+  // Future Self is an early-phase module (student / young adult / early
+  // career) — its own group below "My Progress", per the wireframe.
+  if (["student", "young-adult", "early-career"].includes(stage)) {
+    nav = [
+      ...nav,
+      {
+        label: "Explore",
+        items: [
+          { label: "Future Self", href: "/candidate/future-self", icon: Telescope },
+        ],
+      },
+    ];
+  }
 
   return (
     <aside
@@ -107,10 +155,10 @@ export function CandidateSidebar({ onSignOut }: { onSignOut: () => void }) {
       className="border-border/15 bg-card/20 hidden w-60 shrink-0 flex-col overflow-y-auto border-r px-3 py-4 lg:flex"
     >
       <nav className="flex flex-1 flex-col gap-1">
-        {NAV.map((group) => (
+        {nav.map((group) => (
           <div key={group.label ?? "top"} className="mb-2">
             {group.label && (
-              <p className="text-muted-foreground px-3 pb-1.5 pt-2 text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+              <p className="text-muted-foreground px-3 pb-1.5 pt-2 text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
                 {group.label}
               </p>
             )}
@@ -126,7 +174,7 @@ export function CandidateSidebar({ onSignOut }: { onSignOut: () => void }) {
                   >
                     <Icon className="size-4 shrink-0" aria-hidden />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                    <span className="border-border/20 rounded-full border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider">
+                    <span className="border-border/20 rounded-full border px-1.5 py-0.5 font-mono text-[0.5625rem] uppercase tracking-wider">
                       Soon
                     </span>
                   </span>
@@ -163,7 +211,7 @@ export function CandidateSidebar({ onSignOut }: { onSignOut: () => void }) {
                             href={child.href}
                             aria-current={cActive ? "page" : undefined}
                             className={cn(
-                              "flex min-h-9 items-center gap-2.5 rounded-lg border px-3 py-1.5 text-[13px] transition-colors",
+                              "flex min-h-9 items-center gap-2.5 rounded-lg border px-3 py-1.5 text-[0.8125rem] transition-colors",
                               cActive
                                 ? "border-luminous/25 bg-luminous/12 text-foreground font-medium [&_svg]:text-luminous"
                                 : "border-transparent text-muted-foreground hover:bg-foreground/4 hover:text-foreground",

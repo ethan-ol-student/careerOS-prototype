@@ -148,7 +148,7 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
             {candidate.targetRole} · {candidate.location}
           </p>
         </div>
-        <span className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium">
+        <span className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[0.6875rem] font-medium">
           <span className="bg-clover size-1.5 rounded-full" />
           Online
         </span>
@@ -186,7 +186,7 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
                 >
                   {m.body}
                 </div>
-                <p className="text-muted-foreground text-[10px]">
+                <p className="text-muted-foreground text-[0.625rem]">
                   {mine ? "You" : candidate.name.split(" ")[0]} ·{" "}
                   {formatTimeAgo(m.createdAt)}
                 </p>
@@ -218,7 +218,7 @@ export function ChatInterface({ candidate }: ChatInterfaceProps) {
                 aria-hidden
               />
             </div>
-            <p className="text-muted-foreground mt-1 text-[10px]">
+            <p className="text-muted-foreground mt-1 text-[0.625rem]">
               {candidate.name.split(" ")[0]} is typing —{" "}
               <span className="text-muted-foreground/80 italic">
                 prototype demo

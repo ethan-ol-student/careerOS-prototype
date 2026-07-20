@@ -83,7 +83,7 @@ function CandidateMessagesContent() {
   return (
     <div className="max-w-container mx-auto flex w-full flex-col px-4 pb-4 pt-2 lg:h-full lg:min-h-0">
       <div className="shrink-0">
-        <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+        <p className="text-luminous font-mono text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
           Messages
         </p>
         <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
@@ -155,7 +155,7 @@ function CandidateMessagesContent() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="truncate text-sm font-semibold">{c.employerName}</p>
-                          <span className="text-muted-foreground shrink-0 text-[10px]">
+                          <span className="text-muted-foreground shrink-0 text-[0.625rem]">
                             {formatTimeAgo(c.lastMessageAt)}
                           </span>
                         </div>
@@ -303,7 +303,7 @@ function ThreadView({
           <p className="truncate text-sm font-semibold tracking-tight">
             {conversation.employerName}
           </p>
-          <p className="text-muted-foreground font-mono text-[9px] font-semibold uppercase tracking-[0.14em]">
+          <p className="text-muted-foreground font-mono text-[0.5625rem] font-semibold uppercase tracking-[0.14em]">
             Employer
           </p>
         </div>
@@ -345,7 +345,7 @@ function ThreadView({
                 >
                   {m.body}
                 </div>
-                <p className="text-muted-foreground text-[10px]">
+                <p className="text-muted-foreground text-[0.625rem]">
                   {mine ? "You" : conversation.employerName} · {formatTimeAgo(m.createdAt)}
                 </p>
               </div>

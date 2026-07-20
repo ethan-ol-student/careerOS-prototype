@@ -79,7 +79,7 @@ function CandidateSettingsContent() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
+                    <p className="text-muted-foreground mb-2 text-[0.6875rem] font-mono font-medium uppercase tracking-wider">
                       Target roles
                     </p>
                     {targetRoles.length ? (
@@ -97,7 +97,7 @@ function CandidateSettingsContent() {
                     )}
                   </div>
                   <div>
-                    <p className="text-muted-foreground mb-2 text-[11px] font-mono font-medium uppercase tracking-wider">
+                    <p className="text-muted-foreground mb-2 text-[0.6875rem] font-mono font-medium uppercase tracking-wider">
                       Skills summary
                     </p>
                     {skills.length ? (

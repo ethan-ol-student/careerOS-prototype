@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
+import { emitCarrie } from "@/components/carrie/carrieBus";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Chip, type ChipTone } from "@/components/ui/Chip";
@@ -84,7 +85,7 @@ const fmtDate = (d: string) =>
 const inputCls =
   "border-border/15 bg-foreground/2 focus:border-luminous/60 h-10 w-full rounded-lg border px-3 text-sm outline-none";
 const labelCls =
-  "text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-[0.1em]";
+  "text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-[0.1em]";
 
 export default function JournalPage() {
   return (
@@ -209,6 +210,10 @@ function JournalContent() {
     const json = await res?.json().catch(() => null);
     setSaving(false);
     if (!json?.ok) return;
+    emitCarrie(
+      "success",
+      draft.id ? "Reflection updated." : "Reflection captured — your story grows!",
+    );
     if (draft.id) {
       const id = draft.id;
       setEntries((prev) =>
@@ -305,7 +310,7 @@ function JournalContent() {
                         )}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+                          <span className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
                             {isTemp ? "Draft" : fmtDate(e.date)}
                           </span>
                           {e.pivot && (
@@ -402,7 +407,7 @@ function JournalDetail({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground font-mono text-[11px] uppercase tracking-wider">
+        <span className="text-muted-foreground font-mono text-[0.6875rem] uppercase tracking-wider">
           {fmtDate(entry.date)}
         </span>
         {entry.pivot && (
@@ -533,7 +538,7 @@ function JournalForm({
           {draft.skillsTouched.map((s) => (
             <span
               key={s}
-              className="bg-luminous/10 text-luminous-soft border-luminous/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+              className="bg-luminous/10 text-luminous-soft border-luminous/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.6875rem] font-medium"
             >
               {s}
               <button

@@ -69,11 +69,11 @@ export default function CandidateProfilePage({ params }: PageProps) {
                 the rest of the employer surfaces. */}
             <Link
               href="/employers/marketplace"
-              className="flex items-center gap-2 text-base font-semibold tracking-tight"
+              className="flex items-center gap-2 whitespace-nowrap text-base font-semibold tracking-tight"
             >
               <Compass className="size-5 text-clover" />
               Career OS
-              <span className="text-muted-foreground ml-1 text-[10px] font-mono font-medium uppercase tracking-wider">
+              <span className="text-muted-foreground ml-1 text-[0.625rem] font-mono font-medium uppercase tracking-wider">
                 · Employer
               </span>
             </Link>
@@ -142,7 +142,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
                     Invite to opportunity
                   </Button>
                 </Link>
-                <p className="text-muted-foreground text-[11px]">
+                <p className="text-muted-foreground text-[0.6875rem]">
                   {candidate.source === "real"
                     ? "Built from the candidate's Living Portfolio"
                     : "Profile rendered from prototype demo data"}
@@ -189,7 +189,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
               {readiness.factors.map((f) => (
                 <li
                   key={f.label}
-                  className="text-muted-foreground flex items-center justify-between gap-2 text-[11px]"
+                  className="text-muted-foreground flex items-center justify-between gap-2 text-[0.6875rem]"
                 >
                   <span>{f.label}</span>
                   <span className="text-clover font-mono">
@@ -198,7 +198,7 @@ export default function CandidateProfilePage({ params }: PageProps) {
                 </li>
               ))}
             </ul>
-            <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+            <p className="text-muted-foreground/80 mt-2 text-[0.625rem] italic leading-snug">
               Readiness is computed from self-reported profile signals, not
               verified assessments.
             </p>

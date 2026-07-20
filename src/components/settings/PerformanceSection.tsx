@@ -1,6 +1,7 @@
 "use client";
 
 import { Zap } from "lucide-react";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { usePerformanceMode } from "@/lib/hooks/usePerformanceMode";
 import { cn } from "@/lib/utils";
 
@@ -15,11 +16,11 @@ export function PerformanceSection() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-muted-foreground text-sm">
+      <InfoHint className="text-muted-foreground block text-sm">
         Turns off decorative animations everywhere — the job orbit, entrance
         effects, and hover motion. Handy on older devices. Takes effect
         instantly and is saved on this device.
-      </p>
+      </InfoHint>
 
       <button
         type="button"

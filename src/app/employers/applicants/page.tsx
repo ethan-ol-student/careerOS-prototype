@@ -101,7 +101,7 @@ export default function ApplicantsPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium">{a.candidate.name}</p>
                           {a.needsResponse && (
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant="outline" className="text-[0.625rem]">
                               <Clock className="mr-1 size-3" />
                               No response yet
                             </Badge>

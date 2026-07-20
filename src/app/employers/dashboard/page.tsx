@@ -218,7 +218,7 @@ export default function EmployerDashboardPage() {
                         : "border-border/15 bg-card/30",
                     )}
                   >
-                    <p className="text-muted-foreground text-[10px] uppercase">{d}</p>
+                    <p className="text-muted-foreground text-[0.625rem] uppercase">{d}</p>
                     <p className={cn("text-sm font-semibold", isToday && "text-clover")}>
                       {date.getDate()}
                     </p>

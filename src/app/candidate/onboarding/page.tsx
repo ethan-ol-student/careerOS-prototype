@@ -80,6 +80,30 @@ const GOAL_CHIPS = [
   "Still figuring it out",
 ];
 
+// Curated industry list for the multi-select (max 3). "Other" stays open
+// via ChipGroup's allowOther so nothing is off-limits.
+const INDUSTRIES = [
+  "Technology & Software",
+  "Finance & Banking",
+  "Healthcare & Medical",
+  "Education & Training",
+  "Engineering & Manufacturing",
+  "Retail & E-commerce",
+  "Hospitality & Tourism",
+  "Construction & Property",
+  "Media & Creative",
+  "Marketing & Advertising",
+  "Legal & Consulting",
+  "Government & Public Sector",
+  "Energy & Utilities",
+  "Transportation & Logistics",
+  "Telecommunications",
+  "Food & Beverage",
+  "Agriculture",
+  "Automotive",
+  "Non-profit & NGO",
+];
+
 const EMPLOYMENT_TYPES = [
   "Full-time", "Part-time", "Contract", "Internship",
   "Freelance", "Volunteer", "Personal project",
@@ -161,6 +185,9 @@ interface Draft {
   scheduleFlexibility: string[];
   maxCommuteMinutes: number;
   travelWillingness: string;
+  // Phase-conditional preference answers (mid-career / senior / executive)
+  // keyed by question id — free text, choice arrays, or slider numbers.
+  phaseAnswers: Record<string, string | string[] | number>;
   // Optional self-ID — collected only after the review, never shared with
   // employers, never a match/score input.
   religion: string[];
@@ -185,7 +212,7 @@ const emptyDraft: Draft = {
   minSalaryPeriod: "yearly", availability: "",
   visibility: "hidden_from_current", workEnvironment: "", topValues: [],
   learningHoursPerWeek: 4, scheduleFlexibility: [], maxCommuteMinutes: 45,
-  travelWillingness: "", religion: [], race: [], age: "",
+  travelWillingness: "", phaseAnswers: {}, religion: [], race: [], age: "",
   autoFilled: {}, cvSummary: "",
 };
 
@@ -244,6 +271,17 @@ function normalizeDraft(input: unknown): Draft {
     scheduleFlexibility: a(i.scheduleFlexibility),
     maxCommuteMinutes: n(i.maxCommuteMinutes, 45),
     travelWillingness: s(i.travelWillingness),
+    phaseAnswers:
+      i.phaseAnswers && typeof i.phaseAnswers === "object" && !Array.isArray(i.phaseAnswers)
+        ? Object.fromEntries(
+            Object.entries(i.phaseAnswers as Record<string, unknown>).filter(
+              ([, v]) =>
+                typeof v === "string" ||
+                typeof v === "number" ||
+                (Array.isArray(v) && v.every((x) => typeof x === "string")),
+            ),
+          ) as Record<string, string | string[] | number>
+        : {},
     religion: a(i.religion), race: a(i.race),
     age: typeof i.age === "number" ? String(i.age) : s(i.age),
     autoFilled:
@@ -320,6 +358,7 @@ function toOnboardingPayload(draft: Draft, completed: boolean) {
     scheduleFlexibility: draft.scheduleFlexibility,
     maxCommuteMinutes: draft.maxCommuteMinutes,
     travelWillingness: draft.travelWillingness as "" | "none" | "occasional" | "frequent",
+    phaseAnswers: draft.phaseAnswers,
     minSalaryAmount: Number.isFinite(salary) && salary > 0 ? Math.round(salary) : null,
     minSalaryPeriod: (draft.minSalaryPeriod || "") as "" | "hourly" | "monthly" | "yearly",
     links: draft.links,
@@ -369,9 +408,14 @@ export default function CandidateOnboardingPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  // Edit mode (?edit=1 from Settings) — same contract as the old flow.
+  // Edit mode (?edit=1 from Settings) — an inline overview table instead
+  // of the sequential wizard: every answer visible, edited in place.
   const [editMode, setEditMode] = useState(false);
   const [editChecked, setEditChecked] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [exitPrompt, setExitPrompt] = useState(false);
+  const [savedNote, setSavedNote] = useState(false);
   useEffect(() => {
     setEditMode(new URLSearchParams(window.location.search).get("edit") === "1");
     setEditChecked(true);
@@ -431,6 +475,7 @@ export default function CandidateOnboardingPage() {
 
   const update = useCallback(
     <K extends keyof Draft>(key: K, value: Draft[K]) => {
+      setDirty(true); // only read by edit mode's unsaved-changes guard
       setDraft((prev) => {
         const next = { ...prev, [key]: value };
         // Live revalidation: clear this field's error the moment it's valid.
@@ -626,6 +671,79 @@ export default function CandidateOnboardingPage() {
     }
   }
 
+  /** Edit-mode save: one PATCH (+ idempotent skill upserts + discovery).
+   *  Deliberately skips the experience/education/cert POST fan-out — those
+   *  create rows and would duplicate on every edit save. */
+  async function handleEditSave(): Promise<boolean> {
+    const errs = validate(draft);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      setEditingId(REQUIRED.find((r) => errs[r.field])!.field);
+      setSubmitError("Some required answers are missing — fix the highlighted rows.");
+      return false;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch("/api/me/onboarding", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(toOnboardingPayload(draft, true)),
+      });
+      const body = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: { message?: string } }
+        | null;
+      if (!body?.ok) {
+        setSubmitError(body?.error?.message ?? "Failed to save your changes.");
+        return false;
+      }
+      for (const name of draft.skills.slice(0, 40)) {
+        await fetch("/api/me/skills", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.slice(0, 40), level: 3 }),
+        }).catch(() => null);
+      }
+      await fetch("/api/me/discovery", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discoverable: draft.visibility === "all_recruiters" }),
+      }).catch(() => null);
+      try {
+        localStorage.removeItem(DRAFT_KEY); // server is the truth again
+      } catch {
+        /* ignore */
+      }
+      setDirty(false);
+      setSavedNote(true);
+      setTimeout(() => setSavedNote(false), 2500);
+      return true;
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to save your changes.");
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const exitToDashboard = () => router.push("/candidate/dashboard");
+  const handleExit = () => {
+    if (dirty) setExitPrompt(true);
+    else exitToDashboard();
+  };
+  const discardAndExit = () => {
+    try {
+      localStorage.removeItem(DRAFT_KEY); // drop the unsaved local draft
+    } catch {
+      /* ignore */
+    }
+    exitToDashboard();
+  };
+  const saveAndExit = async () => {
+    if (await handleEditSave()) exitToDashboard();
+    else setExitPrompt(false); // surface the error inline
+  };
+
   // Active question list (student-only questions filter out for others).
   const questions = useMemo(
     () => WIZARD_QUESTIONS.filter((q) => !q.showIf || q.showIf(draft)),
@@ -655,53 +773,104 @@ export default function CandidateOnboardingPage() {
 
   return (
     <StepShell
-      stepNumber={clampedStep + 1}
-      totalSteps={nQ + 1}
-      eyebrow="Candidate setup"
-      title={atReview ? "Review your details" : SECTIONS[activeSection]}
+      {...(editMode ? {} : { stepNumber: clampedStep + 1, totalSteps: nQ + 1 })}
+      eyebrow={editMode ? "Profile settings" : "Candidate setup"}
+      title={
+        editMode
+          ? "Your onboarding answers"
+          : atReview
+            ? "Review your details"
+            : SECTIONS[activeSection]
+      }
       subtitle={
-        atReview
-          ? "Check everything at a glance. Tap Edit on any line to fix it, then Finish."
-          : "One question at a time — your answers autosave as you go."
+        editMode
+          ? "Everything in one place — tap Edit on any line to change it inline, then Save."
+          : atReview
+            ? "Check everything at a glance. Tap Edit on any line to fix it, then Finish."
+            : "One question at a time — your answers autosave as you go."
       }
       footer={
-        <div className="flex items-center justify-between gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={goBack}
-            disabled={clampedStep === 0 || submitting}
-          >
-            <ArrowLeft className="size-4" />
-            Back
-          </Button>
-          <div className="flex items-center gap-2">
-            {!atReview && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setCvOpen(true)}
-                disabled={submitting || parsing}
-              >
+        editMode ? (
+          <div className="flex items-center justify-between gap-3">
+            <Button type="button" variant="ghost" onClick={handleExit} disabled={submitting}>
+              <ArrowLeft className="size-4" />
+              Exit to Dashboard
+            </Button>
+            <div className="flex items-center gap-3">
+              {savedNote && (
+                <span className="text-clover inline-flex items-center gap-1.5 text-xs">
+                  <CheckCircle2 className="size-3.5" /> Saved
+                </span>
+              )}
+              <Button type="button" onClick={() => void handleEditSave()} disabled={submitting || !dirty}>
                 <Sparkles className="size-4" />
-                Quick upload CV
+                {submitting ? "Saving…" : "Save changes"}
               </Button>
-            )}
-            {!atReview ? (
-              <Button type="button" onClick={goNext} disabled={blocked || submitting || parsing}>
-                {clampedStep === nQ - 1 ? "Review" : "Next"}
-                <ArrowRight className="size-4" />
-              </Button>
-            ) : (
-              <Button type="button" onClick={handleFinish} disabled={submitting || parsing}>
-                <Sparkles className="size-4" />
-                {submitting ? "Saving…" : "Finish"}
-              </Button>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={goBack}
+              disabled={clampedStep === 0 || submitting}
+            >
+              <ArrowLeft className="size-4" />
+              Back
+            </Button>
+            <div className="flex items-center gap-2">
+              {!atReview && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setCvOpen(true)}
+                  disabled={submitting || parsing}
+                >
+                  <Sparkles className="size-4" />
+                  Quick upload CV
+                </Button>
+              )}
+              {!atReview ? (
+                <Button type="button" onClick={goNext} disabled={blocked || submitting || parsing}>
+                  {clampedStep === nQ - 1 ? "Review" : "Next"}
+                  <ArrowRight className="size-4" />
+                </Button>
+              ) : (
+                <Button type="button" onClick={handleFinish} disabled={submitting || parsing}>
+                  <Sparkles className="size-4" />
+                  {submitting ? "Saving…" : "Finish"}
+                </Button>
+              )}
+            </div>
+          </div>
+        )
       }
     >
+      {editMode ? (
+        /* ── Edit mode: inline overview table (no wizard) ── */
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+          {submitError && (
+            <p role="alert" className="text-destructive text-sm">
+              {submitError}
+            </p>
+          )}
+          <section className="glass-4 ring-luminous/20 flex flex-col gap-5 rounded-2xl p-6 ring-1 sm:p-8">
+            <EditOverview
+              draft={draft}
+              update={update}
+              errors={errors}
+              editingId={editingId}
+              onToggleEdit={setEditingId}
+            />
+            <SelfIdSection draft={draft} update={update} />
+          </section>
+          <p className="text-muted-foreground text-center text-[0.6875rem]">
+            Changes apply once you press Save. Personal details are optional,
+            kept private, and never used to match you.
+          </p>
+        </div>
+      ) : (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
         {/* Phase rail (wireframe): Personal details · Work experience · Preferences */}
         <nav aria-label="Onboarding sections" className="flex items-center justify-between gap-2">
@@ -721,7 +890,7 @@ export default function CandidateOnboardingPage() {
               />
               <span
                 className={cn(
-                  "text-[10px] font-mono font-semibold uppercase tracking-wider",
+                  "text-[0.625rem] font-mono font-semibold uppercase tracking-wider",
                   activeSection === i && !atReview ? "text-foreground" : "text-muted-foreground",
                 )}
               >
@@ -744,7 +913,7 @@ export default function CandidateOnboardingPage() {
             <div className="flex flex-col gap-4">
               {/* Progress — "Q i / N" + a bar (wireframe counter). */}
               <div>
-                <div className="text-muted-foreground flex items-center justify-between font-mono text-[11px] font-medium uppercase tracking-wider">
+                <div className="text-muted-foreground flex items-center justify-between font-mono text-[0.6875rem] font-medium uppercase tracking-wider">
                   <span>
                     {clampedStep + 1} / {nQ}
                   </span>
@@ -771,7 +940,7 @@ export default function CandidateOnboardingPage() {
                 )}
               </div>
 
-              <p className="text-muted-foreground text-[11px]">
+              <p className="text-muted-foreground text-[0.6875rem]">
                 {current.required
                   ? "This one's needed so we can match you."
                   : "Optional — press Next to skip."}
@@ -780,11 +949,40 @@ export default function CandidateOnboardingPage() {
           ) : null}
         </section>
 
-        <p className="text-muted-foreground text-center text-[11px]">
+        <p className="text-muted-foreground text-center text-[0.6875rem]">
           Autosaved as you go — refresh anytime, nothing is lost. Personal
           details are optional, kept private, and never used to match you.
         </p>
       </div>
+      )}
+
+      {/* Unsaved-changes guard (edit mode): save, discard, or stay. */}
+      <Modal
+        isOpen={exitPrompt}
+        onClose={() => setExitPrompt(false)}
+        title="Unsaved changes"
+        description="You've edited answers that aren't saved yet."
+        size="sm"
+      >
+        <div className="flex flex-col gap-2">
+          <Button type="button" onClick={() => void saveAndExit()} disabled={submitting}>
+            <CheckCircle2 className="size-4" />
+            {submitting ? "Saving…" : "Save & exit"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            onClick={discardAndExit}
+            disabled={submitting}
+          >
+            Discard changes
+          </Button>
+          <Button type="button" variant="outline" onClick={() => setExitPrompt(false)}>
+            Keep editing
+          </Button>
+        </div>
+      </Modal>
 
       {/* Quick upload CV — opens the parser in a modal (wireframe footer button) */}
       <Modal
@@ -1086,6 +1284,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "workEnvironment",
     title: "Where do you do your best work?",
+    showIf: (d) => !isPhasedStage(d),
     answered: (d) => !!d.workEnvironment,
     render: (d, u, adv) => (
       <SelectCard
@@ -1101,6 +1300,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "topValues",
     title: "What matters most? Pick up to 3, in order.",
+    showIf: (d) => !isPhasedStage(d),
     answered: (d) => d.topValues.length > 0,
     render: (d, u) => (
       <ChipGroup options={VALUES} values={d.topValues} onChange={(v) => u("topValues", v)} max={3} numbered allowOther />
@@ -1109,6 +1309,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "learningHoursPerWeek",
     title: "How much time can you give to learning each week?",
+    showIf: (d) => !isPhasedStage(d),
     answered: () => true,
     render: (d, u) => (
       <Slider
@@ -1126,6 +1327,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
     id: "scheduleFlexibility",
     title: "Any schedule needs?",
     subtitle: "Neutral logistics — never demographics.",
+    showIf: (d) => !isPhasedStage(d),
     answered: (d) => d.scheduleFlexibility.length > 0,
     render: (d, u) => (
       <ChipGroup options={SCHEDULE_FLEX} values={d.scheduleFlexibility} onChange={(v) => u("scheduleFlexibility", v)} allowOther />
@@ -1134,6 +1336,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "maxCommuteMinutes",
     title: "Longest commute you'd take?",
+    showIf: (d) => !isPhasedStage(d),
     answered: () => true,
     render: (d, u) => (
       <Slider
@@ -1151,6 +1354,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "travelWillingness",
     title: "Willing to travel for work?",
+    showIf: (d) => !isPhasedStage(d),
     answered: () => true,
     render: (d, u, adv) => (
       <ChipGroup
@@ -1164,6 +1368,327 @@ const PREF_QUESTIONS: PrefQuestion[] = [
       />
     ),
   },
+];
+
+// ── Phase-conditional preference questions (Task 2) ─────────────
+// Mid-career / senior-career / executive stages swap the generic
+// preference tail (environment, values, learning time, schedule,
+// commute, travel) for a reflective, phase-specific question set.
+// Answers live in `draft.phaseAnswers` (→ CandidatesAI.phaseAnswers JSON).
+
+const PHASED_STAGES = ["mid-career", "senior-career", "executive"];
+const isPhasedStage = (d: Draft) => PHASED_STAGES.includes(d.careerStage);
+
+const paStr = (d: Draft, id: string): string => {
+  const v = d.phaseAnswers[id];
+  return typeof v === "string" ? v : "";
+};
+const paArr = (d: Draft, id: string): string[] => {
+  const v = d.phaseAnswers[id];
+  return Array.isArray(v) ? v : [];
+};
+const paNum = (d: Draft, id: string, fallback: number): number => {
+  const v = d.phaseAnswers[id];
+  return typeof v === "number" ? v : fallback;
+};
+const setPa =
+  (u: UpdateFn, d: Draft, id: string) =>
+  (v: string | string[] | number) =>
+    u("phaseAnswers", { ...d.phaseAnswers, [id]: v });
+
+/** Free-text phase answer input (same styling as the goal free-text). */
+function PhaseTextInput({
+  id,
+  draft,
+  update,
+  placeholder,
+}: {
+  id: string;
+  draft: Draft;
+  update: UpdateFn;
+  placeholder: string;
+}) {
+  return (
+    <input
+      id={`f-${id}`}
+      type="text"
+      value={paStr(draft, id)}
+      onChange={(e) => setPa(update, draft, id)(e.target.value)}
+      placeholder={placeholder}
+      className="bg-foreground/2 border-border/15 focus-visible:border-luminous/60 focus-visible:ring-luminous/40 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2"
+    />
+  );
+}
+
+const MID_CAREER_QUESTIONS: PrefQuestion[] = [
+  {
+    id: "mc_challenge",
+    title: "What's the single biggest challenge in your career right now?",
+    showIf: (d) => d.careerStage === "mid-career",
+    answered: (d) => !!paStr(d, "mc_challenge"),
+    render: (d, u, adv) => (
+      <ChipGroup
+        options={[
+          "Feeling stuck or plateaued",
+          "Skills falling behind the market",
+          "Underpaid for my scope",
+          "Burnout & workload",
+          "No clear next step",
+        ]}
+        single
+        allowOther
+        values={paStr(d, "mc_challenge") ? [paStr(d, "mc_challenge")] : []}
+        onChange={(v) => {
+          setPa(u, d, "mc_challenge")(v[0] ?? "");
+          if (v[0]) auto(adv);
+        }}
+      />
+    ),
+  },
+  {
+    id: "mc_change_one",
+    title: "If you could change one thing about your current role, what would it be?",
+    answered: (d) => !!paStr(d, "mc_change_one"),
+    showIf: (d) => d.careerStage === "mid-career",
+    render: (d, u) => (
+      <PhaseTextInput id="mc_change_one" draft={d} update={u} placeholder="e.g. More ownership over product decisions" />
+    ),
+  },
+  {
+    id: "mc_primary_goal",
+    title: "What is your primary goal right now?",
+    subtitle: "Climbing the ladder, or mastering new ground?",
+    showIf: (d) => d.careerStage === "mid-career",
+    answered: (d) => !!paStr(d, "mc_primary_goal"),
+    render: (d, u, adv) => (
+      <ChipGroup
+        options={["Climbing the leadership ladder", "Mastering new areas of expertise"]}
+        single
+        allowOther
+        values={paStr(d, "mc_primary_goal") ? [paStr(d, "mc_primary_goal")] : []}
+        onChange={(v) => {
+          setPa(u, d, "mc_primary_goal")(v[0] ?? "");
+          if (v[0]) auto(adv);
+        }}
+      />
+    ),
+  },
+  {
+    id: "mc_flow_work",
+    title: "What kind of work makes you lose track of time?",
+    subtitle: "Pick any that fit.",
+    showIf: (d) => d.careerStage === "mid-career",
+    answered: (d) => paArr(d, "mc_flow_work").length > 0,
+    render: (d, u) => (
+      <ChipGroup
+        options={[
+          "Building & making things",
+          "Solving hard problems",
+          "Coaching & developing people",
+          "Organizing & planning",
+          "Persuading & selling",
+          "Creating & designing",
+        ]}
+        values={paArr(d, "mc_flow_work")}
+        onChange={setPa(u, d, "mc_flow_work")}
+      />
+    ),
+  },
+  {
+    id: "mc_flexibility",
+    title: "How important is flexibility (remote, hours) to your next move?",
+    showIf: (d) => d.careerStage === "mid-career",
+    answered: (d) => !!paStr(d, "mc_flexibility"),
+    render: (d, u, adv) => (
+      <ChipGroup
+        options={["Essential — non-negotiable", "Important", "Nice to have", "Not a factor"]}
+        single
+        values={paStr(d, "mc_flexibility") ? [paStr(d, "mc_flexibility")] : []}
+        onChange={(v) => {
+          setPa(u, d, "mc_flexibility")(v[0] ?? "");
+          if (v[0]) auto(adv);
+        }}
+      />
+    ),
+  },
+];
+
+const SENIOR_QUESTIONS: PrefQuestion[] = [
+  {
+    id: "sc_driver",
+    title: "What's driving you more right now — influence or income?",
+    showIf: (d) => d.careerStage === "senior-career",
+    answered: (d) => !!paStr(d, "sc_driver"),
+    render: (d, u, adv) => (
+      <ChipGroup
+        options={["Influence", "Income", "Both equally"]}
+        single
+        allowOther
+        values={paStr(d, "sc_driver") ? [paStr(d, "sc_driver")] : []}
+        onChange={(v) => {
+          setPa(u, d, "sc_driver")(v[0] ?? "");
+          if (v[0]) auto(adv);
+        }}
+      />
+    ),
+  },
+  {
+    id: "sc_identity",
+    title: "Do you see yourself as a builder, a fixer, or a strategist?",
+    showIf: (d) => d.careerStage === "senior-career",
+    answered: (d) => !!paStr(d, "sc_identity"),
+    render: (d, u, adv) => (
+      <ChipGroup
+        options={["Builder", "Fixer", "Strategist"]}
+        single
+        values={paStr(d, "sc_identity") ? [paStr(d, "sc_identity")] : []}
+        onChange={(v) => {
+          setPa(u, d, "sc_identity")(v[0] ?? "");
+          if (v[0]) auto(adv);
+        }}
+      />
+    ),
+  },
+  {
+    id: "sc_legacy_skills",
+    title: "What's the one skill you wish the next generation would learn from you?",
+    subtitle: "Stack as many as feel true.",
+    showIf: (d) => d.careerStage === "senior-career",
+    answered: (d) => paArr(d, "sc_legacy_skills").length > 0,
+    render: (d, u) => (
+      <ChipGroup
+        options={[
+          "Leadership under pressure",
+          "Deep technical craft",
+          "Communication & storytelling",
+          "Judgment & decision-making",
+          "Mentoring & coaching",
+          "Resilience & patience",
+        ]}
+        allowOther
+        values={paArr(d, "sc_legacy_skills")}
+        onChange={setPa(u, d, "sc_legacy_skills")}
+      />
+    ),
+  },
+  {
+    id: "sc_fulfilling",
+    title: "What does a fulfilling career look like to you today?",
+    subtitle: "Pick any that resonate.",
+    showIf: (d) => d.careerStage === "senior-career",
+    answered: (d) => paArr(d, "sc_fulfilling").length > 0,
+    render: (d, u) => (
+      <ChipGroup
+        options={[
+          "💰 Financial Maximization — compensation, equity, wealth building",
+          "🧭 Strategic Influence — driving high-level decisions, business scale",
+          "🤝 Mentorship & Legacy — developing teams, helping others grow",
+          "🧠 Intellectual Challenge — solving complex problems, innovation",
+          "🏡 Autonomy & Balance — flexibility, remote work, protecting personal time",
+        ]}
+        values={paArr(d, "sc_fulfilling")}
+        onChange={setPa(u, d, "sc_fulfilling")}
+      />
+    ),
+  },
+  {
+    id: "sc_scope",
+    title: "Are you looking to deepen your domain or broaden your leadership scope?",
+    showIf: (d) => d.careerStage === "senior-career",
+    answered: (d) => !!paStr(d, "sc_scope"),
+    render: (d, u, adv) => (
+      <ChipGroup
+        options={["Deepen my domain", "Broaden my leadership scope", "Both"]}
+        single
+        allowOther
+        values={paStr(d, "sc_scope") ? [paStr(d, "sc_scope")] : []}
+        onChange={(v) => {
+          setPa(u, d, "sc_scope")(v[0] ?? "");
+          if (v[0]) auto(adv);
+        }}
+      />
+    ),
+  },
+];
+
+const EXECUTIVE_QUESTIONS: PrefQuestion[] = [
+  {
+    id: "ex_energy",
+    title: "What drives your professional energy today?",
+    subtitle: "Pick any that fit.",
+    showIf: (d) => d.careerStage === "executive",
+    answered: (d) => paArr(d, "ex_energy").length > 0,
+    render: (d, u) => (
+      <ChipGroup
+        options={[
+          "🚀 Vision & Macro Strategy — setting long-term direction, charting the future",
+          "🌱 Leadership & Culture — developing the next tier of executives, mentoring",
+          "📈 Hyper-Scale & Growth — M&A, geographic expansion, unlocking massive revenue",
+          "🔧 Turnarounds & Crisis — fixing broken operations, navigating structural change",
+          "💡 Product Innovation — staying connected to the core craft, inventing new tech",
+        ]}
+        allowOther
+        values={paArr(d, "ex_energy")}
+        onChange={setPa(u, d, "ex_energy")}
+      />
+    ),
+  },
+  {
+    id: "ex_industry_change",
+    title: "What is the primary long-term change you are trying to drive in your industry?",
+    showIf: (d) => d.careerStage === "executive",
+    answered: (d) => !!paStr(d, "ex_industry_change"),
+    render: (d, u) => (
+      <PhaseTextInput id="ex_industry_change" draft={d} update={u} placeholder="e.g. Making sustainable logistics the industry default" />
+    ),
+  },
+  {
+    id: "ex_hands_on",
+    title: "How hands-on do you still want to be in day-to-day decisions?",
+    subtitle: "1 = advise from the sidelines · 10 = act in the trenches.",
+    showIf: (d) => d.careerStage === "executive",
+    answered: () => true,
+    render: (d, u) => (
+      <Slider
+        id="f-ex_hands_on"
+        label="Hands-on level"
+        value={paNum(d, "ex_hands_on", 5)}
+        onChange={setPa(u, d, "ex_hands_on")}
+        min={1}
+        max={10}
+        unit=""
+      />
+    ),
+  },
+  {
+    id: "ex_non_negotiable",
+    title: "Beyond financial rewards, what's your ultimate non-negotiable for an opportunity?",
+    showIf: (d) => d.careerStage === "executive",
+    answered: (d) => !!paStr(d, "ex_non_negotiable"),
+    render: (d, u, adv) => (
+      <ChipGroup
+        options={[
+          "⚖️ Absolute Strategic Autonomy — full decision-making ownership, explicit board backing",
+          "🎯 Clear Corporate Mandate — a specific, high-leverage mission: turnaround, hyper-scale, IPO",
+          "🤝 High-Alignment Governance — strong chemistry with the board, founders, or CEO",
+          "⚡ Low-Bureaucracy Executive Culture — elite, high-caliber peers, rapid execution",
+          "🌍 Systemic Industry Impact — massive resource availability, industry-shifting market scale",
+        ]}
+        single
+        values={paStr(d, "ex_non_negotiable") ? [paStr(d, "ex_non_negotiable")] : []}
+        onChange={(v) => {
+          setPa(u, d, "ex_non_negotiable")(v[0] ?? "");
+          if (v[0]) auto(adv);
+        }}
+      />
+    ),
+  },
+];
+
+const PHASE_PREF_QUESTIONS: PrefQuestion[] = [
+  ...MID_CAREER_QUESTIONS,
+  ...SENIOR_QUESTIONS,
+  ...EXECUTIVE_QUESTIONS,
 ];
 
 // ── Personal details questions (section 0) ─────────────────────
@@ -1249,10 +1774,17 @@ const PERSONAL_QUESTIONS: WizardQuestion[] = [
     ),
   },
   {
-    id: "industries", section: 0, title: "Which industries interest you?", subtitle: "Optional.",
+    id: "industries", section: 0, title: "Which industries interest you?",
+    subtitle: "Optional — pick up to 3.",
     answered: (d) => d.industries.length > 0,
     render: (d, u) => (
-      <TagInput id="f-industries" values={d.industries} onChange={(v) => u("industries", v)} placeholder="e.g. Technology · Healthcare · Finance" />
+      <ChipGroup
+        options={INDUSTRIES}
+        values={d.industries}
+        onChange={(v) => u("industries", v)}
+        max={3}
+        allowOther
+      />
     ),
   },
   {
@@ -1327,12 +1859,102 @@ const WORK_QUESTIONS: WizardQuestion[] = [
   },
 ];
 
-/** The whole onboarding as one ordered question list (mentor wireframe). */
+/** The whole onboarding as one ordered question list (mentor wireframe).
+ *  Phase-specific sets come after the generic preferences; showIf gates
+ *  mean a mid-career+ user sees their set INSTEAD of the generic tail. */
 const WIZARD_QUESTIONS: WizardQuestion[] = [
   ...PERSONAL_QUESTIONS,
   ...WORK_QUESTIONS,
   ...PREF_QUESTIONS.map((q): WizardQuestion => ({ ...q, section: 2 })),
+  ...PHASE_PREF_QUESTIONS.map((q): WizardQuestion => ({ ...q, section: 2 })),
 ];
+
+const QUESTION_BY_ID = new Map(WIZARD_QUESTIONS.map((q) => [q.id, q]));
+
+/** Edit-mode overview (Task 1): the whole profile as a table; Edit expands
+ *  the owning question's input INLINE under the row — never back into the
+ *  sequential wizard. Single-select chips auto-collapse the row on pick. */
+function EditOverview({
+  draft,
+  update,
+  errors,
+  editingId,
+  onToggleEdit,
+}: {
+  draft: Draft;
+  update: UpdateFn;
+  errors: Record<string, string>;
+  editingId: string | null;
+  onToggleEdit: (id: string | null) => void;
+}) {
+  const d = draft;
+  return (
+    <div className="flex flex-col gap-5">
+      {REVIEW_GROUPS.map((g) => {
+        const rows = g.rows.filter((r) => !r.showIf || r.showIf(d));
+        if (rows.length === 0) return null;
+        return (
+          <div key={g.title}>
+            <p className="text-luminous text-[0.6875rem] font-mono font-semibold uppercase tracking-[0.18em]">
+              {g.title}
+            </p>
+            <div className="border-border/15 divide-border/30 mt-2 divide-y rounded-xl border">
+              {rows.map((r) => {
+                const q = QUESTION_BY_ID.get(r.id);
+                const isEditing = editingId === r.id;
+                const value = r.value(d);
+                const filled = value.trim().length > 0;
+                return (
+                  <div key={r.id}>
+                    <div className="flex items-center gap-3 px-3 py-2 text-sm">
+                      <span className="text-muted-foreground w-32 shrink-0 text-xs">{r.label}</span>
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1 truncate",
+                          !filled && "text-muted-foreground/60 italic",
+                        )}
+                      >
+                        {filled ? value : "Not set"}
+                      </span>
+                      {q && (
+                        <button
+                          type="button"
+                          onClick={() => onToggleEdit(isEditing ? null : r.id)}
+                          className="text-luminous shrink-0 text-xs font-medium hover:underline"
+                        >
+                          {isEditing ? "Close" : "Edit"}
+                        </button>
+                      )}
+                    </div>
+                    {errors[r.id] && (
+                      <p className="text-destructive px-3 pb-2 text-xs">{errors[r.id]}</p>
+                    )}
+                    {isEditing && q && (
+                      <div className="bg-foreground/2 border-border/15 border-t px-3 py-3">
+                        <p className="text-sm font-medium">{q.title}</p>
+                        {q.subtitle && (
+                          <p className="text-muted-foreground mt-0.5 text-xs">{q.subtitle}</p>
+                        )}
+                        <div className="mt-2">
+                          {q.render(d, update, () => onToggleEdit(null))}
+                        </div>
+                        <div className="mt-3 flex justify-end">
+                          <Button size="xs" variant="outline" onClick={() => onToggleEdit(null)}>
+                            Done
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 /** Repeater question bodies — reuse the existing add-forms. */
 function ExperienceRepeater({ draft, update }: { draft: Draft; update: UpdateFn }) {
@@ -1405,6 +2027,97 @@ function EducationRepeater({ draft, update }: { draft: Draft; update: UpdateFn }
   );
 }
 
+// ── Review rows (shared by the wizard review AND the edit overview) ──
+
+interface ReviewRowDef {
+  /** Matches the owning question's id (drives jump-to / inline edit). */
+  id: string;
+  label: string;
+  value: (d: Draft) => string;
+  showIf?: (d: Draft) => boolean;
+}
+
+/** "💰 Financial Maximization — …" → "💰 Financial Maximization". */
+const shortOpt = (s: string) => s.split(" — ")[0];
+const fmtPa = (v: string | string[] | number | undefined): string =>
+  Array.isArray(v) ? v.map(shortOpt).join(" · ") : v === undefined ? "" : shortOpt(String(v));
+
+const PHASE_ROW_LABELS: Record<string, string> = {
+  mc_challenge: "Biggest challenge",
+  mc_change_one: "Change one thing",
+  mc_primary_goal: "Primary goal",
+  mc_flow_work: "Flow work",
+  mc_flexibility: "Flexibility",
+  sc_driver: "Driver",
+  sc_identity: "Identity",
+  sc_legacy_skills: "Legacy skills",
+  sc_fulfilling: "Fulfilling career",
+  sc_scope: "Deepen vs broaden",
+  ex_energy: "Energy source",
+  ex_industry_change: "Industry change",
+  ex_hands_on: "Hands-on (1–10)",
+  ex_non_negotiable: "Non-negotiable",
+};
+
+const REVIEW_GROUPS: { title: string; rows: ReviewRowDef[] }[] = [
+  {
+    title: "Personal details",
+    rows: [
+      { id: "fullName", label: "Name", value: (d) => d.fullName },
+      { id: "nickname", label: "Nickname", value: (d) => d.nickname },
+      { id: "email", label: "Email", value: (d) => d.email },
+      { id: "phone", label: "Phone", value: (d) => d.phone },
+      { id: "location", label: "Location", value: (d) => d.location },
+      { id: "currentTitle", label: "Current title", value: (d) => d.currentTitle },
+      { id: "familyStatus", label: "Family status", value: (d) => d.familyStatus },
+      { id: "gender", label: "Gender", value: (d) => d.gender },
+      { id: "careerStage", label: "Stage", value: (d) => STAGES.find((s) => s.id === d.careerStage)?.label ?? "" },
+      { id: "focus", label: "Focus", value: (d) => FOCUS.find((f) => f.id === d.focus)?.label ?? "" },
+      { id: "industries", label: "Industries", value: (d) => d.industries.join(", ") },
+      { id: "fieldOfStudy", label: "Field of study", value: (d) => d.fieldOfStudy, showIf: (d) => d.careerStage === "student" },
+      { id: "goal", label: "Goal", value: (d) => d.goal },
+    ],
+  },
+  {
+    title: "Work & skills",
+    rows: [
+      { id: "experiences", label: "Experience", value: (d) => (d.experiences.length ? `${d.experiences.length} entr${d.experiences.length === 1 ? "y" : "ies"}` : "") },
+      { id: "education", label: "Education", value: (d) => (d.education.length ? `${d.education.length} entr${d.education.length === 1 ? "y" : "ies"}` : "") },
+      { id: "skills", label: "Skills", value: (d) => d.skills.join(", ") },
+      { id: "certifications", label: "Certifications", value: (d) => d.certifications.join(", ") },
+      { id: "languages", label: "Languages", value: (d) => d.languages.join(", ") },
+    ],
+  },
+  {
+    title: "Preferences",
+    rows: [
+      { id: "targetRoles", label: "Desired roles", value: (d) => d.targetRoles.join(", ") },
+      { id: "desiredLocations", label: "Desired locations", value: (d) => d.desiredLocations.join(", ") },
+      { id: "openToRelocate", label: "Open to relocate", value: (d) => (d.openToRelocate ? "Yes" : "No") },
+      { id: "workArrangement", label: "Work arrangement", value: (d) => d.workArrangement.join(", ") },
+      { id: "jobTypes", label: "Job type", value: (d) => d.jobTypes.join(", ") },
+      { id: "minSalary", label: "Min salary", value: (d) => (d.minSalaryAmount ? `${d.minSalaryAmount} / ${d.minSalaryPeriod || "yearly"}` : "") },
+      { id: "availability", label: "Availability", value: (d) => d.availability },
+      { id: "visibility", label: "Profile visibility", value: (d) => (d.visibility === "all_recruiters" ? "All recruiters" : "Hidden until opt-in") },
+      { id: "workEnvironment", label: "Best environment", value: (d) => ENVIRONMENTS.find((e) => e.id === d.workEnvironment)?.label ?? "", showIf: (d) => !isPhasedStage(d) },
+      { id: "topValues", label: "Top values", value: (d) => d.topValues.join(" · "), showIf: (d) => !isPhasedStage(d) },
+      { id: "learningHoursPerWeek", label: "Learning / week", value: (d) => `${d.learningHoursPerWeek} hrs`, showIf: (d) => !isPhasedStage(d) },
+      { id: "scheduleFlexibility", label: "Schedule flexibility", value: (d) => d.scheduleFlexibility.join(", "), showIf: (d) => !isPhasedStage(d) },
+      { id: "maxCommuteMinutes", label: "Max commute", value: (d) => `${d.maxCommuteMinutes} min`, showIf: (d) => !isPhasedStage(d) },
+      { id: "travelWillingness", label: "Travel", value: (d) => d.travelWillingness, showIf: (d) => !isPhasedStage(d) },
+    ],
+  },
+  {
+    title: "Your phase",
+    rows: PHASE_PREF_QUESTIONS.map((q) => ({
+      id: q.id,
+      label: PHASE_ROW_LABELS[q.id] ?? q.id,
+      value: (d: Draft) => fmtPa(d.phaseAnswers[q.id]),
+      showIf: q.showIf,
+    })),
+  },
+];
+
 /** Final review (mentor wireframe): every answer in a neat table with an
  *  Edit next to each line that jumps back to that exact question. */
 function WizardReview({
@@ -1417,11 +2130,6 @@ function WizardReview({
   onEditField: (id: string) => void;
 }) {
   const d = draft;
-  const stageLabel = STAGES.find((s) => s.id === d.careerStage)?.label ?? "—";
-  const focusLabel = FOCUS.find((f) => f.id === d.focus)?.label;
-  const envLabel = ENVIRONMENTS.find((e) => e.id === d.workEnvironment)?.label;
-  const salary =
-    d.minSalaryAmount && `${d.minSalaryAmount} / ${d.minSalaryPeriod || "yearly"}`;
   const edit = (id: string) => () => onEditField(id);
 
   return (
@@ -1436,50 +2144,21 @@ function WizardReview({
         </div>
       </div>
 
-      <ReviewGroup title="Personal details">
-        <ReviewRow label="Name" value={d.fullName} onEdit={edit("fullName")} />
-        <ReviewRow label="Nickname" value={d.nickname} onEdit={edit("nickname")} />
-        <ReviewRow label="Email" value={d.email} onEdit={edit("email")} />
-        <ReviewRow label="Phone" value={d.phone} onEdit={edit("phone")} />
-        <ReviewRow label="Location" value={d.location} onEdit={edit("location")} />
-        <ReviewRow label="Current title" value={d.currentTitle} onEdit={edit("currentTitle")} />
-        <ReviewRow label="Family status" value={d.familyStatus} onEdit={edit("familyStatus")} />
-        <ReviewRow label="Gender" value={d.gender} onEdit={edit("gender")} />
-        <ReviewRow label="Stage" value={stageLabel} onEdit={edit("careerStage")} />
-        <ReviewRow label="Focus" value={focusLabel ?? ""} onEdit={edit("focus")} />
-        <ReviewRow label="Industries" value={d.industries.join(", ")} onEdit={edit("industries")} />
-        {d.careerStage === "student" && <ReviewRow label="Field of study" value={d.fieldOfStudy} onEdit={edit("fieldOfStudy")} />}
-        <ReviewRow label="Goal" value={d.goal} onEdit={edit("goal")} />
-      </ReviewGroup>
-
-      <ReviewGroup title="Work & skills">
-        <ReviewRow label="Experience" value={d.experiences.length ? `${d.experiences.length} entr${d.experiences.length === 1 ? "y" : "ies"}` : ""} onEdit={edit("experiences")} />
-        <ReviewRow label="Education" value={d.education.length ? `${d.education.length} entr${d.education.length === 1 ? "y" : "ies"}` : ""} onEdit={edit("education")} />
-        <ReviewRow label="Skills" value={d.skills.join(", ")} onEdit={edit("skills")} />
-        <ReviewRow label="Certifications" value={d.certifications.join(", ")} onEdit={edit("certifications")} />
-        <ReviewRow label="Languages" value={d.languages.join(", ")} onEdit={edit("languages")} />
-      </ReviewGroup>
-
-      <ReviewGroup title="Preferences">
-        <ReviewRow label="Desired roles" value={d.targetRoles.join(", ")} onEdit={edit("targetRoles")} />
-        <ReviewRow label="Desired locations" value={d.desiredLocations.join(", ")} onEdit={edit("desiredLocations")} />
-        <ReviewRow label="Open to relocate" value={d.openToRelocate ? "Yes" : "No"} onEdit={edit("openToRelocate")} />
-        <ReviewRow label="Work arrangement" value={d.workArrangement.join(", ")} onEdit={edit("workArrangement")} />
-        <ReviewRow label="Job type" value={d.jobTypes.join(", ")} onEdit={edit("jobTypes")} />
-        <ReviewRow label="Min salary" value={salary || ""} onEdit={edit("minSalary")} />
-        <ReviewRow label="Availability" value={d.availability} onEdit={edit("availability")} />
-        <ReviewRow label="Profile visibility" value={d.visibility === "all_recruiters" ? "All recruiters" : "Hidden until opt-in"} onEdit={edit("visibility")} />
-        <ReviewRow label="Best environment" value={envLabel ?? ""} onEdit={edit("workEnvironment")} />
-        <ReviewRow label="Top values" value={d.topValues.join(" · ")} onEdit={edit("topValues")} />
-        <ReviewRow label="Learning / week" value={`${d.learningHoursPerWeek} hrs`} onEdit={edit("learningHoursPerWeek")} />
-        <ReviewRow label="Schedule flexibility" value={d.scheduleFlexibility.join(", ")} onEdit={edit("scheduleFlexibility")} />
-        <ReviewRow label="Max commute" value={`${d.maxCommuteMinutes} min`} onEdit={edit("maxCommuteMinutes")} />
-        <ReviewRow label="Travel" value={d.travelWillingness} onEdit={edit("travelWillingness")} />
-      </ReviewGroup>
+      {REVIEW_GROUPS.map((g) => {
+        const rows = g.rows.filter((r) => !r.showIf || r.showIf(d));
+        if (rows.length === 0) return null;
+        return (
+          <ReviewGroup key={g.title} title={g.title}>
+            {rows.map((r) => (
+              <ReviewRow key={r.id} label={r.label} value={r.value(d)} onEdit={edit(r.id)} />
+            ))}
+          </ReviewGroup>
+        );
+      })}
 
       <SelfIdSection draft={d} update={update} />
 
-      <p className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+      <p className="text-muted-foreground flex items-center gap-1.5 text-[0.6875rem]">
         <Compass className="size-3.5 shrink-0" aria-hidden />
         Everything autosaves. Press Finish when you&apos;re ready.
       </p>
@@ -1504,7 +2183,7 @@ function SelfIdSection({ draft, update }: { draft: Draft; update: UpdateFn }) {
       >
         <span>
           <span className="text-sm font-medium">A few optional questions</span>
-          <span className="text-muted-foreground block text-[11px]">
+          <span className="text-muted-foreground block text-[0.6875rem]">
             Helps us understand our community. Skip any — private, never shared with
             employers, never used for matching.
           </span>
@@ -1553,7 +2232,7 @@ function SelfIdSection({ draft, update }: { draft: Draft; update: UpdateFn }) {
 function ReviewGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <p className="text-luminous text-[11px] font-mono font-semibold uppercase tracking-[0.18em]">{title}</p>
+      <p className="text-luminous text-[0.6875rem] font-mono font-semibold uppercase tracking-[0.18em]">{title}</p>
       <dl className="border-border/15 mt-2 divide-y divide-border/30 rounded-xl border">
         {children}
       </dl>

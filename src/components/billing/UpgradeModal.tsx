@@ -79,7 +79,7 @@ export function UpgradeModal({
           </li>
         ))}
       </ul>
-      <p className="text-muted-foreground/80 mt-4 text-[11px] italic">
+      <p className="text-muted-foreground/80 mt-4 text-[0.6875rem] italic">
         Research preview: upgrading is free and instant — no card required.
       </p>
       {error && <p className="text-destructive mt-3 text-sm">{error}</p>}

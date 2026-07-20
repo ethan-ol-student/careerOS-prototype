@@ -407,7 +407,7 @@ export default function EmployerOnboardingPage() {
     >
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
         <header className="flex items-center justify-between">
-          <span className="text-clover inline-flex items-center gap-2 text-sm font-semibold">
+          <span className="text-clover inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold">
             <Briefcase className="size-4" />
             Career OS · Employer setup
           </span>
@@ -463,7 +463,7 @@ export default function EmployerOnboardingPage() {
           </div>
         </section>
 
-        <p className="text-muted-foreground text-center text-[11px]">
+        <p className="text-muted-foreground text-center text-[0.6875rem]">
           Your answers are saved as you go. Refresh-safe.
         </p>
       </div>
@@ -484,7 +484,7 @@ function StepHeader({
 }) {
   return (
     <div className="mb-4">
-      <p className="text-clover text-[11px] font-mono font-semibold uppercase tracking-[0.18em]">
+      <p className="text-clover text-[0.6875rem] font-mono font-semibold uppercase tracking-[0.18em]">
         Step {step}
       </p>
       <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
@@ -695,7 +695,7 @@ function Field({
 }) {
   return (
     <label className="mt-3 flex flex-col gap-1.5">
-      <span className="text-muted-foreground font-mono text-[11px] uppercase tracking-wider">
+      <span className="text-muted-foreground font-mono text-[0.6875rem] uppercase tracking-wider">
         {label}
       </span>
       {children}
@@ -834,7 +834,7 @@ function TagInput({
               type="button"
               onClick={() => commit(s)}
               disabled={safeValues.includes(s)}
-              className="text-muted-foreground hover:text-clover text-[11px] disabled:opacity-30"
+              className="text-muted-foreground hover:text-clover text-[0.6875rem] disabled:opacity-30"
             >
               + {s}
             </button>
@@ -848,7 +848,7 @@ function TagInput({
               <button
                 type="button"
                 onClick={() => onChange(safeValues.filter((x) => x !== v))}
-                className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]"
+                className="bg-clover/10 text-clover-soft border-clover/30 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.6875rem]"
                 aria-label={`Remove ${v}`}
               >
                 {v}

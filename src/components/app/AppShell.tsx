@@ -2,12 +2,14 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Compass } from "lucide-react";
 import { useIntent } from "@/lib/context/IntentContext";
 import { useAuth } from "@/lib/context/AuthContext";
-import { LayoutLines } from "@/components/ui/LayoutLines";
+import { useCandidatesAI } from "@/lib/hooks/useCandidatesAI";
+import { useUiDensity } from "@/lib/dashboard/useUiDensity";
 import { TopMenu } from "@/components/app/TopMenu";
+import { CarrieWidget } from "@/components/carrie/CarrieWidget";
 import { CandidateSidebar } from "@/components/app/CandidateSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { StreakChip } from "@/components/app/StreakChip";
@@ -28,6 +30,7 @@ export default function AppShell({
   requireIntent = true,
 }: AppShellProps) {
   const router = useRouter();
+  const pathname = usePathname() ?? "";
   const { intent } = useIntent();
   const {
     user,
@@ -35,8 +38,21 @@ export default function AppShell({
     status: authStatus,
     logout,
   } = useAuth();
+  const { data: ai } = useCandidatesAI();
 
   const [showSignOut, setShowSignOut] = useState(false);
+  // Detailed | Vibrant density — set once on the shell so every candidate
+  // page (jobs, skills, portfolio, …) can swap prose ↔ InfoHint via CSS.
+  const uiDensity = useUiDensity();
+
+  // Students are exploration-first — the job section is off-limits. Bounce
+  // any direct hit on /jobs (list or detail) back to the dashboard; the
+  // sidebar already hides the link.
+  const studentBlockedFromJobs =
+    ai?.careerStage === "student" && pathname.startsWith("/jobs");
+  useEffect(() => {
+    if (studentBlockedFromJobs) router.replace("/candidate/dashboard");
+  }, [studentBlockedFromJobs, router]);
 
   // Auth-driven gating: wait for the AuthProvider to hydrate, then:
   //   - no user → bounce to /auth
@@ -69,7 +85,8 @@ export default function AppShell({
     (authStatus !== "ready" ||
       !user ||
       user.role !== "candidate" ||
-      !candidateOnboardingCompleted)
+      !candidateOnboardingCompleted ||
+      studentBlockedFromJobs)
   ) {
     return null;
   }
@@ -89,8 +106,10 @@ export default function AppShell({
   return (
     /* Zero-scroll frame: the app is exactly one viewport tall; only the
        content region (and, if needed, the sidebar) scrolls internally. */
-    <div className="bg-background text-foreground relative flex h-dvh w-full flex-col overflow-hidden">
-      <LayoutLines />
+    <div
+      data-ui-density={uiDensity}
+      className="bg-background text-foreground relative flex h-dvh w-full flex-col overflow-hidden"
+    >
       <header className="relative z-50 -mb-4 shrink-0 pb-4">
         <div className="fade-bottom bg-background/15 absolute left-0 h-24 w-full backdrop-blur-lg" />
         <nav className="relative flex items-center justify-between py-4 pr-4">
@@ -100,11 +119,11 @@ export default function AppShell({
           <div className="flex shrink-0 items-center px-4 lg:w-60 lg:px-6">
             <Link
               href="/candidate/dashboard"
-              className="flex items-center gap-2 text-base font-semibold tracking-tight"
+              className="flex items-center gap-2 whitespace-nowrap text-base font-semibold tracking-tight"
             >
               <Compass className="size-5 text-luminous" />
               Career OS
-              <span className="text-muted-foreground ml-1 hidden text-[10px] font-mono font-medium uppercase tracking-wider sm:inline">
+              <span className="text-muted-foreground ml-1 hidden text-[0.625rem] font-mono font-medium uppercase tracking-wider sm:inline">
                 · Candidate
               </span>
             </Link>
@@ -125,6 +144,8 @@ export default function AppShell({
         <CandidateSidebar onSignOut={() => setShowSignOut(true)} />
         <div className="min-w-0 flex-1 overflow-y-auto">{children}</div>
       </div>
+
+      <CarrieWidget />
 
       <ConfirmDialog
         isOpen={showSignOut}

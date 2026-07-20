@@ -69,7 +69,7 @@ export default function EmployerNotificationsPage() {
                       <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
                         {n.body}
                       </p>
-                      <p className="text-muted-foreground mt-1 text-[10px]">
+                      <p className="text-muted-foreground mt-1 text-[0.625rem]">
                         {formatTimeAgo(n.createdAt)}
                       </p>
                       {n.kind === "invite-accepted" && n.candidateId && (

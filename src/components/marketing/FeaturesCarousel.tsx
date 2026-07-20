@@ -284,7 +284,7 @@ export function FeaturesCarousel() {
                 {slide.label}
               </p>
 
-              <span className="text-muted-foreground absolute bottom-4 right-5 font-mono text-[10px] uppercase tracking-wider">
+              <span className="text-muted-foreground absolute bottom-4 right-5 font-mono text-[0.625rem] uppercase tracking-wider">
                 {String(i + 1).padStart(2, "0")} / {String(SLIDES.length).padStart(2, "0")}
               </span>
             </div>
@@ -345,7 +345,7 @@ export function FeaturesCarousel() {
         </p>
       </div>
 
-      <p className="text-muted-foreground mt-3 text-center text-[11px]">
+      <p className="text-muted-foreground mt-3 text-center text-[0.6875rem]">
         Drag, swipe, or use the arrow keys to navigate.
       </p>
     </div>

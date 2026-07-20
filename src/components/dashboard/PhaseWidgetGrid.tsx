@@ -114,7 +114,7 @@ export function WidgetHeader({
         ) : null}
       </div>
       {hint ? (
-        <span className="border-border/20 text-muted-foreground shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-mono font-medium uppercase tracking-wider">
+        <span className="border-border/20 text-muted-foreground shrink-0 rounded-full border px-2.5 py-1 text-[0.625rem] font-mono font-medium uppercase tracking-wider">
           {hint}
         </span>
       ) : null}
@@ -151,7 +151,7 @@ export function MeterRow({
         />
       </div>
       {caption ? (
-        <p className="text-muted-foreground text-[11px]">{caption}</p>
+        <p className="text-muted-foreground text-[0.6875rem]">{caption}</p>
       ) : null}
     </div>
   );
@@ -192,7 +192,7 @@ export function MockBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-2 py-0.5 text-[10px] font-mono font-medium uppercase tracking-wider text-yellow-400",
+        "inline-flex items-center gap-1 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-2 py-0.5 text-[0.625rem] font-mono font-medium uppercase tracking-wider text-yellow-400",
         className,
       )}
       title="Sample data — not yet backed by a live source"

@@ -158,29 +158,45 @@ export const SkillRadar = memo(function SkillRadar({
           })}
         </g>
 
-        {/* Axis labels in text tokens, never series color */}
+        {/* Axis labels in text tokens, never series color. Hovering a label
+            swaps the ellipsized name for the FULL name, enlarged with a
+            background halo — so every skill is comfortably readable on demand. */}
         {spokes.map((a, i) => {
           if (a.filler) return null;
           const [x, y] = point(i, R + 16);
           const anchor =
             Math.abs(x - CX) < 8 ? "middle" : x > CX ? "start" : "end";
+          const truncated =
+            a.skill.length > 16 ? `${a.skill.slice(0, 15)}…` : a.skill;
           return (
-            <text
-              key={a.key}
-              x={x}
-              y={y + 3}
-              textAnchor={anchor}
-              className="fill-muted-foreground text-[10px]"
-            >
-              {/* Ellipsize long axis names; the vertex tooltip has the full name. */}
-              {a.skill.length > 16 ? `${a.skill.slice(0, 15)}…` : a.skill}
+            <g key={a.key} className="group cursor-default">
+              {/* Resting label — hidden while this group is hovered. */}
+              <text
+                x={x}
+                y={y + 3}
+                textAnchor={anchor}
+                className="fill-muted-foreground text-[0.625rem] transition-opacity group-hover:opacity-0"
+              >
+                {truncated}
+              </text>
+              {/* Hover label — full name, enlarged, halo'd for legibility. */}
+              <text
+                x={x}
+                y={y + 3}
+                textAnchor={anchor}
+                strokeWidth={3}
+                style={{ paintOrder: "stroke" }}
+                className="fill-foreground stroke-background pointer-events-none text-[0.9375rem] font-semibold opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                {a.skill}
+              </text>
               <title>{a.skill}</title>
-            </text>
+            </g>
           );
         })}
       </svg>
 
-      <figcaption className="text-muted-foreground mt-1 flex items-center justify-center gap-4 text-[11px]">
+      <figcaption className="text-muted-foreground mt-1 flex items-center justify-center gap-4 text-[0.6875rem]">
         <span className="inline-flex items-center gap-1.5">
           <span className="bg-luminous/30 border-luminous inline-block h-2.5 w-2.5 rounded-[3px] border" />
           Validated you

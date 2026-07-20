@@ -17,6 +17,7 @@ import {
 import { Col } from "@/components/app/Grid";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { InfoHint } from "@/components/ui/InfoHint";
 import {
   PhaseWidgetGrid,
   DashboardCard,
@@ -95,7 +96,7 @@ function WhyExpander({ result }: { result: ScoreResult }) {
           ))}
         </ul>
         {result.uncertainty && (
-          <p className="text-muted-foreground/70 mt-2 text-[11px] italic">
+          <p className="text-muted-foreground/70 mt-2 text-[0.6875rem] italic">
             {result.uncertainty}
           </p>
         )}
@@ -244,7 +245,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
             />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-clover mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider">
+                <p className="text-clover mb-2 text-[0.6875rem] font-mono font-semibold uppercase tracking-wider">
                   Maintained ({health.maintained.length})
                 </p>
                 {health.maintained.length ? (
@@ -260,7 +261,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
                 )}
               </div>
               <div>
-                <p className="mb-2 inline-flex items-center gap-1 text-[11px] font-mono font-semibold uppercase tracking-wider text-yellow-400">
+                <p className="mb-2 inline-flex items-center gap-1 text-[0.6875rem] font-mono font-semibold uppercase tracking-wider text-yellow-400">
                   <TriangleAlert className="size-3.5" />
                   Watch for decay ({health.atRisk.length})
                 </p>
@@ -332,11 +333,13 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
               />
             )}
             {lifeImpact.lifeNotes.length > 0 && (
-              <ul className="text-muted-foreground mb-3 space-y-1 text-xs">
-                {lifeImpact.lifeNotes.map((n) => (
-                  <li key={n}>• {n}</li>
-                ))}
-              </ul>
+              <InfoHint className="mb-3 block">
+                <ul className="text-muted-foreground space-y-1 text-xs">
+                  {lifeImpact.lifeNotes.map((n) => (
+                    <li key={n}>• {n}</li>
+                  ))}
+                </ul>
+              </InfoHint>
             )}
             {/* Optional, PRIVATE salary input — never shown to employers. */}
             <div className="flex items-center gap-2">
@@ -460,7 +463,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
             </ol>
             {story.hiddenStrengths.length > 0 && (
               <>
-                <p className="text-clover mt-4 text-[11px] font-mono font-semibold uppercase tracking-wider">
+                <p className="text-clover mt-4 text-[0.6875rem] font-mono font-semibold uppercase tracking-wider">
                   Hidden strengths
                 </p>
                 <ul className="mt-1.5 space-y-1.5">
@@ -588,7 +591,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
             ) : bestJob ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-clover mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider">
+                  <p className="text-clover mb-2 text-[0.6875rem] font-mono font-semibold uppercase tracking-wider">
                     Already in place ({bestJob.matched.length})
                   </p>
                   <ul className="flex flex-wrap gap-1.5">
@@ -600,7 +603,7 @@ export function CareerHealthHome({ data }: { data: CandidateDashboardData }) {
                   </ul>
                 </div>
                 <div>
-                  <p className="mb-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-yellow-400">
+                  <p className="mb-2 text-[0.6875rem] font-mono font-semibold uppercase tracking-wider text-yellow-400">
                     The bridge ({skillGaps.length})
                   </p>
                   {skillGaps.length ? (

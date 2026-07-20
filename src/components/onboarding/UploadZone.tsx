@@ -139,7 +139,7 @@ export function UploadZone({
               Import from LinkedIn — soon
             </Button>
           </div>
-          <p className="text-muted-foreground mt-1 text-[11px]">
+          <p className="text-muted-foreground mt-1 text-[0.6875rem]">
             No CV? No problem — everything below can be added manually.
           </p>
         </div>

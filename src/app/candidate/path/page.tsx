@@ -7,6 +7,7 @@ import AppShell from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Grid12, Col } from "@/components/app/Grid";
 import { Chip } from "@/components/ui/Chip";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { useCandidateDashboard } from "@/lib/dashboard/useCandidateDashboard";
 import { getPhaseConfig } from "@/lib/dashboard/phaseConfig";
 import type { CareerPhase } from "@/lib/dashboard/types";
@@ -60,7 +61,7 @@ function PathContent() {
     <Grid12 className="gap-4">
       <Col span={12} lg={8}>
         <div className="glass-3 overflow-hidden rounded-2xl p-2">
-          <p className="text-luminous px-3 pb-2 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+          <p className="text-luminous px-3 pb-2 pt-2 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
             Phase: {cfg.label}
           </p>
           <PerspectiveMap
@@ -72,16 +73,18 @@ function PathContent() {
 
       <Col span={12} lg={4}>
         <div className="glass-3 flex h-full flex-col rounded-2xl p-6">
-          <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+          <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
             <Route className="size-3" aria-hidden />
             Details on the current track
           </p>
           <h2 className="mt-3 text-lg font-semibold tracking-tight">{cfg.label}</h2>
-          <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">{cfg.purpose}</p>
+          <InfoHint className="text-muted-foreground mt-1.5 block text-sm leading-relaxed">
+            {cfg.purpose}
+          </InfoHint>
 
           {upcoming.length > 0 && (
             <div className="mt-5">
-              <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-wider">
+              <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
                 What&apos;s up ahead
               </p>
               <ul className="mt-2 space-y-2">
@@ -93,9 +96,9 @@ function PathContent() {
                     <MapPin className="text-muted-foreground mt-0.5 size-3.5 shrink-0" aria-hidden />
                     <span>
                       <span className="text-sm font-medium">{c.label}</span>
-                      <span className="text-muted-foreground block text-xs leading-snug">
+                      <InfoHint className="text-muted-foreground block text-xs leading-snug">
                         {c.purpose}
-                      </span>
+                      </InfoHint>
                     </span>
                   </li>
                 ))}
@@ -106,9 +109,11 @@ function PathContent() {
           <div className="border-border/15 mt-auto border-t pt-4">
             <Chip tone="neutral">Preview</Chip>
             <p className="text-muted-foreground mt-2 text-xs">
-              Full turn-by-turn navigation — milestones, unlocks, and the moves
-              between phases — is on the roadmap. For now, plan your next steps in
-              the{" "}
+              <InfoHint>
+                Full turn-by-turn navigation — milestones, unlocks, and the moves
+                between phases — is on the roadmap.
+              </InfoHint>{" "}
+              Plan your next steps in the{" "}
               <Link href="/candidate/chapters" className="text-luminous hover:underline">
                 Life Chapter Designer
               </Link>
@@ -208,8 +213,8 @@ function PerspectiveMap({
               style={{ paintOrder: "stroke" }}
               className={
                 s.current
-                  ? "fill-foreground text-[13px] font-semibold"
-                  : "fill-foreground/80 text-[11px]"
+                  ? "fill-foreground text-[0.8125rem] font-semibold"
+                  : "fill-foreground/80 text-[0.6875rem]"
               }
             >
               {s.current ? `You are here — ${s.label}` : s.label}

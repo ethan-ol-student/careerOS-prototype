@@ -1,168 +1,103 @@
-import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRight,
   ArrowRightIcon,
-  Compass,
-  Sparkles,
-  Users,
+  BadgeCheck,
   Briefcase,
-  Search,
-  Handshake,
-  Activity,
-  ShieldCheck,
-  Telescope,
-  Eye,
+  Check,
+  Compass,
+  Radar as RadarIcon,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 
 import { Section } from "@/components/ui/Section";
 import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Glow } from "@/components/ui/Glow";
-import { Mockup, MockupFrame } from "@/components/ui/Mockup";
 import { Navbar } from "@/components/marketing/Navbar";
-import { DashboardPreview } from "@/components/marketing/DashboardPreview";
-import { FeaturesCarousel } from "@/components/marketing/FeaturesCarousel";
-import { LiveMatchDemo } from "@/components/marketing/LiveMatchDemo";
+import { Faq } from "@/components/marketing/Faq";
 import { Parallax } from "@/components/marketing/Parallax";
 import { isJudgeDemoEnabled } from "@/lib/dev/testMode";
 import { cn } from "@/lib/utils";
+import { DashboardGallery } from "@/components/DashboardGallery";
 
-const CANDIDATE_BENEFITS = [
+// ── Core features (feature → benefit), alternating layout ───────────
+
+type MockKind = "radar" | "ring" | "match";
+
+interface Feature {
+  id?: string;
+  eyebrow: string;
+  title: string;
+  accent: string; // token for the highlighted word
+  body: string;
+  points: string[];
+  cta: { label: string; href: string };
+  mock: MockKind;
+}
+
+
+const FEATURES: Feature[] = [
   {
-    icon: Telescope,
-    title: "A live view of your trajectory",
-    body: "Career OS reads your skills, learning, and goals to show where you stand and where you could go next.",
+    id: "features",
+    eyebrow: "Skills Truth",
+    title: "Know exactly where you stand.",
+    accent: "stand",
+    body: "Every skill carries a trust tier — self-claimed, evidence-backed, or endorsed — so your radar shows validated strength against a real role, not a keyword list.",
+    points: [
+      "3-tier trust on every skill you claim",
+      "An adaptive radar of you vs a target role",
+      "One clear next step to close the gap",
+    ],
+    cta: { label: "See the Skill Radar", href: "/auth?mode=signup&role=candidate" },
+    mock: "radar",
   },
   {
-    icon: Sparkles,
-    title: "Clear next steps as you grow",
-    body: "Every skill you add updates your profile, your readiness, and your recommendations. No black-box scoring.",
+    eyebrow: "Career Intelligence",
+    title: "Always know your next best move.",
+    accent: "move",
+    body: "Readiness, fair pay, transferable skills, and next-move simulations — every recommendation ships with a “Why this?”, so you act on reasons, never a black box.",
+    points: [
+      "Explainable readiness & career-health scores",
+      "Safe, growth, and bold pathways with trade-offs",
+      "Deterministic — the same inputs, the same score",
+    ],
+    cta: { label: "Explore the intelligence", href: "/auth?mode=signup&role=candidate" },
+    mock: "ring",
   },
   {
-    icon: Eye,
-    title: "Found by the right employers",
-    body: "As your readiness rises, your Living Portfolio reaches employers who match your direction.",
+    id: "employers",
+    eyebrow: "For employers",
+    title: "Meet talent already on trajectory.",
+    accent: "trajectory",
+    body: "Every Living Portfolio updates as candidates learn and ship. Find people by where they're heading — with the exact skills, evidence, and reasons behind every match.",
+    points: [
+      "Search by compounding skills & readiness",
+      "Live signals, not frozen résumés",
+      "Transparent, explainable matches",
+    ],
+    cta: { label: "Find talent", href: "/auth?mode=signup&role=employer" },
+    mock: "match",
   },
 ];
-
-const MID_CAREER_VALUE = [
-  {
-    icon: Activity,
-    title: "A Career Health Score, not a job board",
-    body: "Skill relevance, fair pay, and your best next move — one calm monthly check-up instead of daily noise.",
-  },
-  {
-    icon: Compass,
-    title: "Same skill, different door",
-    body: "The Transferable Skill Map shows how much of each nearby role you already cover — and the Skill Bridge names the exact few skills to close.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Every recommendation explains itself",
-    body: 'Safe, growth, and bold pathways each carry a "Why this recommendation?" — reasons and trade-offs, never a verdict from a black box.',
-  },
-];
-
-const EMPLOYER_VALUE = [
-  {
-    icon: Search,
-    title: "Talent on trajectory",
-    body: "Find candidates by where they're heading, not only where they've been. Filter by compounding skills and readiness signals.",
-  },
-  {
-    icon: Activity,
-    title: "Live readiness signals",
-    body: "Every Living Portfolio updates as candidates learn and ship, so you see current momentum instead of a frozen snapshot.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Transparent matches",
-    body: "Every match is explainable: the exact skills, evidence, and chapters behind a candidate's readiness score.",
-  },
-];
-
-// Trust = methodology, not vanity metrics: every claim here is verifiable
-// in-product (this is a research preview — we don't invent user counts).
-const TRUST_POINTS = [
-  {
-    icon: ShieldCheck,
-    title: "Deterministic scoring",
-    body: "Same inputs, same score, every time. Eleven engines, assertion-checked on every release.",
-  },
-  {
-    icon: Eye,
-    title: "Explainable by contract",
-    body: 'Every score ships with its reasons — the "Why this recommendation?" button is never paywalled.',
-  },
-  {
-    icon: Handshake,
-    title: "Honest demo data",
-    body: "Seeded content is curated, cited, and always labelled — and your salary input stays private to you.",
-  },
-];
-
-const CONNECTION_STEPS = [
-  {
-    side: "Candidate",
-    tint: "luminous" as const,
-    icon: Users,
-    title: "Growth signals in",
-    body: "Skills, projects, learning chapters, and goals flow into the Living Portfolio as the candidate grows.",
-  },
-  {
-    side: "CareerOS",
-    tint: "brand" as const,
-    icon: Handshake,
-    title: "The bridge",
-    body: "CareerOS reads trajectory, compounding skills, and readiness, turning personal growth into a discoverable shape.",
-  },
-  {
-    side: "Employer",
-    tint: "clover" as const,
-    icon: Briefcase,
-    title: "Discovery out",
-    body: "Employers surface candidates whose direction matches the role, then reach out with full context.",
-  },
-];
-
-const CONNECTION_TINT: Record<
-  "luminous" | "brand" | "clover",
-  { ring: string; chip: string; sideText: string }
-> = {
-  luminous: {
-    ring: "ring-luminous/30",
-    chip: "bg-luminous/15 text-luminous-soft",
-    sideText: "text-luminous",
-  },
-  brand: {
-    ring: "ring-brand/30",
-    chip: "bg-brand/15 text-brand",
-    sideText: "text-brand",
-  },
-  clover: {
-    ring: "ring-clover/30",
-    chip: "bg-clover/15 text-clover-soft",
-    sideText: "text-clover",
-  },
-};
 
 export default function LandingPage() {
+  const judge = isJudgeDemoEnabled();
+
   return (
     <main className="bg-background text-foreground min-h-screen w-full">
       <Navbar />
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
       <Section className="fade-bottom relative overflow-hidden pb-0 sm:pb-0 md:pb-0">
-        <div className="max-w-container mx-auto flex flex-col gap-12 pt-16 sm:gap-24">
-          <div className="flex flex-col items-center gap-6 text-center sm:gap-10">
+        <div className="max-w-container mx-auto flex flex-col gap-12 pt-14 sm:gap-20">
+          <div className="flex flex-col items-center gap-6 text-center sm:gap-8">
             <Badge variant="outline" className="animate-appear">
               <span className="text-muted-foreground">
                 A career operating system for Asia&apos;s next generation
               </span>
-              <a
-                href="#candidate-vp"
-                className="text-foreground flex items-center gap-1"
-              >
+              <a href="#features" className="text-foreground flex items-center gap-1">
                 See how it works
                 <ArrowRightIcon className="size-3" />
               </a>
@@ -174,406 +109,524 @@ export default function LandingPage() {
                 "text-4xl font-semibold leading-tight sm:text-6xl sm:leading-tight md:text-7xl md:leading-[1.05]",
               )}
             >
-              See where your career is heading.
+              See where your career is <span className="text-brand">heading</span>.
             </h1>
 
-            <p className="animate-appear text-muted-foreground relative z-10 max-w-[680px] text-pretty text-base font-medium opacity-0 [animation-delay:0.1s] sm:text-xl">
+            <p className="animate-appear text-muted-foreground relative z-10 max-w-3xl text-pretty text-base font-medium opacity-0 [animation-delay:0.1s] sm:text-xl">
               Career OS reads your skills, projects, and goals to show your
-              trajectory and what to do next. As you grow, the right employers
-              can find you.
+              trajectory and the next best move. As you grow, the right
+              employers find you.
             </p>
 
-            <div className="animate-appear relative z-10 flex flex-wrap justify-center gap-4 opacity-0 [animation-delay:0.3s]">
-              <LinkButton
-                href="/auth?mode=signup&role=candidate"
-                variant="default"
-                iconRight={<ArrowRight />}
-              >
-                Start your journey
-              </LinkButton>
-              <LinkButton
-                href="/auth?mode=signup&role=employer"
-                variant="glow"
-                icon={<Briefcase />}
-              >
-                Find talent
-              </LinkButton>
-              {isJudgeDemoEnabled() && (
-                <LinkButton href="/judge" variant="outline" icon={<Sparkles />}>
-                  Judge Demo
-                </LinkButton>
-              )}
-            </div>
-
-            <div className="relative w-full pt-12">
-              <Parallax speed={-60}>
-                <MockupFrame
-                  className="animate-appear opacity-0 [animation-delay:0.7s]"
-                  size="small"
-                >
-                  <Mockup
-                    type="responsive"
-                    className="bg-background/90 w-full rounded-xl border-0"
-                  >
-                    <DashboardPreview />
-                  </Mockup>
-                </MockupFrame>
-              </Parallax>
-              <Glow
-                variant="top"
-                className="animate-appear-zoom opacity-0 [animation-delay:1s]"
-              />
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ───────────────────── CANDIDATE VALUE PROPOSITION ───────────────────── */}
-      <Section id="candidate-vp" className="relative">
-        <div className="max-w-container mx-auto grid items-center gap-12 md:grid-cols-12">
-          {/* Image - diverging-path person */}
-          <div className="md:col-span-5">
-            <Parallax speed={90}>
-              <div className="glass-3 ring-brand/20 relative aspect-[4/5] w-full overflow-hidden rounded-3xl ring-1">
-                <Image
-                  src="/candidate_new.png"
-                  alt="A candidate standing at a fork in the path, choosing their direction with Career OS"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 42vw"
-                  priority
-                  className="object-cover scale-x-[-1]"
-                />
-                <div
-                  aria-hidden
-                  className="from-background/40 absolute inset-0 bg-linear-to-t to-transparent"
-                />
+            <div className="animate-appear relative z-10 flex flex-col items-center gap-3 opacity-0 [animation-delay:0.3s]">
+              <div className="flex flex-wrap justify-center gap-3">
+                {judge ? (
+                  <>
+                    <LinkButton href="/judge" variant="default" icon={<Sparkles />}>
+                      Judge Demo
+                    </LinkButton>
+                    <LinkButton
+                      href="/auth?mode=signup&role=candidate"
+                      variant="glow"
+                      iconRight={<ArrowRight />}
+                    >
+                      Start your journey
+                    </LinkButton>
+                  </>
+                ) : (
+                  <>
+                    <LinkButton
+                      href="/auth?mode=signup&role=candidate"
+                      variant="default"
+                      iconRight={<ArrowRight />}
+                    >
+                      Start your journey
+                    </LinkButton>
+                    <LinkButton
+                      href="/auth?mode=signup&role=employer"
+                      variant="glow"
+                      icon={<Briefcase />}
+                    >
+                      Find talent
+                    </LinkButton>
+                  </>
+                )}
               </div>
-            </Parallax>
-          </div>
-
-          {/* Content */}
-          <div className="md:col-span-7">
-            <Badge variant="outline" className="mb-4">
-              <span className="text-muted-foreground">For candidates</span>
-            </Badge>
-            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl md:text-5xl">
-              Your career, navigated{" "}
-              <span className="text-brand">with intent</span>.
-            </h2>
-            <p className="text-muted-foreground mt-4 max-w-2xl text-pretty text-base sm:text-lg">
-              Career OS treats every step you take (a skill learned, a project
-              shipped, a chapter completed) as a signal. Those signals compound
-              into a living picture of where you are and where you could go
-              next.
-            </p>
-
-            <ul className="mt-8 flex flex-col gap-5">
-              {CANDIDATE_BENEFITS.map(({ icon: Icon, title, body }) => (
-                <li key={title} className="flex items-start gap-4">
-                  <span className="bg-brand/15 text-brand flex size-10 shrink-0 items-center justify-center rounded-xl">
-                    <Icon className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-base font-semibold tracking-tight">
-                      {title}
-                    </h3>
-                    <p className="text-muted-foreground mt-1 text-pretty text-sm leading-relaxed">
-                      {body}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-8">
-              <LinkButton
-                href="/auth?mode=signup&role=candidate"
-                variant="default"
-                iconRight={<ArrowRight />}
-              >
-                Start your journey
-              </LinkButton>
+              <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                <BadgeCheck className="text-brand size-3.5" aria-hidden />
+                {judge
+                  ? "No sign-in required — explore the full demo."
+                  : "Free during the research preview — no card, no catch."}
+              </p>
             </div>
-          </div>
-        </div>
-      </Section>
 
-      {/* ─────────────── EXPERIENCED PROFESSIONALS (35+) ─────────────── */}
-      <Section id="second-career" className="relative">
-        <div className="max-w-container mx-auto grid items-center gap-12 md:grid-cols-12">
-          {/* Content */}
-          <div className="md:col-span-7">
-            <Badge variant="outline" className="mb-4">
-              <span className="text-muted-foreground">
-                For experienced professionals 35+
-              </span>
-            </Badge>
-            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl md:text-5xl">
-              Your second career does{" "}
-              <span className="text-luminous">not start from zero</span>.
-            </h2>
-            <p className="text-muted-foreground mt-4 max-w-2xl text-pretty text-base sm:text-lg">
-              Two decades of solved problems is capital, not baggage. Career
-              OS reads your history as proof of capability and shows — with
-              reasons, never black boxes — where it transfers next.
-            </p>
-
-            <ul className="mt-8 flex flex-col gap-5">
-              {MID_CAREER_VALUE.map(({ icon: Icon, title, body }) => (
-                <li key={title} className="flex items-start gap-4">
-                  <span className="bg-luminous/15 text-luminous-soft flex size-10 shrink-0 items-center justify-center rounded-xl">
-                    <Icon className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-base font-semibold tracking-tight">
-                      {title}
-                    </h3>
-                    <p className="text-muted-foreground mt-1 text-pretty text-sm leading-relaxed">
-                      {body}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Wildcard: the real engine, live, no login */}
-          <div className="md:col-span-5">
-            <LiveMatchDemo />
-          </div>
-        </div>
-      </Section>
-
-      {/* ───────────────────── EMPLOYER VALUE PROPOSITION ───────────────────── */}
-      <Section id="employer-vp" className="bg-card/40 relative overflow-hidden">
-        <div className="max-w-container mx-auto grid items-center gap-12 md:grid-cols-12">
-          {/* Content */}
-          <div className="md:order-1 md:col-span-7">
-            <Badge variant="outline" className="mb-4">
-              <span className="text-muted-foreground">For employers</span>
-            </Badge>
-            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl md:text-5xl">
-              Find talent already{" "}
-              <span className="text-brand">on trajectory</span>.
-            </h2>
-            <p className="text-muted-foreground mt-4 max-w-2xl text-pretty text-base sm:text-lg">
-              Career OS turns every candidate into a living portfolio of skills,
-              evidence, and direction, so you reach out when the match is real
-              rather than when keywords line up.
-            </p>
-
-            <ul className="mt-8 flex flex-col gap-5">
-              {EMPLOYER_VALUE.map(({ icon: Icon, title, body }) => (
-                <li key={title} className="flex items-start gap-4">
-                  <span className="bg-brand/15 text-brand flex size-10 shrink-0 items-center justify-center rounded-xl">
-                    <Icon className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-base font-semibold tracking-tight">
-                      {title}
-                    </h3>
-                    <p className="text-muted-foreground mt-1 text-pretty text-sm leading-relaxed">
-                      {body}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <LinkButton
-                href="/auth?mode=signup&role=employer"
-                variant="default"
-                iconRight={<ArrowRight />}
-              >
-                Find talent
-              </LinkButton>
-              <span className="text-muted-foreground font-mono text-xs uppercase tracking-wider">
-                Research preview
-              </span>
-            </div>
-          </div>
-
-          {/* Image slot - Employer */}
-          <div className="md:order-2 md:col-span-5">
-            <Parallax speed={-80}>
-              <div className="border-border/20 relative flex aspect-[4/5] w-full overflow-hidden rounded-3xl border">
-                <Image
-                  src="/employer_new.png"
-                  alt="A hiring team reviewing candidates by their growth trajectory"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 42vw"
-                  className="object-cover scale-x-[-1]"
-                />
-              </div>
+            {/* New dashboard preview */}
+            <Parallax speed={-60}>  
+              <DashboardGallery />
             </Parallax>
           </div>
         </div>
       </Section>
 
-      {/* ───────────────────── HOW CAREEROS CONNECTS BOTH SIDES ───────────────────── */}
-      <Section id="connection" className="relative">
-        <div className="max-w-container mx-auto flex flex-col gap-12">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-              Growth signals in. <span className="text-brand">Discovery</span>{" "}
-              out.
-            </h2>
-            <p className="text-muted-foreground max-w-2xl text-pretty text-base sm:text-lg">
-              Career OS sits between candidates and employers as the translation
-              layer. As candidates grow, the right employers see them, and the
-              path from intent to opportunity gets shorter.
-            </p>
-          </div>
-
-          {/* Three-step bridge */}
-          <ol className="relative grid gap-4 md:grid-cols-3">
-            {/* Connector line on desktop */}
-            <div
-              aria-hidden
-              className="from-luminous via-brand to-clover absolute left-[16.66%] right-[16.66%] top-12 hidden h-px bg-linear-to-r md:block"
-            />
-            {CONNECTION_STEPS.map(({ side, icon: Icon, title, body, tint }, i) => {
-              const t = CONNECTION_TINT[tint];
-              return (
-                <li
-                  key={title}
-                  className={cn(
-                    "glass-3 relative flex flex-col items-center gap-4 rounded-2xl p-6 text-center ring-1",
-                    t.ring,
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "flex size-14 items-center justify-center rounded-2xl",
-                      t.chip,
-                    )}
-                  >
-                    <Icon className="size-6" />
-                  </div>
-                  <p
-                    className={cn(
-                      "text-[11px] font-mono font-semibold uppercase tracking-[0.18em]",
-                      t.sideText,
-                    )}
-                  >
-                    {i + 1} · {side}
-                  </p>
-                  <h3 className="text-lg font-semibold tracking-tight">
-                    {title}
-                  </h3>
-                  <p className="text-muted-foreground text-pretty text-sm leading-relaxed">
-                    {body}
-                  </p>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-      </Section>
-
-      {/* ───────────────────── TRUST — HONEST METHODOLOGY ───────────────────── */}
-      <Section className="bg-card/40 relative py-10 sm:py-12">
-        <div className="max-w-container mx-auto grid gap-6 sm:grid-cols-3">
-          {TRUST_POINTS.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="flex items-start gap-3">
-              <span className="bg-luminous/15 text-luminous-soft flex size-9 shrink-0 items-center justify-center rounded-lg">
-                <Icon className="size-4" />
-              </span>
-              <div>
-                <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
-                <p className="text-muted-foreground mt-1 text-pretty text-xs leading-relaxed">
-                  {body}
-                </p>
-              </div>
-            </div>
+      {/* ───────────────────── CORE FEATURES (alternating) ───────────────────── */}
+      <Section className="relative">
+        <div className="max-w-container mx-auto flex flex-col gap-20 sm:gap-28">
+          {FEATURES.map((f, i) => (
+            <FeatureBlock key={f.title} feature={f} reverse={i % 2 === 1} />
           ))}
         </div>
       </Section>
 
-      {/* ───────────────────── FEATURES CAROUSEL ───────────────────── */}
-      <Section id="features" className="relative overflow-hidden">
-        <div className="max-w-container mx-auto flex flex-col gap-10">
+      {/* ───────────────────────────── FAQ ───────────────────────────── */}
+      <Section id="faq" className="bg-card/40 relative">
+        <div className="max-w-container mx-auto flex flex-col items-center gap-10">
           <div className="flex flex-col items-center gap-4 text-center">
+            <Badge variant="outline">
+              <span className="text-muted-foreground">FAQ</span>
+            </Badge>
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-              A guided tour, scroll by scroll.
+              Questions answered frequently.
             </h2>
             <p className="text-muted-foreground max-w-2xl text-pretty text-base">
-              Swipe, scroll, or tap to move through what Career OS does, one
-              feature at a time.
+              The things people ask before they trust a new tool with their
+              career.
             </p>
           </div>
-
-          <FeaturesCarousel />
+          <Faq />
         </div>
       </Section>
 
-      {/* ───────────────────── FINAL DUAL CTA ───────────────────── */}
+      {/* ─────────────────── LAST-CHANCE CTA ─────────────────── */}
       <Section className="relative overflow-hidden">
-        <div className="max-w-container mx-auto flex flex-col items-center gap-6 text-center">
-          <Badge variant="outline">
-            <span className="text-muted-foreground">
-              Free during research preview
-            </span>
+      <div className="max-w-container mx-auto">
+        {/* Inner Card Wrapper */}
+        <div className="border-brand/25 from-brand/12 to-brand/2 relative overflow-hidden rounded-3xl border bg-linear-to-b px-6 py-14 text-center sm:px-12">
+          
+          {/* --- SEAMLESS BACKGROUND PATTERN --- */}
+          <div 
+            className="pointer-events-none absolute inset-0 z-0 select-none opacity-15 text-brand" 
+            aria-hidden="true"
+          >
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="topo-lines" width="1300" height="800" patternUnits="userSpaceOnUse">
+                <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2602.036627830141 -986.4136406646855C2759.120679224965 -173.47048446084864 1847.312287332023 1187.7474958326593 1373.685395945629 1866.8863197684786C900.0585045592347 2546.025143704296 979.9440736928896 2083.147307323723 328.62754917544544 2273.452714227242C-322.68897534199846 2463.7581211307606 -1461.797598868562 3097.5690440511617 -1752.6339217381008 2780.352272905371C-2043.4702446076394 2463.1355017595815 -1313.385839473355 1383.199622373446 -1067.3868005983454 750.812212727456C-821.3877617233361 118.42480308146514 -923.3111913565606 325.32042384156694 -571.8385351380562 -255.10729339538875C-220.36587891955173 -835.5350106323442 -41.5420430345639 -1882.8853409954995 619.6819492504783 -2035.2408300099355C1280.905941535521 -2187.5963190243715 2444.9525764353175 -1799.3567968685225 2602.036627830141 -986.4136406646855C2759.120679224965 -173.47048446084864 1847.312287332023 1187.7474958326593 1373.685395945629 1866.8863197684786 " />
+                  <path d="M2565.336037202732 -963.3067176619084C2719.802021074308 -163.91261406146896 1823.1904357129147 1174.6183998938136 1357.4573258496275 1842.4382434307017C891.7242159863399 2510.2580869675894 970.2783589677674 2055.0948811933595 329.81710985894733 2242.2285313151533C-310.6441392498725 2429.362181436947 -1430.7676190509937 3052.6095889753396 -1716.7566698727067 2740.6797640153136C-2002.7457206944198 2428.7499390552875 -1284.8293889790398 1366.812990992254 -1042.9303340852807 744.9653715070303C-801.0312791915214 123.11775202180615 -901.2559849975255 326.5651124359065 -555.6412063826626 -244.1888095137665C-210.02642776779976 -814.9427314634395 -34.182989147561784 -1844.8372229872089 616.0206032660631 -1994.653453851404C1266.224195679688 -2144.469684715599 2410.8700533311558 -1762.700821262348 2565.336037202732 -963.3067176619084C2719.802021074308 -163.91261406146896 1823.1904357129147 1174.6183998938136 1357.4573258496275 1842.4382434307017 " />
+                  <path d="M2528.635446575322 -940.1997946591312C2680.483362923651 -154.35474366208882 1799.0685840938072 1161.4893039549688 1341.2292557536261 1817.9901670929266C883.3899274134451 2474.4910302308845 960.6126442426453 2027.0424550629969 331.0066705424492 2211.004348403065C-298.5993031577466 2394.9662417431337 -1399.7376392334252 3007.6501338995204 -1680.8794180073126 2701.007255125257C-1962.0211967812 2394.3643763509936 -1256.2729384847248 1350.4263596110623 -1018.4738675722156 739.1185302866052C-780.6747966597068 127.81070096214762 -879.2007786384904 327.8098010302465 -539.4438776272693 -233.2703256321438C-199.68697661604824 -794.3504522945345 -26.82393526056012 -1806.7891049789177 612.3592572816474 -1954.0660776928726C1251.542449823855 -2101.3430504068274 2376.787530226992 -1726.0448456561733 2528.635446575322 -940.1997946591312C2680.483362923651 -154.35474366208882 1799.0685840938072 1161.4893039549688 1341.2292557536261 1817.9901670929266 " />
+                  <path d="M2491.934794912755 -917.0928716563537C2641.1646437378377 -144.7968732627087 1774.946671439543 1148.3602080161236 1325.0011246224685 1793.5420907551515C875.055577805394 2438.7239734941786 950.9468684823664 1998.9900289326342 332.1961701907944 2179.780165490977C-286.55452810077736 2360.57030204932 -1368.7077204510128 2962.6906788237 -1645.0022271770747 2661.3347462352003C-1921.2967339031363 2359.9788136467005 -1227.716549025566 1334.0397282298713 -994.0174620943071 733.27168906618C-760.3183751630481 132.50364990248954 -857.1456333146116 329.05448962458604 -523.2466099070323 -222.35184175052154C-189.34758649945275 -773.7581731256294 -19.464942408714705 -1768.740986970627 608.6978502620759 -1913.478701534341C1236.8606429328656 -2058.216416098055 2342.7049460876733 -1689.3888700499988 2491.934794912755 -917.0928716563537C2641.1646437378377 -144.7968732627087 1774.946671439543 1148.3602080161236 1325.0011246224685 1793.5420907551515 " />
+                  <path d="M2455.234173767767 -893.9859486535765C2601.8459550696025 -135.23900286332855 1750.824789302857 1135.2311120772788 1308.773024008889 1769.094014417376C866.7212587149211 2402.9569167574728 941.2811232396657 1970.9376028022716 333.3857003567182 2148.5559825788896C-274.50972252622955 2326.1743623555067 -1337.6777711510226 2917.73122374788 -1609.1250058292587 2621.6622373451437C-1880.5722405074948 2325.5932509424065 -1199.1601290488293 1317.6530968486795 -969.5610260988205 727.4248478457548C-739.9619231488116 137.196598842831 -835.0904574731544 330.29917821892604 -507.0493116692169 -211.4333578688993C-179.00816586527935 -753.1658939567244 -12.105919039290711 -1730.692868962336 605.0364737600821 -1872.8913253758096C1222.178866559455 -2015.0897817892833 2308.6223924659325 -1652.732894443824 2455.234173767767 -893.9859486535765C2601.8459550696025 -135.23900286332855 1750.824789302857 1135.2311120772788 1308.773024008889 1769.094014417376 " />
+                  <path d="M2418.533338999732 -870.878995133221C2562.5270527783205 -125.68110194637029 1726.7026935431236 1122.1020466560117 1292.5447097722626 1744.645968597179C858.3867260014013 2367.189890538346 931.6151643739186 1942.8852071894871 334.57501689959463 2117.331830184379C-262.46513057472885 2291.7784531792713 -1306.648035474079 2872.771799189639 -1573.2479981044894 2581.9897589726643C-1839.8479607349 2291.2077187556906 -1170.603922695139 1301.2664959850663 -945.1048037263804 721.5780371429087C-719.6056847576219 141.8895783007506 -813.0354952547443 331.5438973308442 -490.8522270544486 -200.5148434696987C-168.66895885415283 -732.5735842702413 -4.7471092929138194 -1692.6447204364672 601.3748836350414 -1832.3039186997C1207.496876562997 -1971.9631169629329 2274.539625221145 -1616.0768883200712 2418.533338999732 -870.878995133221C2562.5270527783205 -125.68110194637029 1726.7026935431236 1122.1020466560117 1292.5447097722626 1744.645968597179 " />
+                  <path d="M2381.8329619953693 -847.7723162710688C2523.2086082507103 -116.12347568761584 1702.581055547063 1108.9727065765414 1276.3168532993081 1720.197648118778C850.0526510515533 2331.422589661014 921.9496632718428 1914.8325369184981 335.76479120614295 2086.1074031316657C-250.42008085955626 2257.382269344833 -1275.6178420334636 2827.8120999731927 -1537.3705326160484 2542.3170059419817C-1799.1232231986335 2256.8219119107707 -1142.0472585777773 1284.8796204632495 -920.6481235902688 715.730951781858C-699.2489886027602 146.58228310046707 -790.9800752726624 332.7883417845587 -474.6546846760082 -189.59660372870167C-158.32929407935399 -711.9815492419616 2.61215821713472 -1654.596846568801 597.7137512736726 -1791.7167866817936C1192.8153443302108 -1928.8367267947858 2240.457315740028 -1579.421156854522 2381.8329619953693 -847.7723162710688C2523.2086082507103 -116.12347568761584 1702.581055547063 1108.9727065765414 1276.3168532993081 1720.197648118778 " />
+                  <path d="M2345.1323408503813 -824.6653932682914C2483.889919582476 -106.56560528823547 1678.459173410377 1095.8436106376962 1260.0887526857287 1695.7495717810025C841.7183319610804 2295.6555329243092 912.2839180291426 1886.7801107881355 336.95432137206717 2054.883220219577C-238.37527528500868 2222.9863296510193 -1244.5878927334734 2782.8526448973726 -1501.4933112682324 2502.644497051925C-1758.3987298029917 2222.4363492064786 -1113.4908386010402 1268.492989082058 -896.191687594782 709.8841105614329C-678.8925365885239 151.27523204080808 -768.9248994312054 334.0330303788983 -458.457386438193 -178.67811984707896C-147.9898734451806 -691.3892700730567 9.971181586558714 -1616.5487285605104 594.0523747716793 -1751.129410523262C1178.1335679567997 -1885.7100924860138 2206.3747621182874 -1542.7651812483473 2345.1323408503813 -824.6653932682914C2483.889919582476 -106.56560528823547 1678.459173410377 1095.8436106376962 1260.0887526857287 1695.7495717810025 " />
+                  <path d="M2308.4317502229715 -801.5584702655142C2444.571261431818 -97.00773488885534 1654.3373217912686 1082.7145146988514 1243.8606825897273 1671.3014954432274C833.3840433881855 2259.8884761876034 902.6182033040204 1858.727684657773 338.1438820555686 2023.6590373074905C-226.33043919288275 2188.590389957206 -1213.5579129159048 2737.8931898215524 -1465.6160594028383 2462.9719881618685C-1717.6742058897719 2188.0507865021846 -1084.9343881067252 1252.1063577008663 -871.7352210817171 704.0372693410081C-658.536054056709 155.96818098115 -746.8696930721703 335.2777189732383 -442.2600576827997 -167.7596359654567C-137.65042229342907 -670.7969909041517 17.33023547356038 -1578.5006105522193 590.3910287872636 -1710.5420343647306C1163.451822100967 -1842.5834581772417 2172.2922390141243 -1506.1092056421726 2308.4317502229715 -801.5584702655142C2444.571261431818 -97.00773488885534 1654.3373217912686 1082.7145146988514 1243.8606825897273 1671.3014954432274 " />
+                  <path d="M2271.7311290779835 -778.4515472627368C2405.252572763584 -87.44986448947543 1630.2154396545825 1069.5854187600062 1227.6325819761478 1646.8534191054518C825.0497242977126 2224.1214194508975 892.9524580613197 1830.6752585274103 339.3334122214919 1992.4348543954015C-214.28563361833517 2154.1944502633924 -1182.5279636159144 2692.933734745733 -1429.7388380550224 2423.299479271812C-1676.9497124941304 2153.6652237978906 -1056.3779681299884 1235.7197263196754 -847.2787850862304 698.190428120583C-638.1796020424724 160.661129921491 -724.8145172307131 336.52240756757783 -426.0627594449843 -156.84115208383423C-127.31100165925568 -650.2047117352465 24.689258842984145 -1540.4524925439287 586.7296522852698 -1669.9546582061992C1148.7700457275555 -1799.4568238684697 2138.209685392384 -1469.4532300359979 2271.7311290779835 -778.4515472627368C2405.252572763584 -87.44986448947543 1630.2154396545825 1069.5854187600062 1227.6325819761478 1646.8534191054518 " />
+                  <path d="M2235.030385862683 -755.3446242599593C2365.9337620250362 -77.89199409009507 1606.0934354475844 1056.4563228211614 1211.4043592922558 1622.4053427676772C816.7152831369276 2188.3543627141917 883.2865907483065 1802.6228323970477 340.5228203171032 1961.210671483314C-202.2409501141001 2119.798510569579 -1151.4981363862366 2647.974279669913 -1393.861738777519 2383.6269703817543C-1636.2253411688012 2119.2796610935966 -1027.821670223564 1219.3330949384836 -822.8224711610561 692.3435869001582C-617.8232720985484 165.35407886183293 -702.7594634595687 337.76709616191783 -409.8655832774816 -145.92266820221198C-116.97170309539456 -629.6124325663416 32.048160142095185 -1502.4043745356375 583.068153712964 -1629.3672820476677C1134.0881472838323 -1756.3301895596976 2104.1270097003303 -1432.7972544298234 2235.030385862683 -755.3446242599593C2365.9337620250362 -77.89199409009507 1606.0934354475844 1056.4563228211614 1211.4043592922558 1622.4053427676772 " />
+                  <path d="M2198.3297952352727 -732.2377012571822C2326.6151038743787 -68.33412369071539 1581.9715838284765 1043.3272268823162 1195.1762891962544 1597.9572664299008C808.3809945640323 2152.587305977486 873.6208760231839 1774.5704062666846 341.7123810006051 1929.986488571225C-190.19611402197438 2085.4025708757654 -1120.4681565686683 2603.0148245940927 -1357.9844869121248 2343.9544614916977C-1595.5008172555813 2084.8940983893026 -999.265219729249 1202.9464635572922 -798.3660046479913 686.4967456797331C-597.4667895667335 170.0470278021744 -680.7042571005336 339.01178475625784 -393.6682545220883 -135.0041843205895C-106.63225194364281 -609.0201533974366 39.407214029097304 -1464.3562565273469 579.4068077285483 -1588.7799058891362C1119.4064014279993 -1713.2035552509255 2070.044486596167 -1396.141278823649 2198.3297952352727 -732.2377012571822C2326.6151038743787 -68.33412369071539 1581.9715838284765 1043.3272268823162 1195.1762891962544 1597.9572664299008 " />
+                  <path d="M2161.629174090285 -709.13102239503C2287.2964152061436 -58.77649743196025 1557.84970169179 1030.197886802846 1178.948188582675 1573.5089459515011C800.0466754735594 2116.8200051001554 863.9551307804836 1746.517735995697 342.9019111665284 1898.7620615185124C-178.1513084474268 2051.006387041328 -1089.4382072686778 2558.0551253776475 -1322.1072655643088 2304.281708461016C-1554.7763238599398 2050.508291544384 -970.708799752512 1186.5595880354754 -773.9095686525045 680.6496603186829C-577.110337552497 174.73973260189086 -658.6490812590764 340.2562292099724 -377.4709562842729 -124.08594457959202C-96.2928313094692 -588.4281183691567 46.76623739852084 -1426.3083826596808 575.7454312265545 -1548.1927738712297C1104.7246250545882 -1670.0771650827785 2035.9619329744264 -1359.4855473580992 2161.629174090285 -709.13102239503C2287.2964152061436 -58.77649743196025 1557.84970169179 1030.197886802846 1178.948188582675 1573.5089459515011 " />
+                  <path d="M2124.9285834628754 -686.0238247340494C2247.9777570554866 -49.21835237437722 1533.7278500726825 1017.0690655222038 1162.7201184866735 1549.0611442719287C791.712386900665 2081.053223021653 854.2894160553615 1718.465584523537 344.0914718500301 1867.538153264627C-166.10647235530087 2016.610722005717 -1058.4082274511093 2513.0959449600305 -1286.2300136989147 2264.6094742291616C-1514.05179994672 2016.1230034982932 -942.1523492581971 1170.1732313124871 -749.4531021394397 674.8030937564608C-556.7538550206823 179.432956200435 -636.5938749000416 341.50119246251506 -361.2736275288796 -113.16718603976665C-85.95338015771767 -567.8355645420488 54.125291285522735 -1388.259989993187 572.0840852421388 -1507.6051230544952C1090.0428791987556 -1626.9502561158033 2001.8794098702633 -1322.8292970937216 2124.9285834628754 -686.0238247340494C2247.9777570554866 -49.21835237437722 1533.7278500726825 1017.0690655222038 1162.7201184866735 1549.0611442719287 " />
+                  <path d="M2088.227962317887 -662.917145871897C2208.6590683872514 -39.66072611562208 1509.6059679359964 1003.939725442734 1146.492017873094 1524.6128237935282C783.3780678101921 2045.2859221443223 844.6236708126607 1690.4129142525494 345.28100201595385 1836.313726211914C-154.06166678075328 1982.2145381712785 -1027.378278151119 2468.1362457435853 -1250.3527923510987 2224.93672119848C-1473.3273065510782 1981.7371966533742 -913.59592928146 1153.7863557906703 -724.9966661439529 668.9560083954111C-536.3974030064455 184.12566100015192 -614.5386990585844 342.74563691623007 -345.0763292910642 -102.2489462987694C-75.61395952354428 -547.2435295137686 61.4843146549465 -1350.2121161255209 568.422708740145 -1467.0179910365887C1075.3611028253445 -1583.8238659476563 1967.796856248522 -1286.173565628172 2088.227962317887 -662.917145871897C2208.6590683872514 -39.66072611562208 1509.6059679359964 1003.939725442734 1146.492017873094 1524.6128237935282 " />
+                  <path d="M2051.527371690477 -639.8102533866977C2169.340410236595 -30.102886233820527 1485.4841163168885 990.8105989863107 1130.2639477770927 1500.1647169381745C775.0437792372973 2009.5188348900383 834.9579560875386 1662.3604576046087 346.4705626994553 1805.0895127822473C-142.01683068862758 1947.8185679598864 -996.3482983335505 2423.176760150187 -1214.4755404857046 2185.2641817908443C-1432.6027826378586 1947.351603431502 -885.0394787871451 1137.3996938919008 -700.540199630888 663.1091366574078C-516.0409204746309 188.81857942291504 -592.4834926995495 343.9902949929915 -328.8790005356709 -91.33049293472527C-65.27450837179254 -526.651280862442 68.8433685419484 -1312.1640286348083 564.7613627557298 -1426.430645395635C1060.6793569695114 -1540.6972621564623 1933.7143331443594 -1249.5176205395755 2051.527371690477 -639.8102533866977C2169.340410236595 -30.102886233820527 1485.4841163168885 990.8105989863107 1130.2639477770927 1500.1647169381745 " />
+                  <path d="M2014.8267505454892 -616.7032998663424C2130.0217215683597 -20.54498531686204 1461.362234180202 977.6815335650435 1114.0358471635132 1475.716671117977C766.7094601468243 1973.7518086709106 825.2922108448379 1634.3080619918233 347.66009286537906 1773.8653603877378C-129.97202511408 1913.4226587836515 -965.3183490335601 2378.217335591945 -1178.5983191378884 2145.591703418366C-1391.8782892422169 1912.9660712447871 -856.4830588104082 1121.0130930282871 -676.0837636354013 657.2623259545608C-495.6844684603943 193.51155888083463 -570.4283168580923 345.23501410490917 -312.68170229785574 -80.41197853552467C-54.93508773761914 -506.05897117595896 76.20239191137193 -1274.1158801089393 561.0999862537365 -1385.8432387195257C1045.9975805961003 -1497.570597330112 1899.6317795226187 -1212.8616144158227 2014.8267505454892 -616.7032998663424C2130.0217215683597 -20.54498531686204 1461.362234180202 977.6815335650435 1114.0358471635132 1475.716671117977 " />
+                  <path d="M1978.1261294005008 -593.5963768635652C2090.7030329001245 -10.987114917481904 1437.2403520435164 964.5524376261988 1097.8077465499337 1451.268594780202C758.3751410563509 1937.9847519342056 815.6264656021376 1606.2556358614606 348.8496230313026 1742.6411774756498C-117.92721953953242 1879.0267190898385 -934.2883997335698 2333.257880516125 -1142.7210977900725 2105.919194528309C-1351.1537958465751 1878.5805085404932 -827.9266388336713 1104.6264616470958 -651.6273276399145 651.415484734136C-475.32801644615756 198.2045078211761 -548.3731410166354 346.4797026992492 -296.48440406004056 -69.49349465390219C-44.59566710344552 -485.4666920070538 83.5614152807957 -1236.0677621006485 557.4386097517427 -1345.255862560994C1031.3158042226896 -1454.4439630213399 1865.549225900878 -1176.205638809648 1978.1261294005008 -593.5963768635652C2090.7030329001245 -10.987114917481904 1437.2403520435164 964.5524376261988 1097.8077465499337 1451.268594780202 " />
+                  <path d="M1941.4256303258258 -570.4894538607878C2051.384466302202 -1.4292445181019957 1413.1185919771424 951.4233416873535 1081.579768006667 1426.8205184424264C750.0409440361909 1902.2176951974993 805.9608424297494 1578.203209731098 350.0392752675384 1711.4169945635613C-105.88229189467211 1844.6307793960245 -903.2583283632669 2288.2984254403045 -1106.843754371944 2066.2466856382516C-1310.4291803806211 1844.1949458361992 -799.3700967866218 1088.239830265904 -627.1707695741153 645.5686435137109C-454.97144236160875 202.89745676151756 -526.3178431048659 347.7243912935892 -280.2869837519129 -58.57501077227994C-34.2561243989594 -464.8744128381488 90.92056072053197 -1198.0196440923576 553.7773553200614 -1304.6684864024628C1016.634149919591 -1411.3173287125678 1831.4667943494492 -1139.5496632034735 1941.4256303258258 -570.4894538607878C2051.384466302202 -1.4292445181019957 1413.1185919771424 951.4233416873535 1081.579768006667 1426.8205184424264 " />
+                  <path d="M1904.7249176281034 -547.3826529283228C2012.0656860812328 8.128503810965412 1388.9966182877224 938.2941236781958 1065.3515758403528 1402.3723200343384C741.7065333929836 1866.4505163904814 796.2950056343143 1550.150661530423 351.2287138807278 1680.1926895811607C-93.83757787285913 1810.2347176318985 -872.2284706160109 2243.3388482941723 -1070.9666245768624 2026.5740546778825C-1269.7047785377138 1809.8092610615931 -770.8137683626194 1071.8530768144 -602.714425131363 639.7216802229732C-434.61508190010636 207.59028363154653 -504.2627588161432 348.96895781761646 -264.08977706683186 -47.65664896096996C-23.916795317520382 -444.2822557395564 98.27949253722136 -1159.9716481543792 550.1158872653336 -1264.0812323142436C1001.9522819934455 -1368.1908164741083 1797.3841491749736 -1102.8938096676115 1904.7249176281034 -547.3826529283228C2012.0656860812328 8.128503810965412 1388.9966182877224 938.2941236781958 1065.3515758403528 1402.3723200343384 " />
+                  <path d="M1868.0243270006931 -524.2757299255454C1972.7470279305758 17.686374210345775 1364.874766668614 925.165027739351 1049.1235057443514 1377.9242436965633C733.3722448200888 1830.6834596537756 786.6292909091922 1522.0982354000598 352.4182745642295 1648.9685066690727C-81.7927417807332 1775.838777938085 -841.1984907984424 2198.379393218352 -1035.0893727114683 1986.9015457878259C-1228.9802546244941 1775.4236983572991 -742.2573178683043 1055.4664454332087 -578.2579586182981 633.8748390025485C-414.2585993682918 212.28323257188822 -482.20755245710814 350.21364641195623 -247.89244831143833 -36.73816507934748C-13.577344165768864 -423.6899765706512 105.63854642422302 -1121.9235301460883 546.454541280918 -1223.4938561557124C987.2705361376129 -1325.0641821653362 1763.301626070811 -1066.2378340614368 1868.0243270006931 -524.2757299255454C1972.7470279305758 17.686374210345775 1364.874766668614 925.165027739351 1049.1235057443514 1377.9242436965633 " />
+                  <path d="M1831.3238279260177 -501.16877640519033C1933.4284613326531 27.24427512730358 1340.753006602241 912.0359623180839 1032.8955272010844 1353.4761978763659C725.0380477999283 1794.9164334346478 776.9636677368044 1494.0458397872753 353.6079268004655 1617.7443542745627C-69.74781413587289 1741.4428687618501 -810.1684194281396 2153.41996866011 -999.2120292933398 1947.2290674153464C-1188.25563915854 1741.0381661705833 -713.7007758212549 1039.079844569595 -553.8014005524988 628.0280282997019C-393.90202528374266 216.9762120298078 -460.1522545453387 351.45836552387414 -231.69502800331065 -25.819650680147106C-3.237801461282743 -403.09766688416835 112.99769186395929 -1083.8753816202193 542.7932868492369 -1182.9064494796025C972.5888818345138 -1281.937517338986 1729.2191945193822 -1029.581827937684 1831.3238279260177 -501.16877640519033C1933.4284613326531 27.24427512730358 1340.753006602241 912.0359623180839 1032.8955272010844 1353.4761978763659 " />
+                  <path d="M1794.6230847107172 -478.06200599030353C1894.109650594105 36.80199293879309 1316.631002395242 898.906713791348 1016.6673045171929 1329.0279689506997C716.7036066391429 1759.1492241100518 767.2978004237912 1465.993261069022 354.79733489607656 1586.5200187745836C-57.70313063163803 1707.046776480146 -779.1385921984618 2108.4603609963997 -963.3349300158362 1907.5564059373992C-1147.5312678332107 1706.6524508783991 -685.1444779148305 1022.693060600513 -529.3450866273246 622.1810344913856C-373.5456953398186 221.66900838225865 -438.0972007741941 352.7029015303233 -215.49785183580798 -14.90131938641548C7.101497102578378 -382.505540303154 120.35659316307056 -1045.827416199819 539.1317882769306 -1142.3192259089617C957.9069833907906 -1238.8110356181046 1695.136518827329 -992.9260049194002 1794.6230847107172 -478.06200599030353C1894.109650594105 36.80199293879309 1316.631002395242 898.906713791348 1016.6673045171929 1329.0279689506997 " />
+                  <path d="M1757.9224635657292 -454.9550829875262C1854.7909619258703 46.35986333817323 1292.5091202585563 885.7776178525028 1000.4392039036129 1304.5798926129241C708.3692875486702 1723.382167373346 757.6320551810904 1437.940834938659 355.9868650620001 1555.2958358624956C-45.658325057090224 1672.650836786332 -748.1086428984713 2063.500905920579 -927.4577086680202 1867.883897047342C-1106.8067744375692 1672.2668881741051 -656.5880579380936 1006.3064292193217 -504.8886506318378 616.3341932709604C-353.18924332558197 226.3619573225999 -416.04202493273704 353.94759012466284 -199.30055359799258 -3.9828355047930017C17.44091773675177 -361.9132611342493 127.71561653249432 -1007.7792981915281 535.470411774937 -1101.7318497504302C943.2252070173795 -1195.6844013093325 1661.0539652055882 -956.2700293132256 1757.9224635657292 -454.9550829875262C1854.7909619258703 46.35986333817323 1292.5091202585563 885.7776178525028 1000.4392039036129 1304.5798926129241 " />
+                  <path d="M1721.2219644910538 -431.8481294671708C1815.4723953279477 55.91776425513126 1268.3873601921828 872.6485524312361 984.2112253603459 1280.1318467927272C700.0350905285095 1687.6151411542182 747.9664320087027 1409.888439325874 357.17651729823615 1524.0716834679852C-33.61339741223014 1638.2549276100967 -717.0785715281685 2018.5414813623374 -891.5803652498917 1828.2114186748631C-1066.082158971615 1637.8813559873893 -628.0315158910441 989.919828355708 -480.4320925660386 610.4873825681138C-332.8326692410328 231.0549367805197 -393.9867270209676 355.19230923658074 -183.1031332898649 6.935678894407374C27.780460441237665 -341.320951447766 135.07476197223036 -969.7311496656591 531.809157343256 -1061.1444430743206C928.5435527142808 -1152.5577364829824 1626.9715336541599 -919.6140231894728 1721.2219644910538 -431.8481294671708C1815.4723953279477 55.91776425513126 1268.3873601921828 872.6485524312361 984.2112253603459 1280.1318467927272 " />
+                  <path d="M1684.5212517933314 -408.7412064643934C1776.1536151069781 65.4756346545114 1244.2653865027619 859.5194564923913 967.983033194032 1255.683770454952C691.7006798853022 1651.8480844175124 738.3005952132678 1381.8360131955114 358.3659559114253 1492.8475005558976C-21.568683390416936 1603.8589879162837 -686.0487137809125 1973.5820262865172 -855.70323545481 1788.5389097848065C-1025.3577571287076 1603.4957932830962 -599.4751874670417 973.5331969745166 -455.97574812328617 604.6405413476889C-312.47630877953065 235.74788572086118 -371.931642732245 356.43699783092075 -166.90592660478387 17.854162776029852C38.11978952267691 -320.72867227886104 142.43369378891998 -931.6830316573682 528.1476892885278 -1020.5570669157892C913.8616847881358 -1109.43110217421 1592.8888884796843 -882.9580475832983 1684.5212517933314 -408.7412064643934C1776.1536151069781 65.4756346545114 1244.2653865027619 859.5194564923913 967.983033194032 1255.683770454952 " />
+                  <path d="M1647.8206611659211 -385.6342834616162C1736.834956956321 75.0335050538913 1220.1435348836544 846.3903605535461 951.7549630980307 1231.235694117176C683.3663913124076 1616.0810276808065 728.6348804881454 1353.7835870651488 359.555516594927 1461.6233176438095C-9.523847298291003 1569.4630482224702 -655.0187339633441 1928.622571210697 -819.825983589416 1748.8664008947494C-984.633233215488 1569.1102305788022 -570.9187369727267 957.1465655933248 -431.51928161022124 598.7937001272637C-292.1198262477159 240.44083466120242 -349.8764363732098 357.6816864252603 -150.70859784939057 28.772646657652103C48.459240674428656 -300.1363931099561 149.79274767592187 -893.6349136490774 524.4863433041123 -979.9696907572577C899.1799389323028 -1066.3044678654383 1558.8063653755212 -846.3020719771237 1647.8206611659211 -385.6342834616162C1736.834956956321 75.0335050538913 1220.1435348836544 846.3903605535461 951.7549630980307 1231.235694117176 " />
+                  <path d="M1611.1200400209332 -362.52748252915137C1697.516268288086 84.59125338295894 1196.021652746968 833.2611425443883 935.5268624844512 1206.7874957090885C675.0320722219346 1580.3138488737886 718.9691352454447 1325.7310388644737 360.7450467608505 1430.399012661409C2.5209582762563514 1535.0669864583442 -623.9887846633537 1883.6629940645644 -783.9487622416 1709.1937699343798C-943.9087398198462 1534.7245458041957 -542.3623169959897 940.7598121418209 -407.06284561473456 592.9467368365263C-271.76337423347934 245.1336615312316 -327.82126053175284 358.9262529492876 -134.5112996115754 39.69100846896208C58.79866130860205 -279.5442360113635 157.1517710453454 -855.586917711099 520.8249668021185 -939.3824366690387C884.4981625588916 -1023.1779556269785 1524.7238117537804 -809.6462184412616 1611.1200400209332 -362.52748252915137C1697.516268288086 84.59125338295894 1196.021652746968 833.2611425443883 935.5268624844512 1206.7874957090885 " />
+                  <path d="M1574.4195409462577 -339.42077314942094C1658.1977016901637 94.14891015929197 1171.8998926805943 820.1318329824962 919.2988839411846 1182.339205748266C666.6978752017742 1544.546578514036 709.3035120730569 1297.6783991110633 361.9346989970868 1399.1746161262736C14.56588592111666 1500.6708331414834 -592.9587132930508 1838.7033253656973 -748.0714188234715 1669.5210474212759C-903.1841243538921 1500.3387694768548 -513.8057749489403 924.3729671375822 -382.60628754893537 587.0996819930542C-251.4068001489303 249.82639684852597 -305.7659626199834 360.17072792058025 -118.3138793034476 50.60927872753746C69.13820401308817 -258.95217046550556 164.51091648508168 -817.539013325855 517.1637123704375 -898.7952741335541C869.8165082557932 -980.0515349412533 1490.6413802023521 -772.9904564581338 1574.4195409462577 -339.42077314942094C1658.1977016901637 94.14891015929197 1171.8998926805943 820.1318329824962 919.2988839411846 1182.339205748266 " />
+                  <path d="M1537.7189198012697 -316.31375859390926C1618.8790130219286 103.70687211140648 1147.7780105439087 807.0028285963856 903.0707833276049 1157.8912209632254C658.3635561113012 1508.7796133300649 699.6377668303564 1269.626064533435 363.12422916301034 1367.95052476692C26.61069149566424 1466.2749850004047 -561.9287639930604 1793.7439618426115 -712.1941974756555 1629.8486300839536C-862.4596309582505 1465.9532983252952 -485.2493549722035 907.9864273091252 -358.14985155344857 581.2529323253636C-231.05034813469376 254.51943734160182 -283.7107867785264 361.4155080676546 -102.11658106563232 61.52785416189408C79.47762464726156 -238.35979974386623 171.86993985450545 -779.4908037648297 513.5023358684437 -858.2078064222883C855.1347318823823 -936.9248090797469 1456.558826580611 -736.3343892992249 1537.7189198012697 -316.31375859390926C1618.8790130219286 103.70687211140648 1147.7780105439087 807.0028285963856 903.0707833276049 1157.8912209632254 " />
+                  <path d="M1501.0183291738595 -293.20683559113183C1579.5603548712716 113.26474251078662 1123.6561589248004 793.8737326575406 886.8427132316035 1133.4431446254503C650.0292675384064 1473.012556593359 689.9720521052338 1241.5736384030724 364.3137898465118 1336.7263418548318C38.65552758778995 1431.8790453065913 -530.898784175492 1748.7845067667918 -676.3169456102613 1590.1761211938965C-821.7351070450306 1431.5677356210017 -456.6929044778884 891.5997959279339 -333.69338504038365 575.4060911049389C-210.693865602879 259.2123862819435 -261.65558041949123 362.6601966619944 -85.91925231023902 72.44633804351656C99.81707579901331 -217.76752057496117 179.2289937415071 -741.4426857565388 509.8409898840282 -817.6204302637568C840.4529860265495 -893.7981747709748 1422.4763034764478 -699.6784136930503 1501.0183291738595 -293.20683559113183C1579.5603548712716 113.26474251078662 1123.6561589248004 793.8737326575406 886.8427132316035 1133.4431446254503 " />
+                  <path d="M1464.317708028872 -270.09991258835464C1540.2416662030364 122.82261291016653 1099.5342767881148 780.7446367186953 870.614612618024 1108.9950682876743C641.6949484479335 1437.2454998566532 680.3063068625336 1213.5212122727094 365.50332001243555 1305.5021589427433C50.700333162337756 1397.4831056127778 -499.86883487550165 1703.8250516909711 -640.4397242624453 1550.5036123038394C-781.010613649389 1397.1821729167077 -428.1364845011515 875.2131645467421 -309.23694904489685 569.5592498845135C-190.33741358864245 263.90533522228475 -239.60040457803427 363.9048852563342 -69.72195407242373 83.36482192513904C100.15649643318693 -197.17524140605633 186.58801711093088 -703.3945677482479 506.17961338203463 -777.0330541052253C825.7712096531384 -850.6715404622028 1388.393749854707 -663.0224380868757 1464.317708028872 -270.09991258835464C1540.2416662030364 122.82261291016653 1099.5342767881148 780.7446367186953 870.614612618024 1108.9950682876743 " />
+                  <path d="M1427.6170868838835 -246.9929590679992C1500.9229775348012 132.3805138271248 1075.4123946514283 767.6155712974285 854.3865120044445 1084.5470224674773C633.3606293574605 1401.4784736375254 670.6405616198329 1185.4688166599249 366.6928501783591 1274.2780065482339C62.74513873688511 1363.0871964365424 -468.8388855755113 1658.865627132729 -604.5625029146292 1510.831133931361C-740.2861202537474 1362.7966407299923 -399.58006452441464 858.8265636831288 -284.7805130494103 563.7124391816665C-169.9809615744058 268.59831468020457 -217.5452287365772 365.1496043682521 -53.52465583460844 94.28333632433942C110.49591706736032 -176.58293171957314 193.94704048035464 -665.3464192223789 502.51823688004106 -736.4456474291158C811.0894332797275 -807.5448756358526 1354.3111962329663 -626.366431963123 1427.6170868838835 -246.9929590679992C1500.9229775348012 132.3805138271248 1075.4123946514283 767.6155712974285 854.3865120044445 1084.5470224674773 " />
+                  <path d="M1390.9164657388956 -223.8860360652219C1461.604288866566 141.9383842265047 1051.2905125147424 754.4864753585832 838.158411390865 1060.0989461297013C625.0263102669876 1365.7114169008196 660.9748163771324 1157.4163905295618 367.8823803442824 1243.0538236361454C74.78994431143292 1328.691256742729 -437.80893627552086 1613.9061720569089 -568.6852815668133 1471.1586250413034C-699.5616268581057 1328.4110780256979 -371.0236445476777 842.4399323019372 -260.3240770539235 557.8655979612415C-149.62450956016914 273.29126362054603 -195.49005289512024 366.39429296259186 -37.32735759679315 105.20182020596167C120.83533770153394 -155.9906525506683 201.30606384977818 -627.298301214088 498.85686037804726 -695.8582712705843C796.4076569063163 -764.4182413270805 1320.228642611225 -589.7104563569485 1390.9164657388956 -223.8860360652219C1461.604288866566 141.9383842265047 1051.2905125147424 754.4864753585832 838.158411390865 1060.0989461297013 " />
+                  <path d="M1354.2158751114857 -200.7794792733821C1422.285630715909 151.49588841494733 1027.1686608956343 741.3570132088007 821.9303412948636 1035.6505035809887C616.6920216940928 1329.9439939531767 651.3091016520102 1129.3635981882617 369.0719410277843 1211.8292745131203C86.83478040355863 1294.294950837978 -406.7789564579524 1568.9463507701512 -532.8080297014192 1431.4857499403092C-658.837102944886 1294.0251491104673 -342.4671940533626 826.0529347098081 -235.86761054085855 552.0183905298791C-129.26802702835448 277.98384634995 -173.43484653608516 367.63861534599414 -21.13002884139985 116.11993787664665C131.17478885328546 -135.39873959270085 208.6651177367803 -589.2505494167347 495.1955143936318 -655.2712613229903C781.7259110504835 -721.2919732292459 1286.1461195070624 -553.0548469617113 1354.2158751114857 -200.7794792733821C1422.285630715909 151.49588841494733 1027.1686608956343 741.3570132088007 821.9303412948636 1035.6505035809887 " />
+                  <path d="M1317.5151624137634 -177.67255627060467C1382.96685049494 161.05375881432747 1003.0466872062141 728.2279172699557 805.7021491285498 1011.2024272432136C608.3576110508857 1294.1769372164708 641.6432648565751 1101.311172057899 370.2613796409735 1180.6050916010317C98.87949442537183 1259.8990111441644 -375.74909871069644 1523.9868956943315 -496.9308999063376 1391.8132410502521C-618.1127011019787 1259.6395864061733 -313.91086562936016 809.6663033286168 -211.41126609810613 546.1715493094541C-108.91166656685232 282.67679529029147 -151.37976224736246 368.8833039403339 -4.9328221563189345 127.03842175826912C141.5141179347246 -114.80646042379578 216.02404955346947 -551.2024314084438 491.53404633890386 -614.6838851644588C767.044043124338 -678.1653389204738 1252.0634743325872 -516.3988713555367 1317.5151624137634 -177.67255627060467C1382.96685049494 161.05375881432747 1003.0466872062141 728.2279172699557 805.7021491285498 1011.2024272432136 " />
+                  <path d="M1280.814663339088 -154.56545016235873C1343.6482838970169 170.61181231917612 978.9249271398403 715.0990044365792 789.4741705852828 986.7545340109068C600.023414030725 1258.4100635852337 631.9776416841871 1073.2589290330047 371.4510318772095 1149.3810917944124C110.92442207023191 1225.5032545558201 -344.7190273403936 1479.02762372398 -461.0535564882091 1352.1409152656643C-577.3880856360246 1225.254206807348 -285.3543235823107 793.2798550528939 -186.95470803230694 540.3248911944977C-88.55509248230317 287.3699273361017 -129.3244643355929 370.12817564014244 11.264598151808855 137.95708874536012C151.85366063921072 -94.21399814942208 223.38319499320573 -513.1541302946841 487.87279190722256 -574.0963259004586C752.3623888212394 -635.038521506233 1217.9810427811585 -479.74271264389336 1280.814663339088 -154.56545016235873C1343.6482838970169 170.61181231917612 978.9249271398403 715.0990044365792 789.4741705852828 986.7545340109068 " />
+                  <path d="M1244.1140421941 -131.4585271595813C1304.3295952287817 180.16968271855603 954.8030450031545 701.9699084977342 773.2460699717033 962.3064576731313C591.6890949402523 1222.6430068485283 622.3118964414866 1045.206502902642 372.6405620431333 1118.1569088823242C122.96922764477961 1191.1073148620062 -313.6890780404033 1434.0681686481598 -425.17633514039306 1312.4684063756072C-536.663592240383 1190.868644103054 -256.79790360557377 776.8932236717023 -162.49827203682025 534.4780499740727C-68.19864046806651 292.06287627644315 -107.26928849413594 371.3728642344822 27.461896389624144 148.87557262698238C162.1930812733841 -73.62171898051713 230.7422183626295 -475.1060122863933 484.21141540522876 -533.5089497419272C737.6806124478285 -591.9118871974608 1183.8984891594173 -443.08673703771876 1244.1140421941 -131.4585271595813C1304.3295952287817 180.16968271855603 954.8030450031545 701.9699084977342 773.2460699717033 962.3064576731313 " />
+                  <path d="M1207.4134210491118 -108.3517262271165C1265.010906560547 189.72743104762367 930.6811628664682 688.8406904885765 757.0179693581238 937.8582592650432C583.3547758497793 1186.87582804151 612.6461511987861 1017.1539547019663 373.8300922090566 1086.9326038999236C135.0140332193272 1156.7112530978804 -282.6591287404129 1389.1085915020271 -389.2991137925771 1272.7957754152376C-495.93909884474124 1156.4829593284483 -228.24148362883693 760.5064702201983 -138.04183604133345 528.6310866833351C-47.842188453829976 296.7557031464721 -85.21411265267898 372.6174307585093 43.65919462743932 159.79393443829235C172.53250190755762 -53.02956188192479 238.10124173205315 -437.058016348415 480.5500389032354 -492.9216956537081C722.9988360744173 -548.7853749590013 1149.8159355376765 -406.43088350185667 1207.4134210491118 -108.3517262271165C1265.010906560547 189.72743104762367 930.6811628664682 688.8406904885765 757.0179693581238 937.8582592650432 " />
+                  <path d="M1170.712830421702 -85.24477270676107C1225.69224840989 199.28533196458181 906.5593112473603 675.7116250673096 740.7898992621226 913.410213444846C575.0204872768845 1151.1088018223825 602.9804364736638 989.1015590891818 375.01965289255827 1055.7084515054134C147.058869311453 1122.315343921645 -251.62914892284437 1344.149166943785 -353.42186192718293 1233.1232970427586C-455.2145749315215 1122.0974271417324 -199.68503313452186 744.1198693565848 -113.58536952826853 522.7842759804882C-27.485705922015313 301.4486826043917 -63.158906293643895 373.8621498704274 59.85652338283262 170.71244883749284C182.87195305930936 -32.4372521954416 245.46029561905505 -399.00986782254597 476.88869291881974 -452.33428897759853C708.3170902185846 -505.6587101326511 1115.7334124335136 -369.77487737810395 1170.712830421702 -85.24477270676107C1225.69224840989 199.28533196458181 906.5593112473603 675.7116250673096 740.7898992621226 913.410213444846 " />
+                  <path d="M1134.0121482415575 -62.13784970398365C1186.3734987064988 208.84320236396195 882.437368075518 662.5825291284646 724.5617376133866 888.9621371070707C566.6861071512553 1115.3417450856768 593.314630195807 961.049132958819 376.20912202332556 1024.4842685933254C159.10361385084434 1087.9194042278316 -220.59926065801028 1299.1897118679653 -317.5447016145232 1193.450788152702C-414.4901425710361 1087.7118644374386 -171.12867419294116 727.7332379753934 -89.1289945679381 516.9374347600633C-7.129314942935025 306.1416315447332 -41.10379148734319 375.1068384647672 76.05376058549177 181.63093271911532C193.2113126583265 -11.844973026536536 252.81925795332245 -360.9617498142551 473.2272553816699 -411.74691281906706C693.6352528100174 -462.53207582387904 1081.6507977766164 -333.11890177192936 1134.0121482415575 -62.13784970398365C1186.3734987064988 208.84320236396195 882.437368075518 662.5825291284646 724.5617376133866 888.9621371070707 " />
+                  <path d="M1097.3115576141477 -39.030987736362704C1147.0548405558416 218.4010117281856 858.31551645641 649.4533721544631 708.3336675173855 864.5139997341389C558.3518185783605 1079.574627313815 583.6489154706846 932.9966457933001 377.39868270682746 993.2600246460809C171.14844994297005 1053.523403498862 -189.56928084044182 1254.230195756989 -281.66744974912905 1153.7782182274887C-373.7656186578163 1053.3262406979886 -142.5722236986262 711.3465455590456 -64.67252805487328 511.09053250448187C13.227167588879752 310.8345194499184 -19.04858512830799 376.3514660239507 92.25108934088507 192.54935556558132C203.55076381007825 8.747245107212052 260.17831184032434 -322.91369284112045 469.5659093972545 -371.15959769569184C678.9535069541844 -419.40550255026324 1047.5682746724535 -296.462987200911 1097.3115576141477 -39.030987736362704C1147.0548405558416 218.4010117281856 858.31551645641 649.4533721544631 708.3336675173855 864.5139997341389 " />
+                  <path d="M1060.6109364691597 -15.924125768741646C1107.7361518876066 227.95882109240938 834.1936343197242 636.3242151804618 692.1055669038058 840.0658623612073C550.0174994878876 1043.8075095419529 573.9831702279841 904.9441586277808 378.5882128727509 962.0357806988363C183.19325551751774 1019.1274027698921 -158.53933154045143 1209.2706796460125 -245.79022840131307 1114.1056483022753C-333.04112526217466 1018.9406169585384 -114.01580372188926 694.9598531426977 -40.21609205938648 505.2436302489007C33.583619603116404 315.5274073551036 3.0065907131490803 377.596093583134 108.44838757870036 203.46777841204744C213.89018444425164 29.339463240960754 267.537335209748 -284.8656358679858 465.9045328952607 -330.5722825723166C664.2717305807732 -376.2789292766474 1013.4857210507128 -259.8070726298927 1060.6109364691597 -15.924125768741646C1107.7361518876066 227.95882109240938 834.1936343197242 636.3242151804618 692.1055669038058 840.0658623612073 " />
+                  <path d="M1023.9103763593278 7.182797234035661C1068.4175242545277 237.5166914917894 810.0718132181944 623.1951192416168 675.8775273253825 815.6177860234318C541.6832414325709 1008.040452805247 564.3174860204399 876.8917324974182 379.7778040738307 930.8115977867485C195.2381221272217 984.7314630760789 -127.50932120530484 1164.3112245701923 -209.9129460183408 1074.4331394122185C-292.3165708313768 984.5550542542449 -85.45932270999617 678.5732217615061 -15.759595028743433 499.3967890284757C53.94013265250919 320.22035629544496 25.061827589762288 378.8407821774739 124.6457468516719 214.3862622936698C224.22966611358152 49.931742409865706 274.8964196143281 -246.81751785969493 462.24321742842335 -289.9849064137851C649.5900152425186 -333.1522949678753 979.4032284641278 -223.15109702371808 1023.9103763593278 7.182797234035661C1068.4175242545277 237.5166914917894 810.0718132181944 623.1951192416168 675.8775273253825 815.6177860234318 " />
+                  <path d="M987.2097857319179 30.28972023681297C1029.098866103871 247.07456189116942 785.9499615990862 610.0660233027716 659.6494572293814 791.1697096856565C533.348952859676 972.2733960685414 554.6517712953175 848.8393063670551 380.96736475733246 899.5874148746602C207.2829582193474 950.3355233822651 -96.47934138773633 1119.351769494372 -174.0356941529467 1034.7606305221614C-251.592046918157 950.1694915499509 -56.9028722156811 662.1865903803146 8.696871484321377 493.54994780805055C74.29661518432385 324.9133052357864 47.11703394879737 380.08547077181356 140.8430756070652 225.30474617529217C234.56911726533315 70.52402157877066 282.2554735013299 -208.76939985140405 458.5818714440078 -249.39753025525363C634.9082693866858 -290.0256606591032 945.3207053599651 -186.4951214175435 987.2097857319179 30.28972023681297C1029.098866103871 247.07456189116942 785.9499615990862 610.0660233027716 659.6494572293814 791.1697096856565 " />
+                  <path d="M950.5091645869297 53.396643239590276C989.7801774356358 256.63243229054956 761.8280794624002 596.9369273639265 643.4213566158019 766.7216333478814C525.0146337692031 936.5063393318358 544.986026052617 820.7868802366925 382.1568949232559 868.3632319625722C219.32776379389497 915.9395836884519 -65.44939208774599 1074.3923144185521 -138.15847280513066 995.0881216321045C-210.86755352251532 915.7839288456571 -28.34645223894421 645.7999589991232 33.15330747980818 487.7031065876258C94.6530671985605 329.606254176128 69.17220979025433 381.33015936615345 157.0403738448805 236.22323005691453C244.90853789950665 91.11630074767572 289.61449687075356 -170.72128184311316 454.9204949420141 -208.81015409672216C620.2264930132746 -246.89902635033116 911.2381517382239 -149.8391458113689 950.5091645869297 53.396643239590276C989.7801774356358 256.63243229054956 761.8280794624002 596.9369273639265 643.4213566158019 766.7216333478814 " />
+                  <path d="M913.8084824067855 76.50350520721133C950.4614277322444 266.19024165477333 737.7061362905579 583.8077703899253 627.1931949670661 742.2734959749496C516.680253643574 900.7392215599737 535.3202197747602 792.7343930711734 383.3463640540233 837.1389880153279C231.3725083332863 881.5435829594821 -34.419503822911906 1029.4327983075755 -102.28131249247093 955.4155517068914C-170.14312116202996 881.3983051062071 0.20990670263643096 629.4132665827753 57.60968244013861 481.8562043320442C115.00945817764091 334.2991420813132 91.22732459655515 382.574786925337 173.23761104753953 247.14165290338065C255.2478974985239 111.70851888142442 296.9734592050211 -132.67322486997853 451.2590574048643 -168.22283897334694C605.5446556047075 -203.77245307671535 877.1555370813269 -113.18323124035055 913.8084824067855 76.50350520721133C950.4614277322444 266.19024165477333 737.7061362905579 583.8077703899253 627.1931949670661 742.2734959749496 " />
+                  <path d="M877.1079528145319 99.61036717483239C911.1428306167436 275.7480510189971 713.5843457066062 570.6786134159238 610.965185906221 717.8253586020178C508.34602610583545 864.9721037881118 525.6545660847942 764.6819059056543 384.5359857726812 805.9147440680836C243.41740546056838 847.1475822305124 -3.3894629701871395 984.473282196599 -66.40399959192052 915.742981781678C-129.4185362136539 847.0126813667571 28.766418232107753 613.0265741664275 82.06620998835979 476.009302076463C135.36600174461182 338.99202998649844 113.28259199074648 383.8194144845205 189.43500083808908 258.06007574984676C265.5874096854318 132.300737015173 304.3325741271792 -94.62516789684389 447.59777245560497 -127.63552384997172C590.862970784031 -160.6458798030995 843.0730750123203 -76.52731666933221 877.1079528145319 99.61036717483239C911.1428306167436 275.7480510189971 713.5843457066062 570.6786134159238 610.965185906221 717.8253586020178 " />
+                  <path d="M840.4072706343877 122.71722914245345C871.8240809133522 285.3058603832209 689.4624025347639 557.5494564419224 594.7370242574851 693.3772212290862C500.01164598020625 829.2049860162497 515.9887598069373 736.6294187401352 385.7254549034485 774.690500120839C255.4621499999597 812.7515815015429 27.640425294646946 939.5137660856228 -30.5268392792608 876.070411856465C-88.69410385316854 812.6270576273068 57.322777173688394 596.6398817500799 106.52258494869028 470.16239982088166C155.7223927236921 343.68491789168365 135.3377067970473 385.06404204370403 205.63223804074823 268.9784985963129C275.92676928444916 152.89295514892183 311.6915364614466 -56.57711092370931 443.93633491845503 -87.0482087265965C576.1811333754634 -117.51930652948369 808.990460355423 -39.871402098313865 840.4072706343877 122.71722914245345C871.8240809133522 285.3058603832209 689.4624025347639 557.5494564419224 594.7370242574851 693.3772212290862 " />
+                  <path d="M803.7066800069779 145.82415214523076C832.5054227626954 294.8637307826009 665.340550915656 544.4203605030773 578.5089541614838 668.9291448913107C491.67735740731155 793.437929279544 506.32304508181494 708.5769926097723 386.9150155869502 743.4663172087508C267.5069860920855 778.3556418077292 58.67040511221546 894.5543110098026 5.350412586133359 836.3979029664079C-47.969579939948744 778.2414949230133 85.87922766800341 580.2532503688882 130.97905146175515 464.3155586004566C176.0788752555069 348.3778668320251 157.3929131560824 386.3087306380437 221.82956679614153 279.89698247793524C286.2662204362007 173.48523431782667 319.0505903484484 -18.528992915418428 440.2749889340396 -46.46083256806503C561.4993875196305 -74.39267222071157 774.9079372512601 -3.2154264921392723 803.7066800069779 145.82415214523076C832.5054227626954 294.8637307826009 665.340550915656 544.4203605030773 578.5089541614838 668.9291448913107 " />
+                  <path d="M767.0060893795678 168.93107514800818C793.1867646120386 304.42160118198103 641.218699296548 531.2912645642323 562.2808840654824 644.4810685535354C483.3430688344167 757.6708725428384 496.65733035669257 680.5245664794095 388.10457627045184 712.2421342966627C279.55182218421123 743.9597021139157 89.70038492978392 849.5948559339827 41.22766445152746 796.725394076351C-7.245056026729003 743.8559322187193 114.43567816231848 563.8666189876967 155.43551797482002 458.46871738003165C196.43535778732155 353.0708157723666 179.44811951511747 387.5534192323836 238.02689555153495 290.8154663595576C296.6056715879523 194.07751348673173 326.4096442354503 19.519125092872457 436.613642949624 -5.873456409533503C546.8176416637978 -31.26603791193952 740.8254141470973 33.44054911403532 767.0060893795678 168.93107514800818C793.1867646120386 304.42160118198103 641.218699296548 531.2912645642323 562.2808840654824 644.4810685535354 " />
+                  <path d="M730.305498752158 192.03793711562918C753.8681064613816 313.9794105462047 617.0968476774402 518.1621075902309 546.052813969481 620.0329311806037C475.0087802615219 721.9037547709763 486.9916156315702 652.4720793138904 389.2941369539535 681.0178903494182C291.59665827633694 709.5637013849461 120.73036474735238 804.6353398230062 77.10491631692162 757.0528241511377C33.479467886490795 709.4703084792692 142.9921286566335 547.4799265713489 179.89198448788488 452.62181512445034C216.79184031913633 357.7637036775518 201.50332587415267 388.798046791567 254.22422430692836 301.7338892060237C306.94512273970395 214.66973162048043 333.7686981224522 57.56718206600709 432.95229696520846 34.71385871384172C532.1358958079647 11.860535361676284 706.7428910429345 70.09646368505366 730.305498752158 192.03793711562918C753.8681064613816 313.9794105462047 617.0968476774402 518.1621075902309 546.052813969481 620.0329311806037 " />
+                  <path d="M693.6048776071699 215.14486011840648C714.5494177931464 323.5372809455847 592.974965540754 505.0330116513858 529.8247133559016 595.5848548428282C466.67446117104896 686.1366980342707 477.3258703888697 624.4196531835275 390.48366711987717 649.7937074373301C303.64146385088463 675.1677616911326 151.76031404734277 759.675884747186 112.98213766473759 717.3803152610807C74.20396128213247 675.0847457749754 171.5485486333704 531.0932951901573 204.34842048337163 446.7749739040253C237.14829233337286 362.45665261789327 223.55850171560962 390.0427353859068 270.42152254474354 312.6523730876461C317.28454337387757 235.26201078938533 341.12772149187595 95.61530007429798 429.2909204632149 75.30123487237319C517.4541194345538 54.987169670448395 672.6603374211935 106.75243929122826 693.6048776071699 215.14486011840648C714.5494177931464 323.5372809455847 592.974965540754 505.0330116513858 529.8247133559016 595.5848548428282 " />
+                  <path d="M656.9042564621818 238.25175260360567C675.2307291249112 333.0951208273866 568.853083404068 491.90388519496264 513.5966127423221 571.1367479874748C458.340142080576 650.3696107799868 467.6601251461691 596.3671965355867 391.6731972858007 618.5694940076639C315.6862694254322 640.7717914797411 182.7902633473331 714.7163991537877 148.85935901255363 677.7077758534457C114.92845467777408 640.6991525531035 200.10496861010728 514.7066332913877 228.80485647885837 440.9281021660221C257.5047443476095 367.1495710406566 245.61367755706664 391.28739346266843 286.6188207825588 323.5708264516903C327.62396400805096 255.8542594407122 348.4867448612996 133.66338756501074 425.6295439612212 115.88858051332653C502.7723430611428 98.11377346164232 638.5777837994525 143.40838437982472 656.9042564621818 238.25175260360567C675.2307291249112 333.0951208273866 568.853083404068 491.90388519496264 513.5966127423221 571.1367479874748 " />
+                  <path d="M620.2036505759829 261.3586145712267C635.9120557154652 342.6529301916105 544.731216526171 478.77472822096115 497.3685273875317 546.6886106145431C450.00583824889213 614.6024930081248 457.99439516225766 568.3147093700676 392.8627427105133 587.3452500604195C327.7310902587689 606.3757907507714 213.82022790611256 669.7568830428114 184.73659561915866 638.0352059282325C155.65296333220482 606.3135288136534 228.66140384563323 498.31994087503995 253.26130773313423 435.0811999104408C277.8612116206351 371.8424589458418 267.6688686573127 392.53202102185196 302.8161342791632 334.48924929815644C337.96339990101364 276.4464775744609 355.8457834895123 171.71144453814537 421.9681827180166 156.47589563670175C488.09058194652084 141.24034673525819 604.4952454365006 180.06429895084307 620.2036505759829 261.3586145712267C635.9120557154652 342.6529301916105 544.731216526171 478.77472822096115 497.3685273875317 546.6886106145431 " />
+                  <path d="M583.5030446897839 284.46555283279315C596.5933823060193 352.2108158497796 520.609349648274 465.6456475409052 481.14044203274125 522.2405495355567C441.67153441720836 578.8354515302083 448.3286651783462 540.2622984984938 394.0522881352259 556.1210824071204C339.7759110921056 571.9798663157469 244.85019246489196 624.7974432257804 220.61383222576376 598.3627122969646C196.3774719866355 571.9279813681487 257.21783908115924 481.9333247526374 277.71775898741 429.2343739488049C298.2176788936608 376.53542314497236 289.72405975755873 393.7767248749808 319.0134477757675 345.40774843856786C348.30283579397616 297.03877200215493 363.20482211772514 209.75957780522532 418.30682147481207 197.06328705402228C473.4088208318989 184.3669963028193 570.4127070735486 216.72028981580672 583.5030446897839 284.46555283279315C596.5933823060193 352.2108158497796 520.609349648274 465.6456475409052 481.14044203274125 522.2405495355567 " />
+                  <path d="M546.802454062374 307.57244531799233C557.2747241553623 361.7686557315814 496.4874980291661 452.51652108448195 464.9123719367399 497.7924426802032C433.33724584431354 543.0683642759244 438.66295045322386 512.2098418505528 395.24184881872765 524.8968689774541C351.8207471842314 537.5838961043553 275.8801722824604 579.8379576323821 256.49108409115786 558.6901728893295C237.1019958998553 537.5423881462768 285.77428957547426 465.5466628538677 302.1742255004749 423.3875022108017C318.5741614254755 381.2283415677357 311.7792661165939 395.02138295174245 335.21077653116083 356.3262018026121C358.64228694572785 317.63102065348176 370.56387600472704 247.80766529593802 414.6454754903965 237.65063269497563C458.727074976066 227.49360009401323 536.3301839693859 253.3762349044032 546.802454062374 307.57244531799233C557.2747241553623 361.7686557315814 496.4874980291661 452.51652108448195 464.9123719367399 497.7924426802032 " />
+                  <path d="M510.10181765859693 330.6792920268243C517.956020228338 371.3264498370162 472.365600633691 439.3873488516915 448.6842560643713 473.34429004848243C425.00291149505153 507.30123124527336 428.9971899517343 484.1573394262448 396.4313637258621 493.67260977142064C363.86553749998995 503.1878801165967 306.91010632366175 534.8784262626166 292.36829018018483 519.0175877053272C277.82647403670785 503.15674914803765 314.3306942934221 449.1599551787309 326.6306462371726 417.5405846964313C338.930598180923 385.92121421413185 333.8344266992618 396.2659952521369 351.40805951018706 367.24460939028916C368.9816923211123 338.2232235284414 377.9228841153616 285.8557070102836 410.98408372961376 278.23793255956184C444.0452833438659 270.62015810884003 502.2476150888558 290.03213421663247 510.10181765859693 330.6792920268243C517.956020228338 371.3264498370162 472.365600633691 439.3873488516915 448.6842560643713 473.34429004848243 " />
+                  <path d="M473.4012117723979 353.78621502960164C478.63734681889207 380.8843202363962 448.243733755794 426.25825291284644 432.4561707095809 448.89621371070706C416.6686076633677 471.5341745085677 419.33145996782287 456.1049132958819 397.6209091505748 462.4484268593325C375.9103583333266 468.7919404227831 337.94007088244115 489.9189711867965 328.24552678678987 479.3450788152702C318.5509826911386 468.7711864437439 342.8871295289481 432.7733237975393 351.0870974914484 411.6937434760063C359.2870654539487 390.6141631544733 355.88961779950785 397.5106838464767 367.60537300679135 378.1630932719115C379.32112821407486 358.81550269734635 385.28192274357446 323.9038250185745 407.3227224864092 318.8253087180933C429.3635222292439 313.7467924176121 468.1650767259039 326.68810982280706 473.4012117723979 353.78621502960164C478.63734681889207 380.8843202363962 448.243733755794 426.25825291284644 432.4561707095809 448.89621371070706 " />
+                  <path d="M436.70060588619896 376.8931075148008C439.31867340944603 390.4421601181981 424.121866877897 413.12912645642325 416.22808535479044 424.44810685535356C408.3343038316839 435.76708725428387 409.66572998391143 428.05245664794097 398.8104545752874 431.2242134296663C387.9551791666633 434.39597021139156 368.9700354412206 444.95948559339826 364.12276339339496 439.6725394076351C359.27549134556926 434.38559322187194 371.44356476447405 416.38666189876966 375.5435487457242 405.8468717380032C379.64353272697434 395.30708157723666 377.9448088997539 398.75534192323835 383.8026865033957 389.08154663595576C389.66056410703743 379.4077513486732 392.6409613717872 361.95191250928724 403.66136124320457 359.41265435904666C414.68176111462196 356.87339620880607 434.08253836295194 363.34405491140353 436.70060588619896 376.8931075148008C439.31867340944603 390.4421601181981 424.121866877897 413.12912645642325 416.22808535479044 424.44810685535356 " />
+                </g>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#topo-lines)" />
+          </svg>
+          </div>
+          {/* ----------------------------------------------- */}
+
+          <Badge variant="outline" className="mb-5">
+            <span className="text-muted-foreground">Free during judge process</span>
           </Badge>
-          <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-            Two sides. One operating system.
+          <h2 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
+            See where your career is <span className="text-brand">heading</span>.
           </h2>
-          <p className="text-muted-foreground max-w-xl text-pretty text-base sm:text-lg">
-            Whether you&apos;re mapping your next chapter or sourcing the next
-            generation of talent, Career OS meets you on your side of the
-            bridge.
+          <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-pretty text-base sm:text-lg">
+            Map your next chapter or source the next generation of talent —
+            Career OS meets you on your side of the bridge.
           </p>
-          <div className="grid w-full max-w-2xl gap-4 pt-2 sm:grid-cols-2">
-            <div className="glass-3 ring-brand/20 flex flex-col items-center gap-3 rounded-2xl p-6 text-center ring-1">
-              <span className="bg-brand/15 text-brand flex size-12 items-center justify-center rounded-2xl">
-                <Compass className="size-6" />
-              </span>
-              <p className="text-sm font-mono font-semibold uppercase tracking-wider">
-                Candidate
-              </p>
-              <LinkButton
-                href="/auth?mode=signup&role=candidate"
-                variant="default"
-                iconRight={<ArrowRight />}
-                className="w-full sm:w-auto"
-              >
-                Start your journey
-              </LinkButton>
-            </div>
-            <div className="glass-3 ring-brand/20 flex flex-col items-center gap-3 rounded-2xl p-6 text-center ring-1">
-              <span className="bg-brand/15 text-brand flex size-12 items-center justify-center rounded-2xl">
-                <Briefcase className="size-6" />
-              </span>
-              <p className="text-sm font-mono font-semibold uppercase tracking-wider">
-                Employer
-              </p>
+          <div className="mt-7 flex flex-col items-center gap-3">
+            <div className="flex flex-wrap justify-center gap-3">
+              {judge ? (
+                <LinkButton href="/judge" variant="default" size="lg" icon={<Sparkles />}>
+                  Try the Judge Demo
+                </LinkButton>
+              ) : (
+                <LinkButton
+                  href="/auth?mode=signup&role=candidate"
+                  variant="default"
+                  size="lg"
+                  iconRight={<ArrowRight />}
+                >
+                  Start your journey
+                </LinkButton>
+              )}
               <LinkButton
                 href="/auth?mode=signup&role=employer"
                 variant="glow"
-                iconRight={<ArrowRight />}
-                className="w-full sm:w-auto"
+                size="lg"
+                icon={<Briefcase />}
               >
                 Find talent
               </LinkButton>
             </div>
+            <p className="text-muted-foreground flex items-center gap-1.5 text-xs -ml-35">
+              <BadgeCheck className="text-brand size-3.5" aria-hidden />
+              {judge ? "No sign-in required." : "No card, no catch."}
+            </p>
           </div>
         </div>
-        <Glow variant="below" />
-      </Section>
+      </div>
+      <Glow variant="below" />
+    </Section>
 
       {/* ─────────────────────────────── FOOTER ─────────────────────────────── */}
       <footer className="line-t relative">
-        <div className="max-w-container mx-auto flex flex-wrap items-center justify-between gap-3 px-4 py-6">
-          <div className="flex items-center gap-2">
-            <Compass className="size-4 text-brand" />
-            <span className="text-muted-foreground text-sm">Career OS</span>
+        <div className="max-w-container mx-auto grid gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2">
+              <Compass className="text-brand size-5" aria-hidden />
+              <span className="whitespace-nowrap text-base font-semibold tracking-tight">
+                Career OS
+              </span>
+            </div>
+            <p className="text-muted-foreground mt-3 max-w-xs text-sm">
+              A two-sided career intelligence platform — trajectory in, discovery
+              out.
+            </p>
           </div>
-          <p className="text-muted-foreground text-xs">
-            Made for the Talentbank Career OS challenge
-          </p>
+          <FooterCol
+            title="Product"
+            links={[
+              { label: "Features", href: "#features" },
+              { label: "For employers", href: "#employers" },
+              { label: "FAQ", href: "#faq" },
+            ]}
+          />
+          <FooterCol
+            title="Get started"
+            links={[
+              { label: "Candidate sign-up", href: "/auth?mode=signup&role=candidate" },
+              { label: "Employer sign-up", href: "/auth?mode=signup&role=employer" },
+              { label: "Sign in", href: "/auth" },
+            ]}
+          />
+          <FooterCol
+            title="Company"
+            links={[
+              { label: "Pricing", href: "/pricing" },
+              ...(judge ? [{ label: "Judge demo", href: "/judge" }] : []),
+            ]}
+          />
+        </div>
+        <div className="border-border/10 border-t">
+          <div className="max-w-container text-muted-foreground mx-auto flex flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs">
+            <span>© {new Date().getFullYear()} Career OS</span>
+            <span>Made for the Talentbank Career OS challenge</span>
+          </div>
         </div>
       </footer>
     </main>
+  );
+}
+
+// ── Feature block (alternating) ─────────────────────────────────────
+
+function FeatureBlock({ feature, reverse }: { feature: Feature; reverse: boolean }) {
+  const { id, eyebrow, title, accent, body, points, cta, mock } = feature;
+  const [before, after] = title.split(accent); // accent appears exactly once
+  return (
+    <div id={id} className="grid scroll-mt-24 items-center gap-10 md:grid-cols-2">
+      {/* Text */}
+      <div className={cn(reverse && "md:order-2")}>
+        <p className="text-brand font-mono text-xs font-semibold uppercase tracking-[0.18em]">
+          {eyebrow}
+        </p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+          {before}
+          <span className="text-brand">{accent}</span>
+          {after}
+        </h2>
+        <p className="text-muted-foreground mt-4 max-w-xl text-pretty text-base leading-relaxed sm:text-lg">
+          {body}
+        </p>
+        <ul className="mt-6 flex flex-col gap-2.5">
+          {points.map((pt) => (
+            <li key={pt} className="flex items-start gap-2.5 text-sm">
+              <span className="bg-brand/15 text-brand mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full">
+                <Check className="size-3" aria-hidden />
+              </span>
+              <span>{pt}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-7">
+          <LinkButton href={cta.href} variant="default" iconRight={<ArrowRight />}>
+            {cta.label}
+          </LinkButton>
+        </div>
+      </div>
+
+      {/* Preview mock */}
+      <div className={cn(reverse && "md:order-1")}>
+        <FeatureMock kind={mock} />
+      </div>
+    </div>
+  );
+}
+
+// ── On-theme preview mocks (static, no assets) ──────────────────────
+
+function FeatureMock({ kind }: { kind: MockKind }) {
+  return (
+    <div className="glass-3 ring-brand/15 relative aspect-4/3 w-full overflow-hidden rounded-3xl p-6 ring-1">
+      <Glow variant="center" className="opacity-40" />
+      <div className="relative flex h-full flex-col">
+        {kind === "radar" && <RadarMock />}
+        {kind === "ring" && <RingMock />}
+        {kind === "match" && <MatchMock />}
+      </div>
+    </div>
+  );
+}
+
+const skills = ["Frontend", "Backend", "DevOps", "Database", "Testing", "Design"];
+
+function RadarMock() {
+  // Static hexagonal radar: neutral grid + a luminous "you" polygon.
+  const cx = 90;
+  const cy = 84;
+  const hex = (r: number) =>
+    Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+    }).join(" ");
+  const youScale = [0.85, 0.6, 0.7, 0.5, 0.8, 0.65];
+  const you = youScale
+    .map((s, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      const r = 62 * s;
+      return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+    })
+    .join(" ");
+  return (
+    <>
+      <div className="flex items-center gap-1.5">
+        <RadarIcon className="text-luminous size-3.5" aria-hidden />
+        <p className="text-muted-foreground font-mono text-[0.5625rem] font-semibold uppercase tracking-wider">
+          Skill Radar · you vs role
+        </p>
+      </div>
+      <div className="flex flex-1 items-center justify-center scale-200">
+        <svg viewBox="0 0 180 168" className="h-full max-h-40">
+          {[62, 42, 22].map((r) => (
+            <polygon key={r} points={hex(r)} className="fill-none stroke-foreground/12" strokeWidth={1} />
+          ))}
+          <polygon points={hex(62)} className="fill-none stroke-foreground/25" strokeWidth={1} strokeDasharray="3 3" />
+          <polygon points={you} className="fill-luminous/20 stroke-luminous" strokeWidth={2} strokeLinejoin="round" />
+
+          {/* --- NEW: Text Labels Generation --- */}
+          {hex(62).trim().split(/\s+/).map((point, index) => {
+            const [xStr, yStr] = point.split(',');
+            const x = parseFloat(xStr);
+            const y = parseFloat(yStr);
+            
+            // Center coordinates of your viewBox (180/2 and 168/2)
+            const centerX = 90;
+            const centerY = 84;
+
+            // Dynamically push text left or right so it doesn't sit on top of the dot
+            let textAnchor: "middle" | "start" | "end" = "middle";
+            if (x > centerX + 5) textAnchor = "start"; // Pushes text right
+            if (x < centerX - 5) textAnchor = "end";   // Pushes text left
+
+            // Dynamically push text up or down based on vertical position
+            let dy = "0.35em"; 
+            if (y < centerY - 5) dy = "-0.2em"; // Pushes top text up
+            if (y > centerY + 5) dy = "1em";    // Pushes bottom text down
+
+            return (
+              <text
+                key={index}
+                x={x}
+                y={y}
+                dy={dy}
+                textAnchor={textAnchor}
+                className="fill-zinc-400 text-[7px] font-medium tracking-wide"
+              >
+                {skills[index] || `Skill ${index + 1}`}
+              </text>
+            );
+          })}
+        </svg>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {["Endorsed", "Evidence-backed", "Self-claimed"].map((t, i) => (
+          <span
+            key={t}
+            className={cn(
+              "rounded-full border px-2 py-0.5 text-[0.5625rem] font-medium",
+              i === 0 && "border-clover/40 bg-clover/10 text-clover-soft",
+              i === 1 && "border-yellow-400/40 bg-yellow-400/10 text-yellow-400",
+              i === 2 && "border-border/30 bg-foreground/5 text-muted-foreground",
+            )}
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function RingMock() {
+  const value = 84;
+  const r = 30;
+  const C = 2 * Math.PI * r;
+  return (
+    <>
+      <p className="text-muted-foreground font-mono text-[0.5625rem] font-semibold uppercase tracking-wider">
+        Career readiness
+      </p>
+      <div className="mt-1 flex flex-1 items-center gap-4">
+        <svg viewBox="0 0 72 72" className="size-20 shrink-0">
+          <circle cx="36" cy="36" r={r} className="fill-none stroke-foreground/10" strokeWidth={6} />
+          <circle
+            cx="36"
+            cy="36"
+            r={r}
+            className="fill-none stroke-brand"
+            strokeWidth={6}
+            strokeLinecap="round"
+            strokeDasharray={C}
+            strokeDashoffset={C * (1 - value / 100)}
+            transform="rotate(-90 36 36)"
+          />
+          <text x="36" y="41" textAnchor="middle" className="fill-foreground text-[1.125rem] font-bold">
+            {value}
+          </text>
+        </svg>
+        <div className="min-w-0 flex-1 space-y-2">
+          {[
+            { l: "Role match", v: 84 },
+            { l: "Skills validated", v: 70 },
+            { l: "Portfolio depth", v: 55 },
+          ].map((b) => (
+            <div key={b.l} className="flex items-center gap-2">
+              <span className="text-muted-foreground w-24 shrink-0 text-[0.625rem]">{b.l}</span>
+              <span className="bg-foreground/8 h-1.5 min-w-0 flex-1 overflow-hidden rounded-full">
+                <span className="bg-brand block h-full rounded-full" style={{ width: `${b.v}%` }} />
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="border-brand/25 bg-brand/5 mt-2 flex items-center gap-2 rounded-lg border px-3 py-2">
+        <Sparkles className="text-brand size-3.5 shrink-0" aria-hidden />
+        <p className="text-[0.6875rem]">
+          <span className="text-muted-foreground">Next best move: </span>
+          validate <span className="font-medium">SQL</span> — biggest lift to your score.
+        </p>
+      </div>
+    </>
+  );
+}
+
+function MatchMock() {
+  const rows = [
+    { title: "Product Designer", pct: 92, reason: "Matched your Figma + research evidence" },
+    { title: "Data Analyst", pct: 78, reason: "Strong SQL, growing on Python" },
+    { title: "Full Stack Engineer", pct: 68, reason: "Good portfolio, experienced on doing projects" },
+  ];
+  return (
+    <>
+      <div className="flex items-center gap-1.5">
+        <TrendingUp className="text-clover size-3.5" aria-hidden />
+        <p className="text-muted-foreground font-mono text-[0.5625rem] font-semibold uppercase tracking-wider">
+          Explainable matches
+        </p>
+      </div>
+      <div className="mt-2 flex flex-1 flex-col justify-center gap-2.5">
+        {rows.map((r) => (
+          <div key={r.title} className="border-border/15 bg-foreground/2 rounded-xl border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="truncate text-sm font-medium">{r.title}</p>
+              <span className={cn("text-base font-bold tabular-nums", r.pct >= 85 ? "text-clover" : "text-brand")}>
+                {r.pct}%
+              </span>
+            </div>
+            <p className="text-muted-foreground mt-1 flex items-center gap-1 text-[0.625rem]">
+              <BadgeCheck className="text-clover size-3 shrink-0" aria-hidden />
+              {r.reason}
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ── Footer column ───────────────────────────────────────────────────
+
+function FooterCol({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+  return (
+    <div>
+      <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
+        {title}
+      </p>
+      <ul className="mt-3 flex flex-col gap-2">
+        {links.map((l) => (
+          <li key={l.label}>
+            <Link href={l.href} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

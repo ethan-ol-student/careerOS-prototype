@@ -120,14 +120,14 @@ export function CandidateDetailModal({
             accent="clover"
           />
           <div className="glass-3 flex flex-col gap-1 rounded-lg p-3">
-            <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+            <p className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
               Growth signal
             </p>
             <span className="text-clover inline-flex items-center gap-1.5 text-sm font-semibold">
               <TrendingUp className="size-3.5" />
               {candidate.growthSignal}
             </span>
-            <span className="text-muted-foreground text-[10px]">
+            <span className="text-muted-foreground text-[0.625rem]">
               {candidate.availability}
             </span>
           </div>
@@ -144,7 +144,7 @@ export function CandidateDetailModal({
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium">{f.label}</p>
-                <p className="text-muted-foreground text-[11px] leading-snug">
+                <p className="text-muted-foreground text-[0.6875rem] leading-snug">
                   {f.detail}
                 </p>
               </div>
@@ -154,7 +154,7 @@ export function CandidateDetailModal({
             </li>
           ))}
         </ul>
-        <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+        <p className="text-muted-foreground/80 mt-2 text-[0.625rem] italic leading-snug">
           Readiness = {readiness.score}/100, summed from the factors above —
           based on self-reported profile signals, not verified assessments.
         </p>
@@ -173,7 +173,7 @@ export function CandidateDetailModal({
             <p className="text-muted-foreground mt-1 text-xs leading-snug">
               {ARCHETYPES[candidate.archetype].interpretation}
             </p>
-            <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+            <p className="text-muted-foreground/80 mt-2 text-[0.625rem] italic leading-snug">
               Bias check: working style is self-reported interpretation
               context. It never affects match scores and must not be used to
               screen candidates out.
@@ -191,13 +191,13 @@ export function CandidateDetailModal({
             accent="luminous"
             size="sm"
           />
-          <p className="text-muted-foreground/80 mt-1 text-[10px] italic">
+          <p className="text-muted-foreground/80 mt-1 text-[0.625rem] italic">
             {insight.reasons[0]}
           </p>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <p className="text-clover mb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider">
+            <p className="text-clover mb-1.5 text-[0.625rem] font-mono font-semibold uppercase tracking-wider">
               Strengths
             </p>
             <ul className="space-y-1 text-xs leading-snug">
@@ -207,7 +207,7 @@ export function CandidateDetailModal({
             </ul>
           </div>
           <div>
-            <p className="mb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-yellow-400">
+            <p className="mb-1.5 text-[0.625rem] font-mono font-semibold uppercase tracking-wider text-yellow-400">
               Risks to probe
             </p>
             <ul className="space-y-1 text-xs leading-snug">
@@ -221,7 +221,7 @@ export function CandidateDetailModal({
             </ul>
           </div>
         </div>
-        <p className="text-luminous mt-3 mb-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider">
+        <p className="text-luminous mt-3 mb-1.5 text-[0.625rem] font-mono font-semibold uppercase tracking-wider">
           Interview kit
         </p>
         <ol className="space-y-1.5 text-xs leading-snug">
@@ -234,7 +234,7 @@ export function CandidateDetailModal({
             </li>
           ))}
         </ol>
-        <p className="text-muted-foreground/80 mt-2 text-[10px] italic leading-snug">
+        <p className="text-muted-foreground/80 mt-2 text-[0.625rem] italic leading-snug">
           {insight.uncertainty}
         </p>
       </Section>
@@ -289,7 +289,7 @@ function Section({
   return (
     <section className="mb-5 last:mb-0">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+        <p className="text-luminous text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
           {label}
         </p>
         {trailing}

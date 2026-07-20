@@ -74,7 +74,7 @@ export function EmployerSidebar({ onSignOut }: { onSignOut: () => void }) {
         {NAV.map((group) => (
           <div key={group.label ?? "top"} className="mb-2">
             {group.label && (
-              <p className="text-muted-foreground px-3 pb-1.5 pt-2 text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+              <p className="text-muted-foreground px-3 pb-1.5 pt-2 text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
                 {group.label}
               </p>
             )}

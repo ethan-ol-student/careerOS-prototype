@@ -98,7 +98,7 @@ export function LiveMatchDemo() {
           </p>
         ))}
       </div>
-      <p className="text-muted-foreground/70 mt-3 text-[11px] italic">
+      <p className="text-muted-foreground/70 mt-3 text-[0.6875rem] italic">
         Deterministic and explainable — the score is never a black box.
       </p>
     </div>

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { FeedbackModal } from "@/components/ui/FeedbackModal";
+import { emitCarrie } from "@/components/carrie/carrieBus";
 import { MarketValuePanel } from "@/components/market/MarketValuePanel";
 
 interface JobDetail {
@@ -77,7 +78,10 @@ export default function JobDetailPage({
     const json = await res.json();
     setApplying(false);
     if (json.ok || res.status === 409) setApplied(true);
-    if (json.ok) setJustApplied(true);
+    if (json.ok) {
+      setJustApplied(true);
+      emitCarrie("success", "Application sent! Track it live in My applications.");
+    }
     if (!json.ok && res.status !== 409) {
       setError(json.error?.message ?? "Could not apply.");
     }
@@ -137,7 +141,7 @@ export default function JobDetailPage({
                   </Link>
                 </div>
 
-                <h2 className="text-muted-foreground mt-6 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                <h2 className="text-muted-foreground mt-6 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                   Required skills
                 </h2>
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -180,17 +184,17 @@ export default function JobDetailPage({
                   label={job.personalized ? "Your match" : "Base match"}
                   value={job.match}
                 />
-                <h2 className="text-muted-foreground mt-4 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                <h2 className="text-muted-foreground mt-4 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                   Why this score?
                 </h2>
-                <ul className="text-muted-foreground mt-2 space-y-1.5 text-sm">
-                  {job.matchReasons.map((r) => (
-                    <li key={r}>• {r}</li>
-                  ))}
+                <ul className="text-foreground mt-2 space-y-1.5 list-disc text-sm pl-5">
+                    {job.matchReasons.map((r) => (
+                      <li key={r}> {r}</li>
+                    ))}
                 </ul>
                 {job.missing.length > 0 && (
                   <>
-                    <h3 className="text-muted-foreground mt-4 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                    <h3 className="text-muted-foreground mt-4 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                       Bridge to close
                     </h3>
                     <div className="mt-2 flex flex-wrap gap-1.5">

@@ -1,6 +1,7 @@
 "use client";
 
 import { Target, ThumbsUp, ThumbsDown, Sparkles, CalendarDays, Clock } from "lucide-react";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { PRIORITY_META, type ChapterEvent } from "@/lib/chapters/data";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export function ReflectionStats({ events }: { events: ChapterEvent[] }) {
       <div className="flex items-center gap-2">
         <Target className="text-luminous size-4" aria-hidden />
         <div>
-          <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+          <p className="text-luminous font-mono text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
             Am I moving toward my ideal self?
           </p>
           <h2 className="text-base font-semibold tracking-tight">Reflection &amp; meaning</h2>
@@ -42,21 +43,25 @@ export function ReflectionStats({ events }: { events: ChapterEvent[] }) {
       </div>
       {rated > 0 && (
         <div className="mt-3">
-          <div className="text-muted-foreground flex items-center justify-between text-[11px]">
+          <div className="text-muted-foreground flex items-center justify-between text-[0.6875rem]">
             <span>Meaningful share of rated activities</span>
             <span className="text-clover font-semibold">{share}%</span>
           </div>
           <div className="bg-foreground/8 mt-1 h-1.5 w-full overflow-hidden rounded-full">
             <div className="bg-clover h-full rounded-full transition-all" style={{ width: `${share}%` }} />
           </div>
-          <p className="text-muted-foreground mt-1.5 flex items-start gap-1.5 text-[11px]">
-            <Sparkles className="text-luminous mt-0.5 size-3 shrink-0" aria-hidden />
-            {share >= 60
-              ? "Most of your planned time points at your ideal self — keep it up."
-              : unrated > rated
-                ? "Rate a few more activities to get a clearer read on your time."
-                : "A lot of your time isn't moving you forward — worth a rethink."}
-          </p>
+          <InfoHint className="text-muted-foreground mt-1.5 block text-[0.6875rem]">
+            <span className="flex items-start gap-1.5">
+              <Sparkles className="text-luminous mt-0.5 size-3 shrink-0" aria-hidden />
+              <span>
+                {share >= 60
+                  ? "Most of your planned time points at your ideal self — keep it up."
+                  : unrated > rated
+                    ? "Rate a few more activities to get a clearer read on your time."
+                    : "A lot of your time isn't moving you forward — worth a rethink."}
+              </span>
+            </span>
+          </InfoHint>
         </div>
       )}
     </div>
@@ -77,7 +82,7 @@ export function EventDetail({
     onRate(event.id, event.meaningful === value ? null : value);
   return (
     <div className="border-border/15 rounded-xl border p-4">
-      <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-wider">
+      <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
         Selected event
       </p>
       <p className="mt-1 text-sm font-semibold">{event.name}</p>
@@ -96,7 +101,7 @@ export function EventDetail({
         </span>
       </div>
       {event.subtasks.length > 0 && (
-        <p className="text-muted-foreground mt-2 text-[11px]">
+        <p className="text-muted-foreground mt-2 text-[0.6875rem]">
           {event.subtasks.filter((s) => s.done).length}/{event.subtasks.length} sub-tasks done
         </p>
       )}
@@ -132,7 +137,7 @@ export function EventDetail({
           <ThumbsDown className="size-3.5" aria-hidden /> Not really
         </button>
       </div>
-      <p className="text-muted-foreground/70 mt-2 text-[10px]">
+      <p className="text-muted-foreground/70 mt-2 text-[0.625rem]">
         Private reflection — only you ever see this.
       </p>
     </div>
@@ -142,7 +147,7 @@ export function EventDetail({
 function Stat({ label, value, tone }: { label: string; value: number; tone: "clover" | "muted" }) {
   return (
     <div className="border-border/15 bg-foreground/2 rounded-xl border p-2.5">
-      <p className="text-muted-foreground font-mono text-[9px] font-semibold uppercase tracking-wider">{label}</p>
+      <p className="text-muted-foreground font-mono text-[0.5625rem] font-semibold uppercase tracking-wider">{label}</p>
       <p className={cn("mt-0.5 text-xl font-bold tracking-tight", tone === "clover" ? "text-clover" : "text-foreground")}>
         {value}
       </p>

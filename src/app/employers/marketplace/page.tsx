@@ -163,7 +163,7 @@ export default function EmployerMarketplacePage() {
               expandable "Ideal candidate" snapshot. */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="border-border/15 bg-foreground/2 flex min-w-0 items-center gap-2 rounded-full border py-1.5 pl-4 pr-1.5">
-              <span className="text-clover shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+              <span className="text-clover shrink-0 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                 Looking for:
               </span>
               <span
@@ -178,7 +178,7 @@ export default function EmployerMarketplacePage() {
                 type="button"
                 onClick={() => setIdealOpen((v) => !v)}
                 aria-expanded={idealOpen}
-                className="border-clover/30 bg-clover/10 text-clover-soft hover:bg-clover/16 flex items-center gap-2 rounded-xl border px-4 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors"
+                className="border-clover/30 bg-clover/10 text-clover-soft hover:bg-clover/16 flex items-center gap-2 rounded-xl border px-4 py-2.5 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em] transition-colors"
               >
                 <Sparkles className="size-3.5" aria-hidden />
                 Ideal candidate
@@ -297,7 +297,7 @@ export default function EmployerMarketplacePage() {
                       >
                         {/* Match score box */}
                         <div className="border-clover/28 bg-linear-to-b from-clover/14 to-clover/4 flex w-32 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border px-3 py-3">
-                          <p className="text-clover-soft font-mono text-[9px] font-semibold uppercase tracking-[0.14em]">
+                          <p className="text-clover-soft font-mono text-[0.5625rem] font-semibold uppercase tracking-[0.14em]">
                             Match
                           </p>
                           <p className="text-clover text-3xl font-extrabold leading-none tracking-tight">
@@ -329,7 +329,7 @@ export default function EmployerMarketplacePage() {
                               <button
                                 type="button"
                                 onClick={() => setActiveCandidate(c)}
-                                className="truncate text-[15px] font-semibold tracking-tight hover:underline"
+                                className="truncate text-[0.9375rem] font-semibold tracking-tight hover:underline"
                               >
                                 {c.name}
                               </button>
@@ -361,7 +361,7 @@ export default function EmployerMarketplacePage() {
                         <div className="flex w-44 shrink-0 flex-col items-end justify-center gap-2.5">
                           <div className="w-full">
                             <div className="mb-1 flex items-baseline justify-between">
-                              <span className="text-muted-foreground font-mono text-[9px] font-semibold uppercase tracking-[0.1em]">
+                              <span className="text-muted-foreground font-mono text-[0.5625rem] font-semibold uppercase tracking-[0.1em]">
                                 Readiness
                               </span>
                               <span className="text-luminous-soft text-xs font-bold">

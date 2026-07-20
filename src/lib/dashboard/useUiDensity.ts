@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { resolveUiDensity } from "./uiDensity";
-import type { CareerPhase, UiDensity } from "./types";
+import { DENSITY_EVENT, type DensityChoice } from "./uiDensityBus";
+import type { UiDensity } from "./types";
 
 /**
- * Resolved UI density: the user's saved override (from
- * `/api/me/ui-density`) falling back to the phase default.
- * ponytail: fetch-only — the phase default paints instantly, so the
- * only "flash" hits users whose override differs from their default.
+ * Resolved UI density: the user's saved choice from `/api/me/ui-density`,
+ * falling back to Detailed ("calm"). Also subscribes to the density bus so
+ * a change from Settings or Carrie updates this consumer live (no reload).
  */
-export function useUiDensity(phase: CareerPhase): UiDensity {
+export function useUiDensity(): UiDensity {
   const [override, setOverride] = useState("");
 
   useEffect(() => {
@@ -23,13 +23,18 @@ export function useUiDensity(phase: CareerPhase): UiDensity {
           | null;
         if (!cancelled && body?.ok) setOverride(body.data?.uiDensity ?? "");
       } catch {
-        /* offline/error — phase default still applies */
+        /* offline/error — Detailed default still applies */
       }
     })();
+    // Live updates from any setter (Settings / Carrie).
+    const onChange = (e: Event) =>
+      setOverride((e as CustomEvent<DensityChoice>).detail);
+    window.addEventListener(DENSITY_EVENT, onChange);
     return () => {
       cancelled = true;
+      window.removeEventListener(DENSITY_EVENT, onChange);
     };
   }, []);
 
-  return resolveUiDensity(phase, override);
+  return resolveUiDensity(override);
 }

@@ -63,7 +63,7 @@ export function EmployerNotificationsBell() {
       >
         <Bell className="size-4" />
         {unreadCount > 0 && (
-          <span className="bg-clover absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white">
+          <span className="bg-clover absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[0.625rem] font-semibold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -76,7 +76,7 @@ export function EmployerNotificationsBell() {
         >
           <div className="flex items-center justify-between border-b border-border/15 px-4 py-3">
             <p className="text-sm font-semibold">Notifications</p>
-            <span className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+            <span className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
               {notifications.length} total
             </span>
           </div>
@@ -85,7 +85,7 @@ export function EmployerNotificationsBell() {
             <div className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-center">
               <Bell className="size-6 opacity-40" />
               <p className="text-sm">You&apos;re all caught up.</p>
-              <p className="text-[11px]">
+              <p className="text-[0.6875rem]">
                 When candidates accept your invite, you&apos;ll see them here.
               </p>
             </div>
@@ -124,11 +124,11 @@ export function EmployerNotificationsBell() {
                       <p className="text-muted-foreground mt-0.5 text-xs leading-snug">
                         {n.body}
                       </p>
-                      <p className="text-muted-foreground mt-1 text-[10px]">
+                      <p className="text-muted-foreground mt-1 text-[0.625rem]">
                         {formatTimeAgo(n.createdAt)}
                       </p>
                       {n.kind === "invite-accepted" && n.candidateId && (
-                        <span className="text-clover mt-2 inline-flex items-center gap-1 text-[11px] font-medium">
+                        <span className="text-clover mt-2 inline-flex items-center gap-1 text-[0.6875rem] font-medium">
                           <Check className="size-3" />
                           Open chat
                         </span>

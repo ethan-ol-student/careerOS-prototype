@@ -33,7 +33,7 @@ export function FieldShell({
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={id}
-        className="text-muted-foreground flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wider"
+        className="text-muted-foreground flex items-center gap-2 text-[0.6875rem] font-mono font-medium uppercase tracking-wider"
       >
         {label}
         {optional && <span className="normal-case opacity-70">(optional)</span>}
@@ -155,7 +155,7 @@ export function ChipGroup({
             )}
           >
             {numbered && active && (
-              <span className="bg-luminous/25 flex size-4 items-center justify-center rounded-full text-[10px] font-semibold">
+              <span className="bg-luminous/25 flex size-4 items-center justify-center rounded-full text-[0.625rem] font-semibold">
                 {idx + 1}
               </span>
             )}
@@ -340,7 +340,7 @@ export function SelectCard({
             <span className="flex min-w-0 flex-col gap-1">
               {Icon && <Icon className={cn("size-4", active ? "text-luminous" : "text-muted-foreground")} aria-hidden />}
               <span className="text-sm font-medium">{o.label}</span>
-              {o.hint && <span className="text-muted-foreground text-[11px] leading-snug">{o.hint}</span>}
+              {o.hint && <span className="text-muted-foreground text-[0.6875rem] leading-snug">{o.hint}</span>}
             </span>
           </button>
         );
@@ -413,7 +413,7 @@ export function TagInput({
                 type="button"
                 onClick={() => onChange(values.filter((x) => x !== v))}
                 aria-label={`Remove ${v}`}
-                className="bg-luminous text-white inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px]"
+                className="bg-luminous text-white inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.6875rem]"
               >
                 {v} <span aria-hidden>×</span>
               </button>

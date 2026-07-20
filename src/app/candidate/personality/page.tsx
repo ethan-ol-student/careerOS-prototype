@@ -9,6 +9,7 @@ import { Chip } from "@/components/ui/Chip";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { FeedbackModal } from "@/components/ui/FeedbackModal";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { QUIZ_QUESTIONS, ARCHETYPE_ORDER } from "@/lib/intelligence/personalityEngine";
 import { ARCHETYPES } from "@/lib/intelligence/scoringConfig";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,7 @@ function leanLabel(share: number): string {
 /** Accent-pill eyebrow, matching the dashboard cockpit cards. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] [&_svg]:size-3">
+    <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em] [&_svg]:size-3">
       {children}
     </p>
   );
@@ -111,7 +112,7 @@ export default function PersonalityPage() {
   return (
     <AppShell>
       <section className="max-w-container mx-auto w-full px-4 pb-10 pt-4">
-        <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+        <p className="text-luminous font-mono text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
           Working-style profile
         </p>
         <h1 className="mt-0.5 mb-5 text-xl font-extrabold tracking-tight sm:text-2xl">
@@ -140,9 +141,9 @@ export default function PersonalityPage() {
                 <p className="text-luminous-soft text-sm">
                   {archetype.name} · {archetype.tagline}
                 </p>
-                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                <InfoHint className="text-muted-foreground mt-3 block text-sm leading-relaxed">
                   {archetype.animalNote}
-                </p>
+                </InfoHint>
                 <div className="mt-4 flex flex-wrap justify-center gap-1.5">
                   {archetype.strengths.map((s) => (
                     <Chip key={s} tone="luminous">
@@ -162,7 +163,7 @@ export default function PersonalityPage() {
                 </p>
 
                 <div className="mt-6 flex items-center justify-between">
-                  <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                  <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                     How your answers split
                   </p>
                   <Chip tone="luminous">
@@ -188,7 +189,7 @@ export default function PersonalityPage() {
                       />
                     ))}
                 </div>
-                <p className="text-muted-foreground mt-2 text-[11px]">
+                <p className="text-muted-foreground mt-2 text-[0.6875rem]">
                   Shares of your quiz answers — they add up to your whole style,
                   not a pass/fail score.
                 </p>
@@ -296,8 +297,11 @@ export default function PersonalityPage() {
                   className="mt-5"
                 />
                 <p className="text-muted-foreground mt-4 text-center text-xs">
-                  {answered} of {QUIZ_QUESTIONS.length} answered. Pick the option
-                  that fits how you actually work — there are no wrong answers.
+                  {answered} of {QUIZ_QUESTIONS.length} answered.{" "}
+                  <InfoHint>
+                    Pick the option that fits how you actually work — there are
+                    no wrong answers.
+                  </InfoHint>
                 </p>
               </section>
             </Col>

@@ -452,6 +452,11 @@ model CandidatesAI {
   race          String[] @default([]) // optional, self-ID
   age           Int?     // optional, self-ID
 
+  // Onboarding v4 — phase-conditional preference answers (mid-career /
+  // senior-career / executive question sets). One JSON bag keyed by
+  // question id; the TS layer (onboarding page) owns legal keys/shapes.
+  phaseAnswers Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

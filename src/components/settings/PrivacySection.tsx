@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { InfoHint } from "@/components/ui/InfoHint";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useAuth } from "@/lib/context/AuthContext";
 import { clearAllAppCache } from "@/lib/storage/appCache";
@@ -27,11 +28,11 @@ export function PrivacySection() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-muted-foreground text-sm">
+      <InfoHint className="text-muted-foreground block text-sm">
         Signing out or clearing the local cache only affects this device. Your
         saved data stays safely in your account and is restored next time you
         sign in — it is never deleted unless you choose to delete your account.
-      </p>
+      </InfoHint>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={() => setConfirmSignOut(true)}>
           <LogOut className="size-4" />

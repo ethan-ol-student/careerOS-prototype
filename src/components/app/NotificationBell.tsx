@@ -65,7 +65,7 @@ export function NotificationBell() {
         {unreadCount > 0 && (
           <span
             className={cn(
-              "absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white",
+              "absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[0.625rem] font-semibold text-white",
               hasImportant ? "bg-yellow-400 text-black" : "bg-luminous",
             )}
           >
@@ -96,7 +96,7 @@ export function NotificationBell() {
               <p className="text-sm font-semibold leading-tight">
                 Notifications
               </p>
-              <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+              <p className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
                 {notifications.length} total · {unreadCount} unread
               </p>
             </div>
@@ -104,7 +104,7 @@ export function NotificationBell() {
               type="button"
               onClick={markAllRead}
               disabled={unreadCount === 0}
-              className="text-luminous hover:text-luminous focus-visible:ring-luminous/40 disabled:text-muted-foreground/60 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:hover:text-muted-foreground/60"
+              className="text-luminous hover:text-luminous focus-visible:ring-luminous/40 disabled:text-muted-foreground/60 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[0.6875rem] font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:hover:text-muted-foreground/60"
             >
               Mark all as read
             </button>
@@ -114,7 +114,7 @@ export function NotificationBell() {
             <div className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-center">
               <Bell className="size-6 opacity-40" />
               <p className="text-sm">You&apos;re all caught up.</p>
-              <p className="text-[11px]">
+              <p className="text-[0.6875rem]">
                 We&apos;ll ping you when you gain a skill or match a role.
               </p>
             </div>
@@ -150,7 +150,7 @@ export function NotificationBell() {
                       <p className="text-muted-foreground mt-0.5 text-xs leading-snug">
                         {n.body}
                       </p>
-                      <p className="text-muted-foreground mt-1 text-[10px]">
+                      <p className="text-muted-foreground mt-1 text-[0.625rem]">
                         {formatTimeAgo(n.createdAt)}
                       </p>
                       {n.actionLabel && (

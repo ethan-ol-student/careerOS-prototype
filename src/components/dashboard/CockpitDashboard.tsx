@@ -6,9 +6,7 @@ import {
   ArrowUpRight,
   BookOpen,
   Briefcase,
-  CalendarDays,
   Compass,
-  HeartPulse,
   Loader2,
   Radar as RadarIcon,
   Sparkles,
@@ -17,6 +15,13 @@ import {
 } from "lucide-react";
 import { Chip } from "@/components/ui/Chip";
 import { CategoryRadar } from "@/components/skills/CategoryRadar";
+import {
+  ExecutiveDashboard,
+  MidCareerDashboard,
+  SeniorDashboard,
+} from "@/components/dashboard/PhaseDashboards";
+import { StudentDashboard } from "@/components/dashboard/student/StudentDashboard";
+import { YoungAdultDashboard } from "@/components/dashboard/YoungAdultDashboard";
 import { DayTimeline } from "@/components/dashboard/DayTimeline";
 import {
   scoreSkillTruth,
@@ -26,7 +31,7 @@ import {
   type TrustTier,
 } from "@/lib/intelligence/skillTruthEngine";
 import { getPhaseConfig } from "@/lib/dashboard/phaseConfig";
-import { useUiDensity } from "@/lib/dashboard/useUiDensity";
+import { getFutureSelf } from "@/lib/futureSelf";
 import type { Priority } from "@/lib/chapters/data";
 import type { TargetJob } from "@/lib/jobs/data";
 import type { CandidateDashboardData } from "@/lib/dashboard/types";
@@ -56,7 +61,6 @@ interface EventRow {
  * shell's content region scrolls gracefully on smaller screens.
  */
 export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
-  const uiDensity = useUiDensity(data.phase);
   const [claims, setClaims] = useState<ClaimRow[] | null>(null);
   const [jobs, setJobs] = useState<JobRow[] | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -74,7 +78,13 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
         r3.json().catch(() => null),
       ]);
       setClaims(j1?.ok ? j1.data.claims : []);
-      setJobs(j2?.ok ? j2.data.jobs : []);
+      // Future Self path first: the chosen career leads every "vs" readout.
+      const rows: JobRow[] = j2?.ok ? j2.data.jobs : [];
+      const fs = getFutureSelf();
+      const chosen = fs ? rows.findIndex((j) => j.id === fs.jobId) : -1;
+      setJobs(
+        chosen > 0 ? [rows[chosen], ...rows.filter((_, i) => i !== chosen)] : rows,
+      );
       setEvents(j3?.ok ? j3.data : []);
     })();
   }, []);
@@ -102,10 +112,61 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
   const target =
     data.targetJob || data.desiredNextMove || data.longTermGoal || "";
 
+  // Student phase gets the exploration-first Discovery Radar dashboard
+  // (no job section). Renders immediately; claims fill the micro-quest.
+  if (data.phase === "student") {
+    return (
+      <div className="h-full overflow-y-auto">
+        <StudentDashboard data={data} claims={claims} />
+      </div>
+    );
+  }
+
+  // Young Adult gets the 10-second readiness/pipeline dashboard.
+  if (data.phase === "young_adult") {
+    if (!claims || !jobs) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <CardLoading />
+        </div>
+      );
+    }
+    return (
+      <div className="h-full overflow-y-auto">
+        <YoungAdultDashboard data={data} claims={claims} jobs={jobs} truth={truth} mv={mv} />
+      </div>
+    );
+  }
+
+  // Mid-career+ phases get their own dashboard layout (mentor "3 phases"
+  // spec) — same data pipeline, different shape. Earlier phases keep the
+  // four-question cockpit below.
+  if (midCareerPlus) {
+    if (!claims || !jobs) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <CardLoading />
+        </div>
+      );
+    }
+    const phaseProps = { data, claims, jobs, truth, mv };
+    return (
+      <div className="h-full overflow-y-auto">
+        {data.phase === "mid_career" ? (
+          <MidCareerDashboard {...phaseProps} />
+        ) : data.phase === "senior_career" ? (
+          <SeniorDashboard {...phaseProps} />
+        ) : (
+          <ExecutiveDashboard {...phaseProps} />
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div data-ui-density={uiDensity} className="flex h-full flex-col">
+    <div className="flex h-full flex-col">
       <section className="max-w-container mx-auto flex w-full flex-1 flex-col px-4 pb-4 pt-2 lg:min-h-0">
-        <p className="text-luminous shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+        <p className="text-luminous shrink-0 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
           Candidate · {phaseCfg.label} phase
         </p>
         <h1 className="shrink-0 text-xl font-extrabold tracking-tight sm:text-2xl">
@@ -150,7 +211,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
                     href="/candidate/skills"
                     className="glass-4 group rounded-xl p-3 transition-colors"
                   >
-                    <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-wider">
+                    <p className="text-muted-foreground text-[0.625rem] font-mono font-semibold uppercase tracking-wider">
                       Skills
                     </p>
                     <span className="flex items-end justify-between">
@@ -164,7 +225,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
                     </span>
                   </Link>
                   <div className="glass-4 rounded-xl p-3">
-                    <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-wider">
+                    <p className="text-muted-foreground text-[0.625rem] font-mono font-semibold uppercase tracking-wider">
                       Phase
                     </p>
                     <Chip
@@ -194,13 +255,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
             <div className="flex h-full min-h-0 flex-col gap-3 lg:flex-row">
               {/* Left ONLY: the single-day hourly timeline (wireframe). */}
               <div className="flex min-h-0 flex-col lg:w-1/2">
-                <Link
-                  href="/candidate/chapters"
-                  className="text-muted-foreground hover:text-luminous mb-1 flex shrink-0 items-center gap-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider transition-colors"
-                >
-                  <CalendarDays className="size-3" aria-hidden /> Your day — plan it in Life Chapters
-                </Link>
-                <div className="min-h-44 flex-1">
+                <div className="min-h-0 flex-1">
                   <DayTimeline events={events} />
                 </div>
               </div>
@@ -214,13 +269,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
               </div>
             </div>
             
-            {midCareerPlus && (
-              <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
-                <HeartPulse className="text-clover size-3.5" aria-hidden />
-                Your full Career Health plan — Fair Pay, Skill Bridge, Next Move —
-                lives one click away.
-              </p>
-            )}
+    
           </CockpitCard>
 
           {/* 2 — Where are you? */}
@@ -234,8 +283,12 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
             {truth && topJob && claims ? (
               <div className="flex h-full min-h-0 items-stretch gap-4">
                 {/* Wireframe: You vs Job radar with soft/hard arrows */}
-                <div className="w-1/2 min-w-0">
-                  <CategoryRadar claims={claims as SkillClaimInput[]} job={topJob} />
+                <div className="w-1/2 min-w-0 -translate-y-4">
+                  <CategoryRadar
+                    claims={claims as SkillClaimInput[]}
+                    job={topJob}
+                    focusGaps
+                  />
                 </div>
                 {/* Wireframe: big Suitability % + minimum-requirements bars */}
                 <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
@@ -243,12 +296,18 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
                     <span className="glass-4 text-luminous rounded-xl px-3.5 py-1.5 text-3xl font-bold tracking-tight">
                       {truth.score}%
                     </span>
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+                    <span className="font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.18em]">
                       Suitability
                     </span>
                   </div>
                   <p className="text-muted-foreground text-xs">
-                    vs {topJob.title} — your best match
+                    <Link
+                      href="/candidate/future-self"
+                      className="text-luminous-soft hover:text-luminous font-medium transition-colors"
+                      title="Change your Future Self path"
+                    >
+                      vs {topJob.title} →
+                    </Link>
                     {mv && (
                       <span title={mv.reason}>
                         {" "}· market signal{" "}
@@ -256,7 +315,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
                       </span>
                     )}
                   </p>
-                  <p className="text-muted-foreground mt-1 font-mono text-[10px] font-semibold uppercase tracking-wider">
+                  <p className="text-muted-foreground mt-1 font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
                     Minimum requirements
                   </p>
                   <ul className="flex flex-col gap-1.5">
@@ -266,7 +325,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
                       .map((a) => (
                         <li key={a.skill} className="flex items-center gap-2">
                           <span
-                            className="w-24 shrink-0 truncate text-[11px] capitalize"
+                            className="w-24 shrink-0 truncate text-[0.6875rem] capitalize"
                             title={a.skill}
                           >
                             {a.skill}
@@ -280,7 +339,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
                               style={{ width: `${a.you}%` }}
                             />
                           </span>
-                          <span className="text-muted-foreground w-8 shrink-0 text-right font-mono text-[10px] tabular-nums">
+                          <span className="text-muted-foreground w-8 shrink-0 text-right font-mono text-[0.625rem] tabular-nums">
                             {a.you}
                           </span>
                         </li>
@@ -307,7 +366,7 @@ export function CockpitDashboard({ data }: { data: CandidateDashboardData }) {
                   jobs={jobs.filter((j) => j.match > 0).slice(0, 5)}
                   centerInitial={(data.firstName[0] ?? "C").toUpperCase()}
                 />
-                <p className="text-muted-foreground shrink-0 pt-1 text-[10px]">
+                <p className="text-muted-foreground shrink-0 pt-1 text-[0.625rem]">
                   Your top matches orbit you — bigger &amp; brighter = stronger
                   match. Hover to inspect, click to open the role.
                 </p>
@@ -350,10 +409,10 @@ function AiRecommendation({
   return (
     <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-y-auto">
       <div className="border-luminous/30 bg-luminous/5 rounded-lg border px-2.5 py-2">
-        <p className="text-luminous flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider">
+        <p className="text-luminous flex items-center gap-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
           <Sparkles className="size-3" aria-hidden /> AI recommendation
         </p>
-        <p className="mt-1 text-xs leading-snug">{truth.nextStep}</p>
+        <p className="mt-1 block text-xs leading-snug">{truth.nextStep}</p>
       </div>
       <RecoGroup
         title="Learn new skills"
@@ -400,12 +459,14 @@ function RecoGroup({
 }) {
   return (
     <div className="border-border/15 bg-foreground/2 rounded-lg border p-2.5">
-      <p className="text-muted-foreground flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider">
+      <p className="text-muted-foreground flex items-center gap-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
         <Icon className="size-3" aria-hidden /> {title}
       </p>
-      {summary && (
-        <p className="text-muted-foreground mt-1 text-[11px] leading-snug">{summary}</p>
-      )}
+      {/* {summary && (
+        <InfoHint className="text-muted-foreground mt-1 block text-[0.6875rem] leading-snug">
+          {summary}
+        </InfoHint>
+      )} */}
       {skills.length ? (
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {skills.map((s) => (
@@ -413,7 +474,7 @@ function RecoGroup({
               key={s}
               href={`${planHref}?add=${encodeURIComponent(s)}`}
               title={`Plan "${s}" in your Life Chapter Designer`}
-              className="border-border/15 bg-foreground/2 hover:border-luminous/40 hover:text-luminous inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] capitalize transition-colors"
+              className="border-border/15 bg-foreground/2 hover:border-luminous/40 hover:text-luminous inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[0.6875rem] capitalize transition-colors"
             >
               {s}
               <ArrowUpRight className="size-3" aria-hidden />
@@ -421,7 +482,7 @@ function RecoGroup({
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground/70 mt-1 text-[11px] italic">{empty}</p>
+        <p className="text-muted-foreground/70 mt-1 text-[0.6875rem] italic">{empty}</p>
       )}
     </div>
   );
@@ -460,7 +521,7 @@ function OrbitField({
           key={j.id}
           aria-hidden
           className="border-border/15 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed"
-          style={{ width: ORBIT_RADII[i] * 2, height: ORBIT_RADII[i] * 2 }}
+          style={{ width: `${ORBIT_RADII[i] / 8}rem`, height: `${ORBIT_RADII[i] / 8}rem` }}
         />
       ))}
 
@@ -513,7 +574,7 @@ function Orbiter({
       className={cn("absolute left-1/2 top-1/2 animate-spin hover:z-20", pause)}
       style={spin}
     >
-      <div style={{ transform: `translateX(${radius}px)` }}>
+      <div style={{ transform: `translateX(${radius / 16}rem)` }}>
         <div
           data-orbit-counter
           className={cn("animate-spin [animation-direction:reverse]", pause)}
@@ -529,18 +590,19 @@ function Orbiter({
                 : "border-border/20 bg-card/80 text-foreground/80",
             )}
             style={{
-              width: size,
-              height: size,
-              marginLeft: -size / 2,
-              marginTop: -size / 2,
-              fontSize: size * 0.4,
+              // rem so the orbit scales with the global root font-size
+              width: `${size / 16}rem`,
+              height: `${size / 16}rem`,
+              marginLeft: `${-size / 32}rem`,
+              marginTop: `${-size / 32}rem`,
+              fontSize: `${(size * 0.4) / 16}rem`,
               boxShadow: glowing
                 ? `0 0 ${Math.round(job.match / 5)}px 2px rgba(77, 122, 255, 0.55)`
                 : undefined,
             }}
           >
             {job.company[0]?.toUpperCase() ?? "?"}
-            <span className="border-border/20 bg-background pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border px-2 py-1 text-[10px] font-normal group-hover:block">
+            <span className="border-border/20 bg-background pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border px-2 py-1 text-[0.625rem] font-normal group-hover:block">
               {job.title} · {job.company} —{" "}
               <span className="text-luminous font-semibold">{job.match}%</span>
             </span>
@@ -575,7 +637,7 @@ function CockpitCard({
     >
       <div className="flex shrink-0 items-center justify-between gap-2">
         {/* Reference §04: module label rendered as an accent pill */}
-        <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] [&_svg]:size-3">
+        <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em] [&_svg]:size-3">
           {icon}
           {eyebrow}
         </p>

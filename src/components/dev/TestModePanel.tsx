@@ -316,7 +316,7 @@ export function TestModePanel() {
               Log out (landing)
             </Button>
           </div>
-          <p className="text-muted-foreground mt-2 text-[11px]">
+          <p className="text-muted-foreground mt-2 text-[0.6875rem]">
             Switching mode sets the test account&apos;s role, issues a fresh
             session, and routes to the dashboard or onboarding based on the
             completion flags below.
@@ -511,7 +511,7 @@ function Section({
 function StateTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-border/40 bg-card/40 rounded-lg border p-2.5">
-      <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+      <p className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
         {label}
       </p>
       <p className="mt-0.5 truncate font-mono text-sm">{value}</p>
@@ -542,7 +542,7 @@ function ToggleRow({
         <p className="text-sm font-medium">{label}</p>
         <p
           className={cn(
-            "font-mono text-[11px]",
+            "font-mono text-[0.6875rem]",
             value ? "text-clover" : "text-muted-foreground",
           )}
         >

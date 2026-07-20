@@ -14,7 +14,9 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { Select } from "@/components/ui/Select";
+import { emitCarrie } from "@/components/carrie/carrieBus";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
 import { cn } from "@/lib/utils";
 
@@ -59,9 +61,9 @@ export function PortfolioBuilder({
         <h2 className="mt-1 text-xl font-semibold tracking-tight">
           Compose your CV in real time
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <InfoHint className="text-muted-foreground mt-1 block text-sm">
           Edit any section — the preview updates instantly.
-        </p>
+        </InfoHint>
       </div>
 
       {/* Tabs */}
@@ -113,7 +115,7 @@ export function PortfolioBuilder({
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="text-muted-foreground mb-1.5 block text-[11px] font-mono font-medium uppercase tracking-wider">
+    <label className="text-muted-foreground mb-1.5 block text-[0.6875rem] font-mono font-medium uppercase tracking-wider">
       {children}
     </label>
   );
@@ -199,7 +201,7 @@ function IdentityForm() {
           onChange={(e) => setHeadline(e.target.value)}
           placeholder="e.g. Mechanical engineer compounding into robotics"
         />
-        <p className="text-muted-foreground mt-1 text-[10px]">
+        <p className="text-muted-foreground mt-1 text-[0.625rem]">
           {portfolio.headline.length} / 120
         </p>
       </div>
@@ -212,7 +214,7 @@ function IdentityForm() {
           onChange={(e) => setSummary(e.target.value)}
           placeholder="2–4 sentences. What do you do, what are you good at, where are you headed?"
         />
-        <p className="text-muted-foreground mt-1 text-[10px]">
+        <p className="text-muted-foreground mt-1 text-[0.625rem]">
           {portfolio.summary.length} / 600
         </p>
       </div>
@@ -244,11 +246,13 @@ function SkillsForm() {
         </Button>
       </form>
       <p className="text-muted-foreground text-xs">
-        Skills added here start as self-claimed.{" "}
+        <InfoHint>
+          Skills added here start as self-claimed — evidence and endorsements
+          raise their weight.
+        </InfoHint>{" "}
         <a href="/candidate/skills" className="text-luminous hover:underline">
           Validate them on the Skill Radar
-        </a>{" "}
-        — evidence and endorsements raise their weight.
+        </a>
       </p>
       <div>
         <FieldLabel>{portfolio.skills.length} skills on your CV</FieldLabel>
@@ -323,6 +327,12 @@ function ExperienceForm({
       skillsUsed,
       link: link || undefined,
     });
+    emitCarrie(
+      "success",
+      skillsUsed.length
+        ? `Portfolio updated — “${role}” logged and ${skillsUsed.length} skill${skillsUsed.length === 1 ? "" : "s"} sent to your radar!`
+        : `Portfolio updated — “${role}” is on the record!`,
+    );
     setRole(""); setCompany(""); setPeriod(""); setContribution("");
     setApproach(""); setImpact(""); setSkillsUsed([]); setSkillInput("");
     setLink("");
@@ -481,7 +491,7 @@ function ExperienceForm({
               ))}
             </div>
           )}
-          <p className="text-muted-foreground mt-1 text-[10px]">
+          <p className="text-muted-foreground mt-1 text-[0.625rem]">
             These are auto-added to your Skill Radar as self-claimed — validate
             them there to raise their weight.
           </p>
@@ -517,7 +527,7 @@ function ExperienceForm({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{e.title}</p>
                 {e.meta && (
-                  <p className="text-muted-foreground text-[11px]">{e.meta}</p>
+                  <p className="text-muted-foreground text-[0.6875rem]">{e.meta}</p>
                 )}
                 {e.body && (
                   <p className="text-foreground/80 mt-1 text-xs leading-snug">
@@ -525,7 +535,7 @@ function ExperienceForm({
                   </p>
                 )}
                 {e.skills.length > 0 && (
-                  <p className="text-luminous-soft mt-1 text-[11px]">
+                  <p className="text-luminous-soft mt-1 text-[0.6875rem]">
                     {e.skills.join(" · ")}
                   </p>
                 )}
@@ -616,6 +626,7 @@ function RecognitionForm() {
     if (!canSave) return;
     if (accredited) addCertificate({ title, issuer, year });
     else addAward({ title, year, description: description || undefined });
+    emitCarrie("success", `“${title}” added — recognition logged!`);
     setTitle(""); setYear(""); setIssuer(""); setDescription("");
   };
 
@@ -666,7 +677,7 @@ function RecognitionForm() {
           >
             <span className="text-sm">
               Accreditation from a professional body?
-              <span className="text-muted-foreground block text-[11px]">
+              <span className="text-muted-foreground block text-[0.6875rem]">
                 On = a formal certificate with an issuer; off = an award or honor.
               </span>
             </span>
@@ -732,13 +743,13 @@ function RecognitionForm() {
                 <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   {e.title}
                   {e.badge && (
-                    <span className="border-luminous/30 bg-luminous/10 text-luminous-soft rounded-full border px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider">
+                    <span className="border-luminous/30 bg-luminous/10 text-luminous-soft rounded-full border px-2 py-0.5 font-mono text-[0.5625rem] font-semibold uppercase tracking-wider">
                       {e.badge}
                     </span>
                   )}
                 </p>
                 {e.meta && (
-                  <p className="text-muted-foreground text-[11px]">{e.meta}</p>
+                  <p className="text-muted-foreground text-[0.6875rem]">{e.meta}</p>
                 )}
                 {e.body && (
                   <p className="text-foreground/80 text-xs leading-snug">{e.body}</p>

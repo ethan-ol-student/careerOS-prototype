@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { Trophy, Loader2, ExternalLink } from "lucide-react";
 import AppShell from "@/components/app/AppShell";
 import { Badge } from "@/components/ui/Badge";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { ScoreBar } from "@/components/ui/ScoreBar";
-import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 
 interface UniversityRow {
   id: string;
@@ -92,39 +93,21 @@ export default function LeaderboardPage() {
               <Trophy className="text-luminous size-6" />
               Leaderboards
             </h1>
-            <div
-              role="group"
+            <SegmentedControl
               aria-label="Leaderboard type"
-              className="border-border/15 bg-foreground/2 flex rounded-full border p-0.5"
-            >
-              {(
-                [
-                  { id: "university", label: "University" },
-                  { id: "company", label: "Company" },
-                ] as const
-              ).map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  aria-pressed={tab === t.id}
-                  onClick={() => setTab(t.id)}
-                  className={cn(
-                    "min-h-8 rounded-full px-4 text-xs font-medium transition-colors",
-                    tab === t.id
-                      ? "bg-luminous/15 text-luminous-soft"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+              value={tab}
+              onChange={setTab}
+              options={[
+                { id: "university", label: "University" },
+                { id: "company", label: "Company" },
+              ]}
+            />
           </div>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <InfoHint className="text-muted-foreground mt-1 block text-sm">
             {tab === "university"
               ? "Curated employability scores for Malaysian universities — context for where skills get built, not a judgment of individuals."
               : "Curated global “best employer” scores with citations — where talent most wants to work."}
-          </p>
+          </InfoHint>
         </div>
 
         {/* Scroll zone: only the ranked list moves */}
@@ -146,7 +129,7 @@ export default function LeaderboardPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="font-semibold">{r.name}</h2>
                     {r.isDemo && (
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-[0.625rem]">
                         Demo data
                       </Badge>
                     )}

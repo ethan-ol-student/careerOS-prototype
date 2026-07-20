@@ -49,7 +49,7 @@ export function TestPhaseSwitcher({
               </span>
               {active ? <Check className="text-luminous size-4" /> : null}
             </span>
-            <span className="text-muted-foreground block font-mono text-[11px]">
+            <span className="text-muted-foreground block font-mono text-[0.6875rem]">
               {phase}
             </span>
           </button>

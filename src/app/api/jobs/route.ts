@@ -62,6 +62,8 @@ export async function GET(request: Request) {
         matchReasons: bridge
           ? bridge.reasons
           : ["Curated baseline match — sign in and add skills for a personal score."],
+        // Required skills the caller already holds (for the card's ✓ chips).
+        matched: bridge ? bridge.matched : [],
         personalized: !!bridge,
       };
     });

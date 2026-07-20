@@ -17,8 +17,10 @@ import {
 import AppShell from "@/components/app/AppShell";
 import { Grid12, Col } from "@/components/app/Grid";
 import { Chip } from "@/components/ui/Chip";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { ProgressRing } from "@/components/ui/ProgressRing";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   scoreSkillTruth,
   type SkillClaimInput,
@@ -100,7 +102,7 @@ interface Payload {
 /** Accent-pill eyebrow — matches the dashboard cockpit cards. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] [&_svg]:size-3">
+    <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em] [&_svg]:size-3">
       {children}
     </p>
   );
@@ -195,11 +197,11 @@ function InsightsContent() {
           <h2 className="text-lg font-semibold tracking-tight">
             Add skills and portfolio entries to unlock insights.
           </h2>
-          <p className="text-muted-foreground max-w-md text-sm">
+          <InfoHint className="text-muted-foreground block max-w-md text-sm">
             Career Intelligence compares your Skill Radar against your Living
             Portfolio, Working Style, and the market — the more each module holds,
             the more it can reveal.
-          </p>
+          </InfoHint>
           <div className="flex gap-2">
             <LinkButton href="/candidate/skills" variant="outline" size="sm">
               Skill Radar
@@ -221,33 +223,15 @@ function InsightsContent() {
           <Sparkles className="text-luminous size-5" />
           Career Intelligence
         </h1>
-        <div
-          role="group"
+        <SegmentedControl
           aria-label="Intelligence view"
-          className="border-border/15 bg-foreground/2 flex rounded-full border p-0.5"
-        >
-          {(
-            [
-              { id: "analysis", label: "Analysis" },
-              { id: "actions", label: "Actions" },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              aria-pressed={tab === t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                "min-h-8 rounded-full px-4 text-xs font-medium transition-colors",
-                tab === t.id
-                  ? "bg-luminous/15 text-luminous-soft"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+          value={tab}
+          onChange={setTab}
+          options={[
+            { id: "analysis", label: "Analysis" },
+            { id: "actions", label: "Actions" },
+          ]}
+        />
       </div>
 
       {tab === "analysis" ? (
@@ -302,7 +286,7 @@ function QuizChip({ fit }: { fit: StyleFit }) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">The {a?.animal ?? fit.archetypeName}</p>
-        <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
+        <p className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-wider">
           {fit.fitPct}% fit · {fit.field}
         </p>
       </div>
@@ -330,9 +314,9 @@ function UndervaluedCard({ uv }: { uv: UndervaluedResult }) {
           <ArrowUpRight className="size-4" aria-hidden />
         </Link>
       </div>
-      <p className="text-muted-foreground mt-2 text-xs">
+      <InfoHint className="text-muted-foreground mt-2 block text-xs">
         Skills your portfolio proves, but your Skill Radar underrates.
-      </p>
+      </InfoHint>
 
       {uv.strengths.length === 0 ? (
         <div className="mt-5 flex items-start gap-3">
@@ -372,10 +356,12 @@ function UndervaluedCard({ uv }: { uv: UndervaluedResult }) {
           </ul>
 
           {uv.nextStep && (
-            <p className="border-luminous/30 bg-luminous/5 text-muted-foreground mt-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs">
-              <Sparkles className="text-luminous mt-0.5 size-3.5 shrink-0" aria-hidden />
-              <span>{uv.nextStep}</span>
-            </p>
+            <InfoHint className="border-luminous/30 bg-luminous/5 text-muted-foreground mt-4 block rounded-lg border px-3 py-2.5 text-xs">
+              <span className="flex items-start gap-2">
+                <Sparkles className="text-luminous mt-0.5 size-3.5 shrink-0" aria-hidden />
+                <span>{uv.nextStep}</span>
+              </span>
+            </InfoHint>
           )}
         </>
       )}
@@ -435,9 +421,9 @@ function RolesRail({
         <Briefcase aria-hidden />
         Potential roles
       </Eyebrow>
-      <p className="text-muted-foreground mt-2 text-xs">
+      <InfoHint className="text-muted-foreground mt-2 block text-xs">
         Ranked by your match — pick one to analyse.
-      </p>
+      </InfoHint>
       <ul className="mt-3 flex max-h-80 flex-col gap-1.5 overflow-y-auto pr-1">
         {jobs.slice(0, 8).map((j) => {
           const active = j.id === selectedId;
@@ -456,13 +442,13 @@ function RolesRail({
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-medium">{j.title}</span>
-                  <span className="text-muted-foreground block truncate text-[10px]">
+                  <span className="text-muted-foreground block truncate text-[0.625rem]">
                     {j.company}
                   </span>
                 </span>
                 <span
                   className={cn(
-                    "shrink-0 font-mono text-[10px] font-semibold tabular-nums",
+                    "shrink-0 font-mono text-[0.625rem] font-semibold tabular-nums",
                     active ? "text-luminous" : "text-muted-foreground",
                   )}
                 >
@@ -508,7 +494,7 @@ function WhereYouAreChart({
               aria-hidden
               className="border-destructive/70 absolute inset-x-0 top-0 border-t border-dashed"
             />
-            <p className="text-destructive/80 absolute -top-3 right-0 font-mono text-[9px] uppercase tracking-wider">
+            <p className="text-destructive/80 absolute -top-3 right-0 font-mono text-[0.5625rem] uppercase tracking-wider">
               Requirement
             </p>
             <div className="flex h-40 items-end justify-around gap-3 pt-2">
@@ -516,7 +502,7 @@ function WhereYouAreChart({
                 <div key={a.skill} className="flex h-full w-full max-w-14 flex-col items-center justify-end gap-1">
                   <span
                     className={cn(
-                      "text-[10px] font-semibold tabular-nums",
+                      "text-[0.625rem] font-semibold tabular-nums",
                       a.you >= a.required ? "text-clover" : "text-luminous",
                     )}
                   >
@@ -538,7 +524,7 @@ function WhereYouAreChart({
                 <p
                   key={a.skill}
                   title={a.skill}
-                  className="text-muted-foreground w-full max-w-14 truncate text-center text-[9px] capitalize"
+                  className="text-muted-foreground w-full max-w-14 truncate text-center text-[0.5625rem] capitalize"
                 >
                   {a.skill}
                 </p>
@@ -546,7 +532,7 @@ function WhereYouAreChart({
             </div>
           </div>
           <div className="border-border/15 bg-foreground/2 mt-3 rounded-lg border px-3 py-2">
-            <p className="text-muted-foreground font-mono text-[9px] font-semibold uppercase tracking-wider">
+            <p className="text-muted-foreground font-mono text-[0.5625rem] font-semibold uppercase tracking-wider">
               Skills
             </p>
             <p className="mt-0.5 text-xs leading-snug">
@@ -580,7 +566,7 @@ function CareerProfilePanel({
     <section className="glass-3 ring-luminous/20 flex h-full flex-col gap-3 rounded-2xl p-5 ring-1">
       {/* Desired job / position progress */}
       <div>
-        <div className="text-muted-foreground flex items-center justify-between font-mono text-[10px] font-semibold uppercase tracking-wider">
+        <div className="text-muted-foreground flex items-center justify-between font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
           <span className="truncate">{job ? job.title : "Desired position"}</span>
           <span className="text-luminous text-sm tabular-nums">
             {truth ? `${truth.score}%` : "—"}
@@ -596,7 +582,7 @@ function CareerProfilePanel({
 
       {/* Living Portfolio evidence summary */}
       <div className="border-border/15 bg-foreground/2 rounded-xl border p-3">
-        <p className="text-muted-foreground font-mono text-[10px] font-semibold uppercase tracking-wider">
+        <p className="text-muted-foreground font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
           Living Portfolio
         </p>
         <ul className="text-muted-foreground mt-1.5 space-y-1 text-xs">
@@ -621,13 +607,13 @@ function CareerProfilePanel({
 
       {/* AI Career Summary — deterministic, grounded in the data above */}
       <div className="border-luminous/30 bg-luminous/5 rounded-xl border p-3">
-        <p className="text-luminous flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider">
+        <p className="text-luminous flex items-center gap-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-wider">
           <Sparkles className="size-3" aria-hidden /> AI summary
         </p>
         <p className="mt-1.5 text-xs leading-relaxed">{buildCareerSummary(data)}</p>
-        <p className="text-muted-foreground/80 mt-2 text-[10px]">
+        <InfoHint className="text-muted-foreground/80 mt-2 block text-[0.625rem]">
           Generated from your own data — no black box.
-        </p>
+        </InfoHint>
       </div>
     </section>
   );
@@ -656,7 +642,7 @@ function NarrativeCard({ n }: { n: Narrative }) {
         </Link>
       </div>
       <p className="text-muted-foreground mt-2 text-xs">
-        Patterns your Timeline Journal reveals across entries.
+        <InfoHint>Patterns your Timeline Journal reveals across entries.</InfoHint>
         {(n.pivots > 0 || n.dominantMood) && (
           <>
             {" "}
@@ -690,12 +676,12 @@ function NarrativeCard({ n }: { n: Narrative }) {
                 <Chip tone={ENERGY_TONE[t.energy]} className="capitalize">
                   {t.theme}
                 </Chip>
-                <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
+                <span className="text-muted-foreground font-mono text-[0.625rem] tabular-nums">
                   ×{t.count}
                 </span>
                 {!t.inPortfolio && (
                   <span
-                    className="text-[10px] font-medium text-yellow-400"
+                    className="text-[0.625rem] font-medium text-yellow-400"
                     title="Written about, but not yet proven in your portfolio"
                   >
                     unproven
@@ -720,10 +706,12 @@ function NarrativeCard({ n }: { n: Narrative }) {
           )}
 
           {n.nextStep && (
-            <p className="border-luminous/30 bg-luminous/5 text-muted-foreground mt-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs">
-              <Sparkles className="text-luminous mt-0.5 size-3.5 shrink-0" aria-hidden />
-              <span>{n.nextStep}</span>
-            </p>
+            <InfoHint className="border-luminous/30 bg-luminous/5 text-muted-foreground mt-4 block rounded-lg border px-3 py-2.5 text-xs">
+              <span className="flex items-start gap-2">
+                <Sparkles className="text-luminous mt-0.5 size-3.5 shrink-0" aria-hidden />
+                <span>{n.nextStep}</span>
+              </span>
+            </InfoHint>
           )}
         </>
       )}
@@ -765,9 +753,9 @@ function WorkAnimalCard({ fit }: { fit: StyleFit }) {
               {fit.archetypeName}
             </span>
           </p>
-          <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+          <InfoHint className="text-muted-foreground mt-1 block text-sm leading-relaxed">
             {archetype?.animalNote ?? ""}
-          </p>
+          </InfoHint>
           <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
             {fit.reasons.slice(1, 3).map((r) => (
               <li key={r} className="flex gap-1.5">
@@ -782,10 +770,12 @@ function WorkAnimalCard({ fit }: { fit: StyleFit }) {
         </div>
       </div>
 
-      <p className="border-clover/25 bg-clover/5 text-muted-foreground mt-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs">
-        <ShieldCheck className="text-clover mt-0.5 size-3.5 shrink-0" aria-hidden />
-        <span>{fit.biasNote}</span>
-      </p>
+      <InfoHint className="border-clover/25 bg-clover/5 text-muted-foreground mt-4 block rounded-lg border px-3 py-2.5 text-xs">
+        <span className="flex items-start gap-2">
+          <ShieldCheck className="text-clover mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <span>{fit.biasNote}</span>
+        </span>
+      </InfoHint>
     </section>
   );
 }
@@ -828,8 +818,10 @@ function MarketGapsCard({
         </Link>
       </div>
       <p className="text-muted-foreground mt-2 shrink-0 text-xs">
-        In-demand skills you haven&apos;t validated — ranked by real market
-        demand.
+        <InfoHint>
+          In-demand skills you haven&apos;t validated — ranked by real market
+          demand.
+        </InfoHint>
         {ctx && (
           <>
             {" "}
@@ -872,7 +864,7 @@ function MarketGapsCard({
                       style={{ width: `${g.demandScore}%` }}
                     />
                   </span>
-                  <span className="text-clover shrink-0 font-mono text-[10px] font-semibold tabular-nums">
+                  <span className="text-clover shrink-0 font-mono text-[0.625rem] font-semibold tabular-nums">
                     {g.demandScore}/100
                   </span>
                 </div>
@@ -886,10 +878,12 @@ function MarketGapsCard({
             ))}
           </ul>
           {gaps.nextStep && (
-            <p className="border-clover/30 bg-clover/5 text-muted-foreground mt-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs">
-              <TrendingUp className="text-clover mt-0.5 size-3.5 shrink-0" aria-hidden />
-              <span>{gaps.nextStep}</span>
-            </p>
+            <InfoHint className="border-clover/30 bg-clover/5 text-muted-foreground mt-4 block rounded-lg border px-3 py-2.5 text-xs">
+              <span className="flex items-start gap-2">
+                <TrendingUp className="text-clover mt-0.5 size-3.5 shrink-0" aria-hidden />
+                <span>{gaps.nextStep}</span>
+              </span>
+            </InfoHint>
           )}
         </>
       )}

@@ -55,7 +55,7 @@ export function ScoringInfo({ className }: { className?: string }) {
           aria-label="How we score"
           className="bg-popover text-popover-foreground border-border/20 absolute right-0 top-full z-50 mt-1 w-72 origin-top-right rounded-xl border p-4 shadow-xl"
         >
-          <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+          <p className="text-luminous text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
             How we score
           </p>
           <p className="text-foreground/90 mt-1.5 text-sm font-medium">

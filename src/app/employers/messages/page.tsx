@@ -138,12 +138,12 @@ export default function EmployerMessagesPage() {
                         <p className="truncate text-sm font-semibold">
                           {c.candidateName}
                         </p>
-                        <span className="text-muted-foreground shrink-0 text-[10px]">
+                        <span className="text-muted-foreground shrink-0 text-[0.625rem]">
                           {formatTimeAgo(c.lastMessageAt)}
                         </span>
                       </div>
                       {c.candidateRole ? (
-                        <p className="text-muted-foreground truncate text-[11px]">
+                        <p className="text-muted-foreground truncate text-[0.6875rem]">
                           {c.candidateRole}
                         </p>
                       ) : null}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { InfoHint } from "@/components/ui/InfoHint";
 import { cn } from "@/lib/utils";
 
 /**
@@ -75,12 +76,12 @@ export function DiscoverySection() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-muted-foreground text-sm">
+      <InfoHint className="text-muted-foreground block text-sm">
         When discovery is on, your Living Portfolio is projected into the
         employer marketplace so the right employers can find and message you.
         It&apos;s off by default — you decide when you&apos;re visible, and you
         can turn it off anytime.
-      </p>
+      </InfoHint>
 
       <div className="border-border/15 bg-card/40 flex items-center justify-between gap-4 rounded-xl border p-4">
         <div className="flex items-start gap-3">

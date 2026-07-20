@@ -91,11 +91,11 @@ export default function EmployerAppShell({
           <div className="flex shrink-0 items-center px-4 lg:w-60 lg:px-6">
             <Link
               href="/employers/dashboard"
-              className="flex items-center gap-2 text-base font-semibold tracking-tight"
+              className="flex items-center gap-2 whitespace-nowrap text-base font-semibold tracking-tight"
             >
               <Compass className="size-5 text-clover" />
               Career OS
-              <span className="text-muted-foreground ml-1 hidden text-[10px] font-mono font-medium uppercase tracking-wider sm:inline">
+              <span className="text-muted-foreground ml-1 hidden text-[0.625rem] font-mono font-medium uppercase tracking-wider sm:inline">
                 · Employer
               </span>
             </Link>

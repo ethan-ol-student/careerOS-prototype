@@ -32,8 +32,10 @@ Canonical reference: claude.ai/design project `afc8b34c-6e5b-4f6d-95b1-4555cf97b
    `--btn-*` CSS vars. Never hardcode a green button.
 6. **Decorative glows carry `data-glow`** (hidden in calm density) and all
    animation must respect `html.reduce-motion` (see globals.css).
-7. Age-adaptive density (`data-ui-density="calm"`) may enlarge text and hide
-   glows — never rely on a glow or animation to convey meaning.
+7. UI density is a binary user choice set on the candidate AppShell:
+   Detailed (`data-ui-density="calm"` — full prose, glows hidden) or Vibrant
+   (explanations collapse to ⓘ InfoHints, glows on). Never rely on a glow or
+   animation to convey meaning.
 
 ## Recipes (copy these, don't invent)
 
@@ -61,7 +63,7 @@ Canonical reference: claude.ai/design project `afc8b34c-6e5b-4f6d-95b1-4555cf97b
   Idle: `border-transparent text-muted-foreground hover:bg-foreground/4`.
 - **Inputs**: h-10/11, `rounded-lg border-border/15 bg-foreground/2`,
   focus `border-luminous/60`; label above = mono uppercase
-  `text-[10px] tracking-[0.1em] text-muted-foreground`. Dropdowns use the
+  `text-[0.625rem] tracking-[0.1em] text-muted-foreground`. Dropdowns use the
   `Select` primitive — never a raw `<select>` (native widget faces ignore
   dark tokens on some platforms).
 - **Avatar/initials**: `rounded-full bg-luminous/15 ring-2 ring-luminous/30
@@ -70,6 +72,15 @@ Canonical reference: claude.ai/design project `afc8b34c-6e5b-4f6d-95b1-4555cf97b
   users.
 - **Radius scale**: 6 / 10 (`rounded-lg`) / 14 / 16 (`rounded-2xl`) / full —
   nothing else.
+- **Micro-text is rem, never px**: the app renders at a 90% root scale
+  (`html { font-size: 90% }`), so arbitrary sizes MUST be rem to scale with
+  everything else — `text-[0.5625rem]` (9), `text-[0.625rem]` (10),
+  `text-[0.6875rem]` (11). A `text-[10px]` literal breaks the global scale.
+  Same for inline styles: heights/widths in rem strings, not px numbers.
+- **Explanatory prose is density-aware**: any "how to read this / what this
+  means" sentence on a candidate surface goes inside `<InfoHint>` (from
+  `ui/InfoHint`) — full prose under Detailed, ⓘ popover under Vibrant. Keep
+  empty states, errors, and data values OUTSIDE InfoHint.
 
 ## When adding a new feature
 

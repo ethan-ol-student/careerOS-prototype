@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Plus, X, Check, ListTodo, CalendarDays, Clock, Flag } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { InfoHint } from "@/components/ui/InfoHint";
+import { emitCarrie } from "@/components/carrie/carrieBus";
 import { useChapters } from "@/lib/context/ChaptersContext";
 import { PRIORITY_META, type Priority } from "@/lib/chapters/data";
 import { cn } from "@/lib/utils";
@@ -43,6 +45,7 @@ export function EventEditor({
     e.preventDefault();
     if (!canSave) return;
     addEvent({ name, priority, date, time, subtasks });
+    emitCarrie("success", `“${name.trim()}” is scheduled — time blocked, future you says thanks!`);
     reset();
     onSaved?.();
   };
@@ -68,9 +71,9 @@ export function EventEditor({
         <h3 className="mt-1 text-xl font-semibold tracking-tight">
           Add an activity to your timetable
         </h3>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <InfoHint className="text-muted-foreground mt-1 block text-sm">
           Fill the fields, add sub-tasks, hit save — then go again.
-        </p>
+        </InfoHint>
       </div>
 
       <Label icon={<ListTodo className="size-3" />}>Name</Label>
@@ -166,7 +169,7 @@ export function EventEditor({
 
 function Label({ children, icon, className }: { children: React.ReactNode; icon?: React.ReactNode; className?: string }) {
   return (
-    <p className={cn("text-muted-foreground mb-1.5 flex items-center gap-1.5 text-[11px] font-mono font-medium uppercase tracking-wider", className)}>
+    <p className={cn("text-muted-foreground mb-1.5 flex items-center gap-1.5 text-[0.6875rem] font-mono font-medium uppercase tracking-wider", className)}>
       {icon}
       {children}
     </p>

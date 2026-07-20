@@ -33,7 +33,7 @@ export function JudgeTourStepCard() {
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+          <p className="text-muted-foreground text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
             Step {currentIndex + 1} of {steps.length}
           </p>
           <h2 className="mt-1 text-base font-semibold leading-tight">
@@ -42,7 +42,7 @@ export function JudgeTourStepCard() {
         </div>
         <span
           className={cn(
-            "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider",
+            "shrink-0 rounded-full border px-2.5 py-1 text-[0.625rem] font-mono font-semibold uppercase tracking-wider",
             STATUS_CLASS[currentStep.status],
           )}
         >

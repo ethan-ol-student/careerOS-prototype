@@ -68,7 +68,7 @@ export function ScoreBar({
       )}
     >
       <div className="flex items-center justify-between gap-1">
-        <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-[0.12em]">
+        <p className="text-muted-foreground font-mono text-[0.625rem] uppercase tracking-[0.12em]">
           {label}
         </p>
         {trailing}
@@ -83,7 +83,7 @@ export function ScoreBar({
         >
           {safe}
         </span>
-        <span className="text-muted-foreground/80 font-mono text-[10px]">/ 100</span>
+        <span className="text-muted-foreground/80 font-mono text-[0.625rem]">/ 100</span>
       </div>
       <div className="bg-foreground/8 h-1.25 w-full overflow-hidden rounded-full">
         <div

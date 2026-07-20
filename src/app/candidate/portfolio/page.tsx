@@ -20,7 +20,10 @@ import AppShell from "@/components/app/AppShell";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { ProgressRing } from "@/components/ui/ProgressRing";
+import { InfoHint } from "@/components/ui/InfoHint";
+import { emitCarrie } from "@/components/carrie/carrieBus";
 import { Modal } from "@/components/ui/Modal";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { MeterRow } from "@/components/dashboard/PhaseWidgetGrid";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { PortfolioBuilder, type Section } from "@/components/portfolio/PortfolioBuilder";
@@ -168,6 +171,8 @@ function PortfolioContent() {
     if (!json?.ok) {
       setProblemsSolved(prev);
       setNote(json?.error?.message ?? "Could not save problems solved.");
+    } else {
+      emitCarrie("success", "Problems-solved updated — proof of capability logged!");
     }
   }
 
@@ -199,7 +204,7 @@ function PortfolioContent() {
         {/* ── Header row: title left, actions right ── */}
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+            <p className="text-luminous font-mono text-[0.625rem] font-semibold uppercase tracking-[0.16em]">
               Living Portfolio
             </p>
             <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
@@ -209,34 +214,15 @@ function PortfolioContent() {
           <div className="flex flex-wrap items-center gap-2">
             {note && <p className="text-clover max-w-56 truncate text-xs">{note}</p>}
             {/* Wireframe: Edit CV | Preview CV segmented toggle */}
-            <div
-              role="group"
+            <SegmentedControl
               aria-label="Portfolio mode"
-              className="border-border/15 bg-foreground/2 flex rounded-full border p-0.5"
-            >
-              {(
-                [
-                  { id: "edit", label: "Edit CV", icon: PencilLine },
-                  { id: "preview", label: "Preview CV", icon: Eye },
-                ] as const
-              ).map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  aria-pressed={mode === m.id}
-                  onClick={() => setMode(m.id)}
-                  className={cn(
-                    "inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors",
-                    mode === m.id
-                      ? "bg-luminous/15 text-luminous-soft"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <m.icon className="size-3.5" aria-hidden />
-                  {m.label}
-                </button>
-              ))}
-            </div>
+              value={mode}
+              onChange={setMode}
+              options={[
+                { id: "edit", label: "Edit CV", icon: PencilLine },
+                { id: "preview", label: "Preview CV", icon: Eye },
+              ]}
+            />
             <Button variant="ghost" size="sm" onClick={() => setTimelineOpen(true)}>
               <History className="size-3.5" />
               Timeline
@@ -313,7 +299,7 @@ function PortfolioContent() {
                 aria-expanded={versionsOpen}
                 className="glass-3 hover:border-luminous/40 border-border/15 flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 transition-colors"
               >
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                <span className="font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                   Your saved versions
                 </span>
                 <span className="text-muted-foreground flex items-center gap-1.5 text-xs tabular-nums">
@@ -332,7 +318,7 @@ function PortfolioContent() {
                 onClose={() => setVersionsOpen(false)}
                 side="up"
               >
-                <p className="text-luminous font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                <p className="text-luminous font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                   Saved versions
                 </p>
                 {versions.length ? (
@@ -374,7 +360,7 @@ function PortfolioContent() {
                   size={40}
                   compact
                 />
-                <span className="min-w-0 flex-1 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+                <span className="min-w-0 flex-1 text-left font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
                   Resume completeness
                 </span>
                 <ChevronDown
@@ -425,10 +411,10 @@ function PortfolioContent() {
                   ))}
                 </ul>
                 {!complete && (
-                  <p className="text-muted-foreground mt-3 text-xs">
+                  <InfoHint className="text-muted-foreground mt-3 block text-xs">
                     Click any item to jump to where it gets done. Finish all of
                     them to unlock the PDF export.
-                  </p>
+                  </InfoHint>
                 )}
               </ExpandOverlay>
             </div>
@@ -519,14 +505,14 @@ function AutoSkillsPanel() {
 
   return (
     <section className="glass-3 rounded-2xl p-5">
-      <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em]">
+      <p className="border-luminous/30 bg-luminous/10 text-luminous-soft inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
         <Sparkles className="size-3" aria-hidden />
         Skills you&apos;ve learnt or strengthened
       </p>
-      <p className="text-muted-foreground mt-2 text-xs">
+      <InfoHint className="text-muted-foreground mt-2 block text-xs">
         Auto-summarized from your experience entries — each one lands on your
         Skill Radar automatically.
-      </p>
+      </InfoHint>
       {rows.length ? (
         <ul className="mt-3 space-y-1.5">
           {rows.map((r) => (
@@ -538,7 +524,7 @@ function AutoSkillsPanel() {
               <Chip tone={r.strengthened ? "clover" : "neutral"}>
                 {r.strengthened ? "Strengthened" : "Learnt"}
               </Chip>
-              <span className="text-muted-foreground shrink-0 font-mono text-[10px] tabular-nums">
+              <span className="text-muted-foreground shrink-0 font-mono text-[0.625rem] tabular-nums">
                 ×{r.count}
               </span>
             </li>

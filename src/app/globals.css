@@ -324,21 +324,14 @@ html.reduce-motion [data-orbit-counter] {
   transform: rotate(calc(-1 * var(--orbit-angle, 0deg))) !important;
 }
 
-/* ── Age-adaptive UI density (Feature 14) ─────────────────────────
-   `[data-ui-density]` is set by CockpitDashboard (phase default + the
-   user's Settings override — never locked to age). "vibrant" is the
-   unchanged default. "calm" is the editorial 30–55+ experience:
-   readability goes UP (larger body sizes, relaxed leading), visual
-   noise goes DOWN (no decorative card glows). Colors and contrast are
-   deliberately untouched so accessibility is identical in both modes. */
-[data-ui-density="calm"] .text-xs {
-  font-size: 0.8125rem; /* 12px → 13px */
-  line-height: 1.55;
-}
-[data-ui-density="calm"] .text-sm {
-  font-size: 0.9375rem; /* 14px → 15px */
-  line-height: 1.6;
-}
+/* ── UI density: Detailed ("calm") | Vibrant ──────────────────────
+   `[data-ui-density]` is set once on the candidate AppShell root from
+   the user's Settings choice (Detailed is the default). Colors and
+   contrast are deliberately untouched so accessibility is identical
+   in both modes. */
+/* Detailed ("calm") renders BASELINE type sizes — no enlargement — so the
+   global 90% scale reads identically on candidate, employer, and marketing
+   pages. Its only visual marker: decorative glows stay off. */
 [data-ui-density="calm"] [data-glow] {
   display: none; /* editorial: no decorative radial glows */
 }
@@ -363,4 +356,79 @@ html.reduce-motion [data-orbit-counter] {
   body {
     @apply bg-background text-foreground;
   }
+  /* Global density (Task 5): the whole app renders at a ~90% visual
+     scale. Every Tailwind size/spacing utility is rem-based, so shrinking
+     the root font-size scales type, padding, gaps, and component metrics
+     proportionally — fluid, responsive, and NOT a destructive CSS zoom.
+     The viewport stays full-size, so the 10% delta becomes whitespace. */
+  html {
+    font-size: 90%;
+  }
+}
+
+/* ── Themed scrollbars (Task 6) ───────────────────────────────────
+   Every scroll zone (page, panels, modals, dropdowns) shares one quiet,
+   token-driven scrollbar: transparent track, rounded low-contrast thumb
+   that warms toward the accent on hover. WebKit/Chromium get the full
+   pseudo-element treatment; Firefox (the only engine without
+   ::-webkit-scrollbar) gets the standard properties via @supports so
+   Chromium's scrollbar-color never overrides the styled thumb. */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--foreground) 14%, transparent);
+  border-radius: 999px;
+  /* Transparent border + padding-box clip = a slim floating pill. */
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--luminous) 45%, transparent);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+[data-role-accent="employer"] *::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--clover) 45%, transparent);
+}
+@supports (-moz-appearance: none) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent)
+      transparent;
+  }
+}
+
+/* ── Carrie (page-guide avatar) ───────────────────────────────────
+   Idle blink + gentle bob. Both use `animation`, so the global
+   `html.reduce-motion` rule freezes them automatically. */
+@keyframes carrie-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.12); }
+}
+@keyframes carrie-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.carrie-blink { animation: carrie-blink 4.2s ease-in-out infinite; }
+.carrie-bob { animation: carrie-bob 2.8s ease-in-out infinite; }
+
+/* ── Density hints (Task 3) ───────────────────────────────────────
+   `InfoHint` renders a verbose secondary line twice: the full prose
+   (`.dv-hint-full`) and a compact info-icon + popover (`.dv-hint-compact`).
+   Detailed density (default) shows the prose; vibrant swaps in the icon. */
+.dv-hint-compact {
+  display: none;
+}
+[data-ui-density="vibrant"] .dv-hint-full {
+  display: none;
+}
+[data-ui-density="vibrant"] .dv-hint-compact {
+  display: inline-flex;
 }

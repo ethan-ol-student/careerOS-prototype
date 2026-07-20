@@ -56,7 +56,7 @@ export function CVPreview() {
 
         {/* Header */}
         <header className="border-border/15 relative border-b px-6 py-6 sm:px-8 sm:py-8">
-          <p className="text-luminous text-[10px] font-mono font-semibold uppercase tracking-[0.22em]">
+          <p className="text-luminous text-[0.625rem] font-mono font-semibold uppercase tracking-[0.22em]">
             Living portfolio · live
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -72,7 +72,7 @@ export function CVPreview() {
             </p>
           )}
 
-          <div className="text-muted-foreground mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+          <div className="text-muted-foreground mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[0.6875rem]">
             {intent.field && (
               <span className="flex items-center gap-1">
                 <Compass className="size-3" />
@@ -121,7 +121,7 @@ export function CVPreview() {
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
                         <p className="text-sm font-semibold">{e.role}</p>
-                        <p className="text-muted-foreground text-[11px]">
+                        <p className="text-muted-foreground text-[0.6875rem]">
                           {e.period}
                         </p>
                       </div>
@@ -153,7 +153,7 @@ export function CVPreview() {
                         </p>
                       )}
                       {p.link && (
-                        <p className="text-luminous truncate text-[11px]">
+                        <p className="text-luminous truncate text-[0.6875rem]">
                           {p.link}
                         </p>
                       )}
@@ -172,7 +172,7 @@ export function CVPreview() {
                   {portfolio.skills.map((s) => (
                     <span
                       key={s}
-                      className="bg-luminous/10 text-luminous-soft border-luminous/30 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                      className="bg-luminous/10 text-luminous-soft border-luminous/30 rounded-full border px-2 py-0.5 text-[0.6875rem] font-medium"
                     >
                       {s}
                     </span>
@@ -220,10 +220,10 @@ export function CVPreview() {
         </div>
 
         <footer className="border-border/15 flex items-center justify-between border-t px-6 py-3 sm:px-8">
-          <p className="text-muted-foreground text-[10px]">
+          <p className="text-muted-foreground text-[0.625rem]">
             Updated in real time · saved locally
           </p>
-          <p className="text-muted-foreground font-mono text-[10px]">
+          <p className="text-muted-foreground font-mono text-[0.625rem]">
             {portfolio.totalAdditions} edits
           </p>
         </footer>
@@ -252,12 +252,12 @@ function CVSection({
     <section>
       <div className="mb-2 flex items-center gap-1.5">
         {Icon && <Icon className="text-muted-foreground size-3" />}
-        <p className="text-muted-foreground text-[10px] font-mono font-semibold uppercase tracking-[0.18em]">
+        <p className="text-muted-foreground text-[0.625rem] font-mono font-semibold uppercase tracking-[0.18em]">
           {title}
         </p>
       </div>
       {isEmpty ? (
-        <p className="text-muted-foreground/70 text-[11px] italic">{empty}</p>
+        <p className="text-muted-foreground/70 text-[0.6875rem] italic">{empty}</p>
       ) : (
         children
       )}
