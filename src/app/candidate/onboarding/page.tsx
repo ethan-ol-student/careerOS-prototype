@@ -36,6 +36,8 @@ import {
   TextField,
   Toggle,
 } from "@/components/onboarding/inputs";
+import { RoleSelect, type RolePick } from "@/components/roles/RoleSelect";
+import { setDensity } from "@/lib/dashboard/uiDensityBus";
 import { useAuth } from "@/lib/context/AuthContext";
 import type { ParsedCv } from "@/lib/cv-parser/heuristics";
 import { cn } from "@/lib/utils";
@@ -188,6 +190,11 @@ interface Draft {
   // Phase-conditional preference answers (mid-career / senior / executive)
   // keyed by question id — free text, choice arrays, or slider numbers.
   phaseAnswers: Record<string, string | string[] | number>;
+  // Role-catalog associations (v5): senior/exec store their CURRENT role,
+  // standard tracks store DESIRED role ids; titles mirror into targetRoles.
+  currentRoleId: string | null;
+  currentRoleTitle: string;
+  desiredRoleIds: string[];
   // Optional self-ID — collected only after the review, never shared with
   // employers, never a match/score input.
   religion: string[];
@@ -212,7 +219,9 @@ const emptyDraft: Draft = {
   minSalaryPeriod: "yearly", availability: "",
   visibility: "hidden_from_current", workEnvironment: "", topValues: [],
   learningHoursPerWeek: 4, scheduleFlexibility: [], maxCommuteMinutes: 45,
-  travelWillingness: "", phaseAnswers: {}, religion: [], race: [], age: "",
+  travelWillingness: "", phaseAnswers: {},
+  currentRoleId: null, currentRoleTitle: "", desiredRoleIds: [],
+  religion: [], race: [], age: "",
   autoFilled: {}, cvSummary: "",
 };
 
@@ -282,6 +291,9 @@ function normalizeDraft(input: unknown): Draft {
             ),
           ) as Record<string, string | string[] | number>
         : {},
+    currentRoleId: typeof i.currentRoleId === "string" ? i.currentRoleId : null,
+    currentRoleTitle: s(i.currentRoleTitle),
+    desiredRoleIds: a(i.desiredRoleIds),
     religion: a(i.religion), race: a(i.race),
     age: typeof i.age === "number" ? String(i.age) : s(i.age),
     autoFilled:
@@ -359,6 +371,9 @@ function toOnboardingPayload(draft: Draft, completed: boolean) {
     maxCommuteMinutes: draft.maxCommuteMinutes,
     travelWillingness: draft.travelWillingness as "" | "none" | "occasional" | "frequent",
     phaseAnswers: draft.phaseAnswers,
+    currentRoleId: draft.currentRoleId,
+    currentRoleTitle: draft.currentRoleTitle.trim(),
+    desiredRoleIds: draft.desiredRoleIds,
     minSalaryAmount: Number.isFinite(salary) && salary > 0 ? Math.round(salary) : null,
     minSalaryPeriod: (draft.minSalaryPeriod || "") as "" | "hourly" | "monthly" | "yearly",
     links: draft.links,
@@ -1015,6 +1030,13 @@ export default function CandidateOnboardingPage() {
   );
 }
 
+/** Rebuild RolePick chips from stored titles + ids. Pairing is positional
+ *  (free-text titles carry no id) — close enough for the chips; the
+ *  `desiredRoleIds` array itself stays exact. */
+function rolePicks(titles: string[], ids: string[]): RolePick[] {
+  return titles.map((t, i) => ({ id: ids[i] ?? null, title: t }));
+}
+
 /** Keys the user actually touched (≠ defaults) — server merge keeps these. */
 function stripDefaults(d: Draft): Partial<Draft> {
   const out: Record<string, unknown> = {};
@@ -1157,15 +1179,46 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "targetRoles",
     title: "What roles are you aiming for?",
-    subtitle: "Add one or more — any field counts. (Required)",
+    subtitle: "Search the catalog or type your own — pick up to 5. (Required)",
     required: true,
+    showIf: (d) => !isSeniorExec(d),
     answered: (d) => d.targetRoles.length > 0,
     render: (d, u) => (
-      <TagInput
+      <RoleSelect
         id="f-targetRoles"
-        values={d.targetRoles}
-        onChange={(v) => u("targetRoles", v)}
-        placeholder="e.g. Electrician · Product designer · Chef"
+        multiple
+        max={5}
+        values={rolePicks(d.targetRoles, d.desiredRoleIds)}
+        onChange={(next) => {
+          u("targetRoles", next.map((p) => p.title));
+          u("desiredRoleIds", next.map((p) => p.id).filter(Boolean) as string[]);
+        }}
+      />
+    ),
+  },
+  {
+    id: "currentRole",
+    title: "What is your current role?",
+    subtitle: "Search the catalog — industry and role. (Required)",
+    showIf: (d) => isSeniorExec(d),
+    answered: (d) => d.currentRoleTitle.trim().length > 0,
+    render: (d, u) => (
+      <RoleSelect
+        id="f-currentRole"
+        values={
+          d.currentRoleTitle
+            ? [{ id: d.currentRoleId, title: d.currentRoleTitle }]
+            : []
+        }
+        onChange={(next) => {
+          const p = next[0] ?? null;
+          u("currentRoleId", p?.id ?? null);
+          u("currentRoleTitle", p?.title ?? "");
+          // Mirror into targetRoles so every engine (matching, fair pay,
+          // readiness) keeps a role to reason about + the required-field
+          // validation holds for this track.
+          u("targetRoles", p ? [p.title] : []);
+        }}
       />
     ),
   },
@@ -1173,6 +1226,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
     id: "desiredLocations",
     title: "Where would you like to work?",
     subtitle: "Cities, regions, or “Remote”.",
+    showIf: (d) => !isSeniorExec(d),
     answered: (d) => d.desiredLocations.length > 0,
     render: (d, u) => (
       <TagInput
@@ -1186,6 +1240,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "openToRelocate",
     title: "Open to relocating for the right role?",
+    showIf: (d) => !isSeniorExec(d),
     answered: () => true,
     render: (d, u, adv) => (
       <ChipGroup
@@ -1203,6 +1258,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
     id: "workArrangement",
     title: "How do you want to work?",
     subtitle: "Pick any that fit.",
+    showIf: (d) => !isSeniorExec(d),
     answered: (d) => d.workArrangement.length > 0,
     render: (d, u) => (
       <ChipGroup
@@ -1215,6 +1271,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "jobTypes",
     title: "What kind of role are you after?",
+    showIf: (d) => !isSeniorExec(d),
     answered: (d) => d.jobTypes.length > 0,
     render: (d, u) => (
       <ChipGroup options={JOB_TYPES} values={d.jobTypes} onChange={(v) => u("jobTypes", v)} allowOther />
@@ -1224,6 +1281,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
     id: "minSalary",
     title: "Any minimum salary?",
     subtitle: "Optional — leave blank to skip.",
+    showIf: (d) => !isSeniorExec(d),
     answered: (d) => !!d.minSalaryAmount,
     render: (d, u) => (
       <div className="flex max-w-xs gap-2">
@@ -1252,6 +1310,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "availability",
     title: "How soon are you looking?",
+    showIf: (d) => !isSeniorExec(d),
     answered: (d) => !!d.availability,
     render: (d, u, adv) => (
       <ChipGroup
@@ -1268,6 +1327,7 @@ const PREF_QUESTIONS: PrefQuestion[] = [
   {
     id: "visibility",
     title: "Who can see your profile?",
+    showIf: (d) => !isSeniorExec(d),
     answered: () => true,
     render: (d, u, adv) => (
       <ChipGroup
@@ -1378,6 +1438,11 @@ const PREF_QUESTIONS: PrefQuestion[] = [
 
 const PHASED_STAGES = ["mid-career", "senior-career", "executive"];
 const isPhasedStage = (d: Draft) => PHASED_STAGES.includes(d.careerStage);
+/** Senior/Executive get a COMPLETELY swapped preference section (spec):
+ *  Current Role replaces Desired Roles, and the 9-question keyed sets
+ *  replace every standard preference question. */
+const isSeniorExec = (d: Draft) =>
+  d.careerStage === "senior-career" || d.careerStage === "executive";
 
 const paStr = (d: Draft, id: string): string => {
   const v = d.phaseAnswers[id];
@@ -1386,10 +1451,6 @@ const paStr = (d: Draft, id: string): string => {
 const paArr = (d: Draft, id: string): string[] => {
   const v = d.phaseAnswers[id];
   return Array.isArray(v) ? v : [];
-};
-const paNum = (d: Draft, id: string, fallback: number): number => {
-  const v = d.phaseAnswers[id];
-  return typeof v === "number" ? v : fallback;
 };
 const setPa =
   (u: UpdateFn, d: Draft, id: string) =>
@@ -1513,175 +1574,337 @@ const MID_CAREER_QUESTIONS: PrefQuestion[] = [
   },
 ];
 
+// ── Senior / Executive preference sets (spec: "senior and executive
+// phase onboarding question preference") — the standard preference
+// section is COMPLETELY swapped for these. Answers persist as concise
+// UPPERCASE keys (per the spec's implementation note); labels stay in
+// the TS layer. UX-toggle questions apply live side-effects.
+
+interface KOpt {
+  k: string;
+  label: string;
+}
+
+const kToLabel = (opts: KOpt[], k: string) => opts.find((o) => o.k === k)?.label ?? k;
+
+/** ChipGroup that displays labels but stores UPPERCASE keys. */
+function KeyedChips({
+  d,
+  u,
+  id,
+  opts,
+  single,
+  max,
+  adv,
+  onKeys,
+}: {
+  d: Draft;
+  u: UpdateFn;
+  id: string;
+  opts: KOpt[];
+  single?: boolean;
+  max?: number;
+  adv?: () => void;
+  /** Side-effect hook (e.g. mirror into availability / density). */
+  onKeys?: (keys: string[]) => void;
+}) {
+  const keys = single ? (paStr(d, id) ? [paStr(d, id)] : []) : paArr(d, id);
+  return (
+    <ChipGroup
+      options={opts.map((o) => o.label)}
+      single={single}
+      max={max}
+      values={keys.map((k) => kToLabel(opts, k))}
+      onChange={(labels) => {
+        const next = labels.map((l) => opts.find((o) => o.label === l)?.k ?? l);
+        setPa(u, d, id)(single ? (next[0] ?? "") : next);
+        onKeys?.(next);
+        if (single && next[0] && adv) auto(adv);
+      }}
+    />
+  );
+}
+
+const SEN_LEADERSHIP: KOpt[] = [
+  { k: "SINGLE_TEAM", label: "Leading a single team or department" },
+  { k: "BUSINESS_UNIT", label: "Running a cross-functional business unit" },
+  { k: "GLOBAL_PRACTICE", label: "Leading a global practice or discipline" },
+  { k: "FIRST_MANAGER", label: "Expert → my first people-manager role" },
+  { k: "EXPERT_PATH", label: "Expert path, no direct reports (Principal)" },
+];
+const SEN_STAGE: KOpt[] = [
+  { k: "EARLY_STARTUP", label: "Early startup (building from scratch)" },
+  { k: "SCALE_UP", label: "High-growth scale-up (setting up systems)" },
+  { k: "ENTERPRISE", label: "Large established enterprise" },
+  { k: "INVESTOR_BACKED", label: "Investment-backed (VC / PE portfolio)" },
+  { k: "PUBLIC_NONPROFIT", label: "Public sector or non-profit" },
+  { k: "FLEXIBLE", label: "Flexible — it's all about the challenge" },
+];
+const SEN_CULTURE: KOpt[] = [
+  { k: "INDEPENDENCE", label: "High independence, low bureaucracy" },
+  { k: "CLEAR_STRATEGY", label: "Clear strategies & direct decisions" },
+  { k: "TEAM_LEARNING", label: "Heavy focus on team learning & growth" },
+  { k: "LOW_EGO", label: "Collaborative, low-ego leadership team" },
+  { k: "BIAS_FOR_ACTION", label: "Fast-paced bias for action" },
+  { k: "DIVERSE_INCLUSIVE", label: "Highly diverse and inclusive" },
+  { k: "STABILITY", label: "Predictability and stability" },
+];
+const SEN_CHALLENGE: KOpt[] = [
+  { k: "RAPID_GROWTH", label: "Growing a team or business rapidly" },
+  { k: "TURNAROUND", label: "Leading a major turnaround or change" },
+  { k: "NEW_LAUNCH", label: "Launching a new product line or location" },
+  { k: "POST_MERGER", label: "Handling post-merger integration" },
+  { k: "ZERO_TO_ONE", label: "Building a department from absolute zero" },
+  { k: "MATURE_OPERATION", label: "Running an already mature operation" },
+];
+const SEN_REPORT: KOpt[] = [
+  { k: "CEO_FOUNDER", label: "The CEO or Founder" },
+  { k: "C_SUITE", label: "A C-suite leader (CTO, CMO…)" },
+  { k: "SENIOR_VP", label: "A Senior VP" },
+  { k: "BOARD", label: "A Board of Directors" },
+  { k: "RELATIONSHIP_FIRST", label: "The relationship matters more than the title" },
+];
+const SEN_PAY: KOpt[] = [
+  { k: "HIGH_BASE", label: "High base salary, standard equity" },
+  { k: "EQUITY_UPSIDE", label: "Moderate base, massive equity upside" },
+  { k: "PERFORMANCE_BONUS", label: "Performance bonuses as a major component" },
+  { k: "LONG_TERM_EQUITY", label: "Long-term stock over immediate cash" },
+  { k: "MISSION_FLEXIBLE", label: "Flexible on pay if the mission is right" },
+];
+const SEN_APPROACH: KOpt[] = [
+  { k: "ACTIVE", label: "Actively looking — send direct matches" },
+  { k: "OPEN_IF_EXCEPTIONAL", label: "Happy, but open if a role is exceptional" },
+  { k: "STAY_VISIBLE", label: "Not looking, but keep me visible" },
+  { k: "CONFIDENTIAL", label: "Strictly confidential until I reach out" },
+];
+const SEN_DENSITY: KOpt[] = [
+  { k: "HIGH_DENSITY", label: "High Density — complex charts, compact lists" },
+  { k: "BALANCED", label: "Balanced — summaries, visual aids, side nav" },
+  { k: "HIGH_FOCUS", label: "High Focus — generous spacing, zero clutter" },
+];
+const SEN_FIRST: KOpt[] = [
+  { k: "SKILLS_MATRIX", label: "My skills matrix vs market demands" },
+  { k: "JOB_MATCHES", label: "Active job matches & application timelines" },
+  { k: "LEARNING_PATHS", label: "Learning pathways to close my gaps" },
+  { k: "PATH_SIMULATIONS", label: "Multi-year career pathway simulations" },
+];
+
+const EXE_MIX: KOpt[] = [
+  { k: "FULL_TIME_OPERATING", label: "A dedicated full-time operating role" },
+  { k: "ROLE_PLUS_BOARD", label: "One corporate role + one board seat" },
+  { k: "BOARD_PORTFOLIO", label: "A portfolio of board directorships" },
+  { k: "VC_PE_ADVISORY", label: "Advisory / operating partner (VC or PE)" },
+  { k: "INTERIM_EXEC", label: "High-impact interim executive assignments" },
+  { k: "EXEC_IN_RESIDENCE", label: "Executive-in-Residence (exploring)" },
+];
+const EXE_LIFECYCLE: KOpt[] = [
+  { k: "PRODUCT_MARKET_FIT", label: "Proving early product-market fit" },
+  { k: "SCALE_UP", label: "Scaling up ($50M–$500M+ systems)" },
+  { k: "MATURE", label: "Mature companies — steady efficiency" },
+  { k: "TURNAROUND", label: "Surgical turnarounds" },
+  { k: "PRE_EXIT", label: "Pre-exit preparation (acquisition / IPO)" },
+  { k: "ANY_STAGE", label: "Any stage — I adapt my operating model" },
+];
+const EXE_BOARD: KOpt[] = [
+  { k: "AUDIT", label: "Audit Committee" },
+  { k: "COMPENSATION", label: "Compensation Committee" },
+  { k: "NOM_GOVERNANCE", label: "Nominating & Corporate Governance" },
+  { k: "RISK_COMPLIANCE", label: "Risk & Compliance" },
+  { k: "ESG", label: "ESG & Sustainability" },
+  { k: "OPERATIONAL_ONLY", label: "None — operational role, no board duties" },
+  { k: "FIRST_TIME_OPEN", label: "Open to first-time board seats" },
+];
+const EXE_VALUES: KOpt[] = [
+  { k: "TRANSPARENCY", label: "Absolute transparency and candor" },
+  { k: "LONG_TERM_VALUE", label: "Long-term value over short-term quarters" },
+  { k: "INCLUSIVE_LEADERSHIP", label: "Inclusive leadership & fair practices" },
+  { k: "CUSTOMER_OBSESSION", label: "Customer obsession over politics" },
+  { k: "BOLD_INNOVATION", label: "Bold innovation & intelligent risk" },
+  { k: "INTEGRITY", label: "Uncompromising integrity & governance" },
+];
+const EXE_TRANSITION: KOpt[] = [
+  { k: "GOALS_ACCOMPLISHED", label: "I've fully accomplished my current goals" },
+  { k: "PARTNER_WITH_FOUNDER", label: "Partner with a founder or CEO I respect" },
+  { k: "LARGER_SCOPE", label: "Larger global scope or P&L responsibility" },
+  { k: "TO_PORTFOLIO_WORK", label: "Moving into board & portfolio work" },
+  { k: "PLANNING_LEGACY", label: "Between positions — planning my legacy" },
+  { k: "SPECIFIC_CHALLENGE", label: "Only a highly specific challenge" },
+];
+const EXE_LIFESTYLE: KOpt[] = [
+  { k: "LOCALLY_ANCHORED", label: "Locally anchored — minimal relocation" },
+  { k: "GLOBALLY_MOBILE", label: "Completely mobile globally" },
+  { k: "BOARD_TRAVEL_25", label: "Standard board-level travel (≤25%)" },
+  { k: "FLEXIBLE_SCHEDULE", label: "Flexible scheduling for family priorities" },
+  { k: "FRACTIONAL_ONLY", label: "Strictly fractional / part-time" },
+  { k: "NO_CONSTRAINTS", label: "No constraints — all-in for the mission" },
+];
+const EXE_PRIVACY: KOpt[] = [
+  { k: "CONCIERGE", label: "White-glove concierge matching" },
+  { k: "ANONYMOUS", label: "Full algorithmic anonymity" },
+  { k: "VETTED_ACCESS", label: "Vetted access (search firms & VC/PE only)" },
+  { k: "OPEN_VISIBILITY", label: "Open visibility — maximize inbound" },
+];
+const EXE_LAYOUT: KOpt[] = [
+  { k: "ARCHITECTURAL_MINIMALISM", label: "Architectural Minimalism — calm, zero animations" },
+  { k: "DYNAMIC_WORKSPACE", label: "Dynamic Workspace — interactive, animated" },
+];
+const EXE_CADENCE: KOpt[] = [
+  { k: "CONTINUOUS_FEED", label: "Continuous Feed — daily/weekly tracking" },
+  { k: "MACRO_REVIEWS", label: "Macro Reviews — monthly/quarterly checkpoints" },
+];
+
+/** All keyed option sets → review-table label lookup. */
+const ALL_KOPT_SETS: KOpt[][] = [
+  SEN_LEADERSHIP, SEN_STAGE, SEN_CULTURE, SEN_CHALLENGE, SEN_REPORT, SEN_PAY,
+  SEN_APPROACH, SEN_DENSITY, SEN_FIRST, EXE_MIX, EXE_LIFECYCLE, EXE_BOARD,
+  EXE_VALUES, EXE_TRANSITION, EXE_LIFESTYLE, EXE_PRIVACY, EXE_LAYOUT, EXE_CADENCE,
+];
+const KEY_LABEL: Record<string, string> = Object.fromEntries(
+  ALL_KOPT_SETS.flat().map((o) => [o.k, o.label]),
+);
+
+/** Q7 mirrors: keep the legacy availability/visibility fields the engines
+ *  and marketplace read in sync with the keyed answers. */
+const SEN_APPROACH_AVAILABILITY: Record<string, string> = {
+  ACTIVE: "Actively looking",
+  OPEN_IF_EXCEPTIONAL: "Open to offers",
+  STAY_VISIBLE: "Just exploring",
+  CONFIDENTIAL: "Just exploring",
+};
+
+const isSenior = (d: Draft) => d.careerStage === "senior-career";
+const isExec = (d: Draft) => d.careerStage === "executive";
+
 const SENIOR_QUESTIONS: PrefQuestion[] = [
   {
-    id: "sc_driver",
-    title: "What's driving you more right now — influence or income?",
-    showIf: (d) => d.careerStage === "senior-career",
-    answered: (d) => !!paStr(d, "sc_driver"),
+    id: "sen_leadership", title: "What kind of leadership role are you targeting next?",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_leadership"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="sen_leadership" opts={SEN_LEADERSHIP} single adv={adv} />,
+  },
+  {
+    id: "sen_stage", title: "What size or stage of company sounds like the right fit?",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_stage"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="sen_stage" opts={SEN_STAGE} single adv={adv} />,
+  },
+  {
+    id: "sen_culture", title: "What workplace culture traits do you need to do your best work?",
+    subtitle: "Pick up to 3.", showIf: isSenior, answered: (d) => paArr(d, "sen_culture").length > 0,
+    render: (d, u) => <KeyedChips d={d} u={u} id="sen_culture" opts={SEN_CULTURE} max={3} />,
+  },
+  {
+    id: "sen_challenge", title: "What type of business challenge gets you excited?",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_challenge"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="sen_challenge" opts={SEN_CHALLENGE} single adv={adv} />,
+  },
+  {
+    id: "sen_report", title: "Who do you want to report to, ideally?",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_report"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="sen_report" opts={SEN_REPORT} single adv={adv} />,
+  },
+  {
+    id: "sen_pay", title: "What pay structure is an absolute must-have for your next move?",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_pay"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="sen_pay" opts={SEN_PAY} single adv={adv} />,
+  },
+  {
+    id: "sen_approach", title: "How do you prefer to be approached with new opportunities?",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_approach"),
     render: (d, u, adv) => (
-      <ChipGroup
-        options={["Influence", "Income", "Both equally"]}
-        single
-        allowOther
-        values={paStr(d, "sc_driver") ? [paStr(d, "sc_driver")] : []}
-        onChange={(v) => {
-          setPa(u, d, "sc_driver")(v[0] ?? "");
-          if (v[0]) auto(adv);
+      <KeyedChips
+        d={d} u={u} id="sen_approach" opts={SEN_APPROACH} single adv={adv}
+        onKeys={(keys) => {
+          const k = keys[0];
+          if (!k) return;
+          u("availability", SEN_APPROACH_AVAILABILITY[k] ?? "");
+          if (k === "CONFIDENTIAL") u("visibility", "hidden_from_current");
         }}
       />
     ),
   },
   {
-    id: "sc_identity",
-    title: "Do you see yourself as a builder, a fixer, or a strategist?",
-    showIf: (d) => d.careerStage === "senior-career",
-    answered: (d) => !!paStr(d, "sc_identity"),
+    id: "sen_density", title: "How much information do you like on screen at once?",
+    subtitle: "This restyles your dashboard instantly.",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_density"),
     render: (d, u, adv) => (
-      <ChipGroup
-        options={["Builder", "Fixer", "Strategist"]}
-        single
-        values={paStr(d, "sc_identity") ? [paStr(d, "sc_identity")] : []}
-        onChange={(v) => {
-          setPa(u, d, "sc_identity")(v[0] ?? "");
-          if (v[0]) auto(adv);
+      <KeyedChips
+        d={d} u={u} id="sen_density" opts={SEN_DENSITY} single adv={adv}
+        onKeys={(keys) => {
+          const k = keys[0];
+          if (k) void setDensity(k === "HIGH_DENSITY" ? "vibrant" : "calm");
         }}
       />
     ),
   },
   {
-    id: "sc_legacy_skills",
-    title: "What's the one skill you wish the next generation would learn from you?",
-    subtitle: "Stack as many as feel true.",
-    showIf: (d) => d.careerStage === "senior-career",
-    answered: (d) => paArr(d, "sc_legacy_skills").length > 0,
-    render: (d, u) => (
-      <ChipGroup
-        options={[
-          "Leadership under pressure",
-          "Deep technical craft",
-          "Communication & storytelling",
-          "Judgment & decision-making",
-          "Mentoring & coaching",
-          "Resilience & patience",
-        ]}
-        allowOther
-        values={paArr(d, "sc_legacy_skills")}
-        onChange={setPa(u, d, "sc_legacy_skills")}
-      />
-    ),
-  },
-  {
-    id: "sc_fulfilling",
-    title: "What does a fulfilling career look like to you today?",
-    subtitle: "Pick any that resonate.",
-    showIf: (d) => d.careerStage === "senior-career",
-    answered: (d) => paArr(d, "sc_fulfilling").length > 0,
-    render: (d, u) => (
-      <ChipGroup
-        options={[
-          "💰 Financial Maximization — compensation, equity, wealth building",
-          "🧭 Strategic Influence — driving high-level decisions, business scale",
-          "🤝 Mentorship & Legacy — developing teams, helping others grow",
-          "🧠 Intellectual Challenge — solving complex problems, innovation",
-          "🏡 Autonomy & Balance — flexibility, remote work, protecting personal time",
-        ]}
-        values={paArr(d, "sc_fulfilling")}
-        onChange={setPa(u, d, "sc_fulfilling")}
-      />
-    ),
-  },
-  {
-    id: "sc_scope",
-    title: "Are you looking to deepen your domain or broaden your leadership scope?",
-    showIf: (d) => d.careerStage === "senior-career",
-    answered: (d) => !!paStr(d, "sc_scope"),
-    render: (d, u, adv) => (
-      <ChipGroup
-        options={["Deepen my domain", "Broaden my leadership scope", "Both"]}
-        single
-        allowOther
-        values={paStr(d, "sc_scope") ? [paStr(d, "sc_scope")] : []}
-        onChange={(v) => {
-          setPa(u, d, "sc_scope")(v[0] ?? "");
-          if (v[0]) auto(adv);
-        }}
-      />
-    ),
+    id: "sen_first", title: "When you log in, what's the first thing you want to check?",
+    showIf: isSenior, answered: (d) => !!paStr(d, "sen_first"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="sen_first" opts={SEN_FIRST} single adv={adv} />,
   },
 ];
 
 const EXECUTIVE_QUESTIONS: PrefQuestion[] = [
   {
-    id: "ex_energy",
-    title: "What drives your professional energy today?",
-    subtitle: "Pick any that fit.",
-    showIf: (d) => d.careerStage === "executive",
-    answered: (d) => paArr(d, "ex_energy").length > 0,
-    render: (d, u) => (
-      <ChipGroup
-        options={[
-          "🚀 Vision & Macro Strategy — setting long-term direction, charting the future",
-          "🌱 Leadership & Culture — developing the next tier of executives, mentoring",
-          "📈 Hyper-Scale & Growth — M&A, geographic expansion, unlocking massive revenue",
-          "🔧 Turnarounds & Crisis — fixing broken operations, navigating structural change",
-          "💡 Product Innovation — staying connected to the core craft, inventing new tech",
-        ]}
-        allowOther
-        values={paArr(d, "ex_energy")}
-        onChange={setPa(u, d, "ex_energy")}
-      />
-    ),
+    id: "exe_mix", title: "What does your ideal mix of professional work look like right now?",
+    subtitle: "Select all that apply.", showIf: isExec, answered: (d) => paArr(d, "exe_mix").length > 0,
+    render: (d, u) => <KeyedChips d={d} u={u} id="exe_mix" opts={EXE_MIX} />,
   },
   {
-    id: "ex_industry_change",
-    title: "What is the primary long-term change you are trying to drive in your industry?",
-    showIf: (d) => d.careerStage === "executive",
-    answered: (d) => !!paStr(d, "ex_industry_change"),
-    render: (d, u) => (
-      <PhaseTextInput id="ex_industry_change" draft={d} update={u} placeholder="e.g. Making sustainable logistics the industry default" />
-    ),
+    id: "exe_lifecycle", title: "At what stage of a company's lifecycle do your skills shine brightest?",
+    showIf: isExec, answered: (d) => !!paStr(d, "exe_lifecycle"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="exe_lifecycle" opts={EXE_LIFECYCLE} single adv={adv} />,
   },
   {
-    id: "ex_hands_on",
-    title: "How hands-on do you still want to be in day-to-day decisions?",
-    subtitle: "1 = advise from the sidelines · 10 = act in the trenches.",
-    showIf: (d) => d.careerStage === "executive",
-    answered: () => true,
-    render: (d, u) => (
-      <Slider
-        id="f-ex_hands_on"
-        label="Hands-on level"
-        value={paNum(d, "ex_hands_on", 5)}
-        onChange={setPa(u, d, "ex_hands_on")}
-        min={1}
-        max={10}
-        unit=""
-      />
-    ),
+    id: "exe_board", title: "What type of board or governance setup are you looking for?",
+    showIf: isExec, answered: (d) => !!paStr(d, "exe_board"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="exe_board" opts={EXE_BOARD} single adv={adv} />,
   },
   {
-    id: "ex_non_negotiable",
-    title: "Beyond financial rewards, what's your ultimate non-negotiable for an opportunity?",
-    showIf: (d) => d.careerStage === "executive",
-    answered: (d) => !!paStr(d, "ex_non_negotiable"),
+    id: "exe_values", title: "Which core values must an organization genuinely live by?",
+    subtitle: "Pick up to 3.", showIf: isExec, answered: (d) => paArr(d, "exe_values").length > 0,
+    render: (d, u) => <KeyedChips d={d} u={u} id="exe_values" opts={EXE_VALUES} max={3} />,
+  },
+  {
+    id: "exe_transition", title: "What's the main reason you're looking to transition right now?",
+    showIf: isExec, answered: (d) => !!paStr(d, "exe_transition"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="exe_transition" opts={EXE_TRANSITION} single adv={adv} />,
+  },
+  {
+    id: "exe_lifestyle", title: "Any lifestyle conditions or travel limits we should respect?",
+    showIf: isExec, answered: (d) => !!paStr(d, "exe_lifestyle"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="exe_lifestyle" opts={EXE_LIFESTYLE} single adv={adv} />,
+  },
+  {
+    id: "exe_privacy", title: "How should Career OS manage your market privacy?",
+    showIf: isExec, answered: (d) => !!paStr(d, "exe_privacy"),
     render: (d, u, adv) => (
-      <ChipGroup
-        options={[
-          "⚖️ Absolute Strategic Autonomy — full decision-making ownership, explicit board backing",
-          "🎯 Clear Corporate Mandate — a specific, high-leverage mission: turnaround, hyper-scale, IPO",
-          "🤝 High-Alignment Governance — strong chemistry with the board, founders, or CEO",
-          "⚡ Low-Bureaucracy Executive Culture — elite, high-caliber peers, rapid execution",
-          "🌍 Systemic Industry Impact — massive resource availability, industry-shifting market scale",
-        ]}
-        single
-        values={paStr(d, "ex_non_negotiable") ? [paStr(d, "ex_non_negotiable")] : []}
-        onChange={(v) => {
-          setPa(u, d, "ex_non_negotiable")(v[0] ?? "");
-          if (v[0]) auto(adv);
+      <KeyedChips
+        d={d} u={u} id="exe_privacy" opts={EXE_PRIVACY} single adv={adv}
+        onKeys={(keys) => {
+          const k = keys[0];
+          if (!k) return;
+          u("visibility", k === "OPEN_VISIBILITY" ? "all_recruiters" : "hidden_from_current");
         }}
       />
     ),
+  },
+  {
+    id: "exe_layout", title: "Which visual layout matches your processing style?",
+    subtitle: "This restyles your workspace instantly.",
+    showIf: isExec, answered: (d) => !!paStr(d, "exe_layout"),
+    render: (d, u, adv) => (
+      <KeyedChips
+        d={d} u={u} id="exe_layout" opts={EXE_LAYOUT} single adv={adv}
+        onKeys={(keys) => {
+          const k = keys[0];
+          if (k) void setDensity(k === "ARCHITECTURAL_MINIMALISM" ? "calm" : "vibrant");
+        }}
+      />
+    ),
+  },
+  {
+    id: "exe_cadence", title: "How often do you want to interact with your growth updates?",
+    showIf: isExec, answered: (d) => !!paStr(d, "exe_cadence"),
+    render: (d, u, adv) => <KeyedChips d={d} u={u} id="exe_cadence" opts={EXE_CADENCE} single adv={adv} />,
   },
 ];
 
@@ -2037,8 +2260,9 @@ interface ReviewRowDef {
   showIf?: (d: Draft) => boolean;
 }
 
-/** "💰 Financial Maximization — …" → "💰 Financial Maximization". */
-const shortOpt = (s: string) => s.split(" — ")[0];
+/** "💰 Financial Maximization — …" → "💰 Financial Maximization"; keyed
+ *  answers (UPPER_SNAKE) resolve through the option-label lookup. */
+const shortOpt = (s: string) => KEY_LABEL[s] ?? s.split(" — ")[0];
 const fmtPa = (v: string | string[] | number | undefined): string =>
   Array.isArray(v) ? v.map(shortOpt).join(" · ") : v === undefined ? "" : shortOpt(String(v));
 
@@ -2048,15 +2272,24 @@ const PHASE_ROW_LABELS: Record<string, string> = {
   mc_primary_goal: "Primary goal",
   mc_flow_work: "Flow work",
   mc_flexibility: "Flexibility",
-  sc_driver: "Driver",
-  sc_identity: "Identity",
-  sc_legacy_skills: "Legacy skills",
-  sc_fulfilling: "Fulfilling career",
-  sc_scope: "Deepen vs broaden",
-  ex_energy: "Energy source",
-  ex_industry_change: "Industry change",
-  ex_hands_on: "Hands-on (1–10)",
-  ex_non_negotiable: "Non-negotiable",
+  sen_leadership: "Next leadership role",
+  sen_stage: "Company stage",
+  sen_culture: "Culture traits",
+  sen_challenge: "Business challenge",
+  sen_report: "Reports to",
+  sen_pay: "Pay structure",
+  sen_approach: "Approach preference",
+  sen_density: "Dashboard density",
+  sen_first: "First check",
+  exe_mix: "Work mix",
+  exe_lifecycle: "Lifecycle stage",
+  exe_board: "Board setup",
+  exe_values: "Core values",
+  exe_transition: "Transition reason",
+  exe_lifestyle: "Lifestyle limits",
+  exe_privacy: "Market privacy",
+  exe_layout: "Visual layout",
+  exe_cadence: "Update cadence",
 };
 
 const REVIEW_GROUPS: { title: string; rows: ReviewRowDef[] }[] = [
@@ -2091,14 +2324,15 @@ const REVIEW_GROUPS: { title: string; rows: ReviewRowDef[] }[] = [
   {
     title: "Preferences",
     rows: [
-      { id: "targetRoles", label: "Desired roles", value: (d) => d.targetRoles.join(", ") },
-      { id: "desiredLocations", label: "Desired locations", value: (d) => d.desiredLocations.join(", ") },
-      { id: "openToRelocate", label: "Open to relocate", value: (d) => (d.openToRelocate ? "Yes" : "No") },
-      { id: "workArrangement", label: "Work arrangement", value: (d) => d.workArrangement.join(", ") },
-      { id: "jobTypes", label: "Job type", value: (d) => d.jobTypes.join(", ") },
-      { id: "minSalary", label: "Min salary", value: (d) => (d.minSalaryAmount ? `${d.minSalaryAmount} / ${d.minSalaryPeriod || "yearly"}` : "") },
-      { id: "availability", label: "Availability", value: (d) => d.availability },
-      { id: "visibility", label: "Profile visibility", value: (d) => (d.visibility === "all_recruiters" ? "All recruiters" : "Hidden until opt-in") },
+      { id: "currentRole", label: "Current role", value: (d) => d.currentRoleTitle, showIf: isSeniorExec },
+      { id: "targetRoles", label: "Desired roles", value: (d) => d.targetRoles.join(", "), showIf: (d) => !isSeniorExec(d) },
+      { id: "desiredLocations", label: "Desired locations", value: (d) => d.desiredLocations.join(", "), showIf: (d) => !isSeniorExec(d) },
+      { id: "openToRelocate", label: "Open to relocate", value: (d) => (d.openToRelocate ? "Yes" : "No"), showIf: (d) => !isSeniorExec(d) },
+      { id: "workArrangement", label: "Work arrangement", value: (d) => d.workArrangement.join(", "), showIf: (d) => !isSeniorExec(d) },
+      { id: "jobTypes", label: "Job type", value: (d) => d.jobTypes.join(", "), showIf: (d) => !isSeniorExec(d) },
+      { id: "minSalary", label: "Min salary", value: (d) => (d.minSalaryAmount ? `${d.minSalaryAmount} / ${d.minSalaryPeriod || "yearly"}` : ""), showIf: (d) => !isSeniorExec(d) },
+      { id: "availability", label: "Availability", value: (d) => d.availability, showIf: (d) => !isSeniorExec(d) },
+      { id: "visibility", label: "Profile visibility", value: (d) => (d.visibility === "all_recruiters" ? "All recruiters" : "Hidden until opt-in"), showIf: (d) => !isSeniorExec(d) },
       { id: "workEnvironment", label: "Best environment", value: (d) => ENVIRONMENTS.find((e) => e.id === d.workEnvironment)?.label ?? "", showIf: (d) => !isPhasedStage(d) },
       { id: "topValues", label: "Top values", value: (d) => d.topValues.join(" · "), showIf: (d) => !isPhasedStage(d) },
       { id: "learningHoursPerWeek", label: "Learning / week", value: (d) => `${d.learningHoursPerWeek} hrs`, showIf: (d) => !isPhasedStage(d) },

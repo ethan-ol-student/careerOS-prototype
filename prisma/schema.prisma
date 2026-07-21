@@ -457,8 +457,29 @@ model CandidatesAI {
   // question id; the TS layer (onboarding page) owns legal keys/shapes.
   phaseAnswers Json?
 
+  // Onboarding v5 — role-catalog associations. Senior/Executive tracks
+  // store their CURRENT role; standard tracks store DESIRED role ids
+  // (titles keep mirroring into targetRoles for engine compatibility).
+  currentRoleId    String?
+  currentRoleTitle String   @default("") // denormalized for display
+  desiredRoleIds   String[] @default([])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ── Role catalog (taxonomy) ────────────────────────────────────
+// Curated job-role taxonomy (prisma/data/roles.csv): each role maps to a
+// Category/Industry and its connected skills (stored lower-case-normalized
+// so Skill Radar / Career Intelligence engines consume them directly).
+// Seeded idempotently; NOT demo data — core reference taxonomy.
+model RoleCatalog {
+  id       String   @id // "role-<csv id>"
+  category String
+  title    String
+  skills   String[] @default([])
+
+  @@index([category])
 }
 
 // ── Advanced Employer onboarding answers (AI-matching input) ──

@@ -38,6 +38,10 @@ export interface CandidatesAIData {
   onboardingCompleted: boolean;
   // Onboarding v2 — preference signals surfaced on the dashboard.
   topValues?: string[];
+  // Onboarding v5 — role-catalog associations.
+  currentRoleId?: string | null;
+  currentRoleTitle?: string;
+  desiredRoleIds?: string[];
 }
 
 

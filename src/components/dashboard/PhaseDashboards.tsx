@@ -450,8 +450,13 @@ export function SeniorDashboard({ data, claims, jobs, truth, mv }: PhaseDashProp
             <div className="min-w-0">
               <p className="truncate text-lg font-bold tracking-tight">{data.name}</p>
               <p className="text-muted-foreground truncate text-sm">
-                {data.portfolio.headline || "Senior professional"}
+                {data.ai?.currentRoleTitle || data.portfolio.headline || "Senior professional"}
               </p>
+              {data.ai?.currentRoleTitle && (
+                <span className="border-yellow-400/40 bg-yellow-400/10 mt-1 inline-block rounded-full border px-2 py-0.5 font-mono text-[0.5625rem] font-semibold uppercase tracking-wider text-yellow-400">
+                  Current role
+                </span>
+              )}
               <p className="text-muted-foreground/70 truncate text-xs">{subtitle}</p>
             </div>
           </div>
@@ -656,7 +661,7 @@ export function ExecutiveDashboard({ data, claims, jobs, truth, mv }: PhaseDashP
           <div className="min-w-0">
             <p className="truncate text-base font-bold tracking-tight">{data.name}</p>
             <p className="text-muted-foreground truncate text-xs">
-              {data.portfolio.headline || "Executive & Beyond"}
+              {data.ai?.currentRoleTitle || data.portfolio.headline || "Executive & Beyond"}
             </p>
           </div>
         </div>

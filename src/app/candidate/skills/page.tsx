@@ -23,6 +23,12 @@ import {
   type TrustTier,
 } from "@/lib/intelligence/skillTruthEngine";
 import { getFutureSelf } from "@/lib/futureSelf";
+import {
+  fetchRoleCatalog,
+  roleToTargetJob,
+  savedRoleIdFor,
+} from "@/lib/roles/catalog";
+import { jobReadiness } from "@/lib/jobs/data";
 import { useCandidatesAI } from "@/lib/hooks/useCandidatesAI";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +97,37 @@ export default function SkillsPage() {
     })();
   }, [loadClaims]);
 
-  const job = jobs.find((j) => j.id === jobId) ?? null;
+  // The candidate's saved role (Current Role for senior/exec, first Desired
+  // Role otherwise) joins the rail as a synthetic target and becomes the
+  // default comparison — cross-module integration with the role catalog.
+  const [roleTarget, setRoleTarget] = useState<BookshelfJob | null>(null);
+  useEffect(() => {
+    const savedId = ai ? savedRoleIdFor(ai) : null;
+    if (!savedId || !claims) return;
+    let cancelled = false;
+    void fetchRoleCatalog().then((catalog) => {
+      if (cancelled) return;
+      const role = catalog.find((r) => r.id === savedId);
+      if (!role) return;
+      const t = roleToTargetJob(role);
+      const target: BookshelfJob = {
+        ...t,
+        match: jobReadiness(t, claims.map((c) => c.name)).pct,
+      };
+      setRoleTarget(target);
+      setJobId((cur) => (cur && cur !== jobs[0]?.id ? cur : target.id));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the saved-role inputs only
+  }, [ai?.currentRoleId, ai?.desiredRoleIds?.[0], ai?.careerStage, claims]);
+
+  const railJobs = useMemo(
+    () => (roleTarget ? [roleTarget, ...jobs] : jobs),
+    [roleTarget, jobs],
+  );
+  const job = railJobs.find((j) => j.id === jobId) ?? null;
   const truth = useMemo(
     () =>
       job && claims ? scoreSkillTruth(claims as SkillClaimInput[], job) : null,
@@ -117,12 +153,12 @@ export default function SkillsPage() {
 
   const filteredJobs = useMemo(() => {
     const q = roleQuery.trim().toLowerCase();
-    if (!q) return jobs;
-    return jobs.filter(
+    if (!q) return railJobs;
+    return railJobs.filter(
       (j) =>
         j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q),
     );
-  }, [jobs, roleQuery]);
+  }, [railJobs, roleQuery]);
 
   // ── Bookshelf data handlers (the page owns all fetching) ──
 

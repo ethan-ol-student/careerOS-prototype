@@ -81,6 +81,9 @@ async function main() {
     console.log("SEED_DEMO=false → skipping demo catalog.");
   }
 
+  // Role-catalog taxonomy is CORE reference data (not demo) — always seeded.
+  await seedRoleCatalog();
+
   console.log(`Seeding judge evaluation account "${JUDGE_ACCOUNT.username}"...`);
   await seedJudgeAccount();
 
@@ -180,6 +183,82 @@ async function seedMidCareerDemo() {
       data: { profileId, name: c.name, priority: c.priority, date: c.date, time: c.time, subtasks: c.subtasks },
     });
   }
+}
+
+// Role taxonomy (prisma/data/roles.csv): 200+ roles mapped to a
+// Category/Industry + connected skills. Skills are stored lower-case
+// normalized so Skill Radar / Career Intelligence consume them directly.
+// Idempotent: upsert by the CSV's stable id; rows removed from the CSV are
+// pruned so the taxonomy stays exactly the curated list.
+async function seedRoleCatalog() {
+  const roles = readCsv("roles.csv");
+  console.log(`Seeding ${roles.length} role-catalog entries…`);
+  for (const r of roles) {
+    const fields = {
+      category: r["Category"],
+      title: r["Job Title"],
+      skills: r["Connected Skills"]
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean),
+    };
+    await prisma.roleCatalog.upsert({
+      where: { id: `role-${r["ID"]}` },
+      create: { id: `role-${r["ID"]}`, ...fields },
+      update: fields,
+    });
+  }
+  await prisma.roleCatalog.deleteMany({
+    where: { id: { notIn: roles.map((r) => `role-${r["ID"]}`) } },
+  });
+
+  // Every catalog role is ALSO a browsable, applicable opening on /jobs:
+  // one "open market" company per category, one Job row per role
+  // (id "rc-<roleId>", source "role-catalog", no expiry). Idempotent:
+  // upsert + prune rows whose role left the catalog. Demo-labelled.
+  console.log(`Seeding ${roles.length} role-catalog market jobs…`);
+  const categoryCompany = new Map<string, string>();
+  for (const cat of new Set(roles.map((r) => r["Category"]))) {
+    const company = await prisma.company.upsert({
+      where: { name: cat },
+      create: { name: cat, size: "", type: "", location: "Malaysia / Remote", isDemo: true },
+      update: {},
+    });
+    categoryCompany.set(cat, company.id);
+  }
+  const demoBase = (title: string) =>
+    45 + ([...title].reduce((s, c) => s + c.charCodeAt(0), 0) % 36); // 45–80
+  for (const r of roles) {
+    const skills = r["Connected Skills"]
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, 6);
+    const fields = {
+      title: r["Job Title"],
+      location: "Malaysia / Remote",
+      duration: "Full-time",
+      field: r["Category"],
+      requiredSkills: skills,
+      baseMatch: demoBase(r["Job Title"]),
+      sourceUrl: null,
+      companyId: categoryCompany.get(r["Category"])!,
+      isDemo: true,
+      source: "role-catalog",
+      status: "active",
+    };
+    await prisma.job.upsert({
+      where: { id: `rc-role-${r["ID"]}` },
+      create: { id: `rc-role-${r["ID"]}`, ...fields },
+      update: fields,
+    });
+  }
+  await prisma.job.deleteMany({
+    where: {
+      source: "role-catalog",
+      id: { notIn: roles.map((r) => `rc-role-${r["ID"]}`) },
+    },
+  });
 }
 
 // Demo job catalogue + salary benchmarks, from curated CSV (prisma/data/*).

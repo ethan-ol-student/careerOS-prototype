@@ -73,6 +73,13 @@ const OnboardingPatchSchema = z
       )
       .optional(),
 
+    // Onboarding v5 — role-catalog associations (senior/exec = current
+    // role; standard tracks = desired roles). Titles mirror into
+    // targetRoles for engine compatibility.
+    currentRoleId: z.string().max(40).nullable().optional(),
+    currentRoleTitle: z.string().max(120).optional(),
+    desiredRoleIds: z.array(z.string().max(40)).max(20).optional(),
+
     // Onboarding v3 — focus + optional self-ID (PRIVATE, never projected)
     focus: z.enum(["", "improve", "discovering"]).optional(),
     familyStatus: z.string().max(40).optional(),

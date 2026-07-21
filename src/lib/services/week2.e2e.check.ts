@@ -36,7 +36,9 @@ async function main() {
   // 1) Jobs render from DB with personalized match scores
   // (catalogue rows only — employer-posted jobs land in the same table and
   // are soft-deleted by design, so total count is not a stable invariant)
-  const jobs = (await prisma.job.findMany({ where: { employerId: null }, include: { company: true } })).map((r) => ({
+  // (source "seed" = the original 20-row catalogue; role-catalog market jobs
+  // land in the same table with source "role-catalog")
+  const jobs = (await prisma.job.findMany({ where: { employerId: null, source: "seed" }, include: { company: true } })).map((r) => ({
     row: r,
     bridge: scoreSkillBridge(toTargetJob(r), skills),
   }));

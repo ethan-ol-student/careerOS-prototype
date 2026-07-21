@@ -28,6 +28,12 @@ import {
 } from "@/lib/intelligence/skillTruthEngine";
 import { ARCHETYPES } from "@/lib/intelligence/scoringConfig";
 import type { TargetJob } from "@/lib/jobs/data";
+import {
+  fetchRoleCatalog,
+  roleToTargetJob,
+  savedRoleIdFor,
+} from "@/lib/roles/catalog";
+import { jobReadiness } from "@/lib/jobs/data";
 import { cn } from "@/lib/utils";
 
 interface Undervalued {
@@ -142,11 +148,35 @@ function InsightsContent() {
         r3?.json().catch(() => null),
       ]);
       if (cancelled) return;
+      const claimRows: SkillClaimInput[] = j3?.ok ? j3.data.claims : [];
       if (j2?.ok) {
-        setJobs(j2.data.jobs as JobRow[]);
-        if (j2.data.jobs[0]) setSelectedJobId(j2.data.jobs[0].id);
+        let rows = j2.data.jobs as JobRow[];
+        // Saved role (Current Role for senior/exec, first Desired Role
+        // otherwise) leads the rail as a synthetic role target.
+        try {
+          const [me, catalog] = await Promise.all([
+            fetch("/api/me/onboarding", { cache: "no-store" })
+              .then((r) => r.json())
+              .catch(() => null),
+            fetchRoleCatalog(),
+          ]);
+          const savedId = me?.ok ? savedRoleIdFor(me.data) : null;
+          const role = savedId ? catalog.find((r) => r.id === savedId) : null;
+          if (role) {
+            const t = roleToTargetJob(role);
+            rows = [
+              { ...t, match: jobReadiness(t, claimRows.map((c) => c.name)).pct },
+              ...rows,
+            ];
+          }
+        } catch {
+          /* catalog unavailable — plain jobs list still works */
+        }
+        if (cancelled) return;
+        setJobs(rows);
+        if (rows[0]) setSelectedJobId(rows[0].id);
       }
-      if (j3?.ok) setClaims(j3.data.claims as SkillClaimInput[]);
+      if (j3?.ok) setClaims(claimRows);
       if (j1?.ok) {
         setData(j1.data as Payload);
         setStatus("ready");

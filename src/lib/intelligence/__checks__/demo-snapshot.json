@@ -56,7 +56,7 @@
     {
       "id": "change-role",
       "flavor": "bold",
-      "confidence": 40,
+      "confidence": 50,
       "difficulty": "high",
       "salaryImpactPct": 8,
       "timeMonths": 12
